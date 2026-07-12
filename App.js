@@ -90,6 +90,7 @@ const translations = {
     moneyLeft: 'Toplam kalan',
     savings: 'Tasarruf',
     receiptCount: 'Fiş sayısı',
+    searchResultCount: (count) => `${count} fiş bulundu`,
     dailyAverage: 'Günlük ort.',
     spendingInsightTitle: 'En çok nereye gidiyor?',
     spendingInsightText: (category, amount) => `Bu ay en yüksek harcama ${category} kategorisinde. Toplam: ${amount}.`,
@@ -144,7 +145,7 @@ const translations = {
     receiptsShort: 'fiş',
     boughtItems: 'Alınanlar',
     tapMerchantReceipts: 'Fişleri görmek için dokun',
-    searchReceipts: 'Fişlerde ara',
+    searchReceipts: 'Mağaza, kategori, ürün, tarih veya tutar ara',
     noReceipts: 'Henüz fiş yok',
     noReceiptsText: 'İlk fişi eklediğinde harcamaların, marketlerin ve raporların burada görünecek.',
     noReportData: 'Bu filtrede veri yok',
@@ -298,6 +299,7 @@ const translations = {
     moneyLeft: 'Total left',
     savings: 'Savings',
     receiptCount: 'Receipt count',
+    searchResultCount: (count) => `${count} receipts found`,
     dailyAverage: 'Daily avg.',
     spendingInsightTitle: 'Where does it go most?',
     spendingInsightText: (category, amount) => `Your highest spending this month is ${category}. Total: ${amount}.`,
@@ -352,7 +354,7 @@ const translations = {
     receiptsShort: 'receipts',
     boughtItems: 'Items',
     tapMerchantReceipts: 'Tap to view receipts',
-    searchReceipts: 'Search receipts',
+    searchReceipts: 'Search store, category, item, date, or amount',
     noReceipts: 'No receipts yet',
     noReceiptsText: 'After you add your first receipt, spending, stores, and reports will appear here.',
     noReportData: 'No data for this filter',
@@ -506,6 +508,7 @@ const translations = {
     moneyLeft: 'Solde total',
     savings: 'Epargne',
     receiptCount: 'Nombre de tickets',
+    searchResultCount: (count) => `${count} tickets trouves`,
     dailyAverage: 'Moyenne jour',
     spendingInsightTitle: 'Ou va le plus d argent?',
     spendingInsightText: (category, amount) => `Ce mois-ci, la depense la plus elevee est ${category}. Total: ${amount}.`,
@@ -560,7 +563,7 @@ const translations = {
     receiptsShort: 'tickets',
     boughtItems: 'Articles',
     tapMerchantReceipts: 'Touchez pour voir les tickets',
-    searchReceipts: 'Rechercher',
+    searchReceipts: 'Rechercher magasin, categorie, article, date ou montant',
     noReceipts: 'Aucun ticket',
     noReceiptsText: 'Ajoutez votre premier ticket pour voir les depenses, magasins et rapports.',
     noReportData: 'Aucune donnee pour ce filtre',
@@ -714,6 +717,7 @@ const translations = {
     moneyLeft: 'Gesamt uebrig',
     savings: 'Sparen',
     receiptCount: 'Beleganzahl',
+    searchResultCount: (count) => `${count} Belege gefunden`,
     dailyAverage: 'Tagesdurchs.',
     spendingInsightTitle: 'Wohin geht am meisten?',
     spendingInsightText: (category, amount) => `Diesen Monat ist ${category} am hoechsten. Gesamt: ${amount}.`,
@@ -768,7 +772,7 @@ const translations = {
     receiptsShort: 'Belege',
     boughtItems: 'Gekauft',
     tapMerchantReceipts: 'Tippen, um Belege zu sehen',
-    searchReceipts: 'Belege suchen',
+    searchReceipts: 'Nach Laden, Kategorie, Artikel, Datum oder Betrag suchen',
     noReceipts: 'Noch keine Belege',
     noReceiptsText: 'Nach dem ersten Beleg erscheinen Ausgaben, Geschaefte und Berichte hier.',
     noReportData: 'Keine Daten fuer diesen Filter',
@@ -922,6 +926,7 @@ const translations = {
     moneyLeft: 'Total restante',
     savings: 'Ahorro',
     receiptCount: 'Numero de tickets',
+    searchResultCount: (count) => `${count} tickets encontrados`,
     dailyAverage: 'Media diaria',
     spendingInsightTitle: 'Donde gastas mas?',
     spendingInsightText: (category, amount) => `Este mes el gasto mas alto esta en ${category}. Total: ${amount}.`,
@@ -976,7 +981,7 @@ const translations = {
     receiptsShort: 'tickets',
     boughtItems: 'Productos',
     tapMerchantReceipts: 'Toca para ver tickets',
-    searchReceipts: 'Buscar tickets',
+    searchReceipts: 'Buscar tienda, categoria, producto, fecha o importe',
     noReceipts: 'Aun no hay tickets',
     noReceiptsText: 'Cuando anadas el primer ticket, veras gastos, tiendas e informes aqui.',
     noReportData: 'No hay datos para este filtro',
@@ -1476,12 +1481,42 @@ function searchReceipts(receipts, query) {
   }
 
   return receipts.filter((receipt) => {
+    const categoryLabel = getCategoryLabel(receipt.category, translations.tr);
+    const normalizedDate = normalizeDateDisplay(receipt.date, receipt.createdAt);
+    const amountText = [
+      String(receipt.amount || ''),
+      formatTL(receipt.amount),
+      Number(receipt.amount || 0).toFixed(2).replace('.', ','),
+    ].join(' ');
     const itemText = Array.isArray(receipt.items)
       ? receipt.items
-          .map((item) => (typeof item === 'string' ? item : item?.name || ''))
+          .map((item) => {
+            if (typeof item === 'string') {
+              return item;
+            }
+
+            return [
+              item?.name || '',
+              getCategoryLabel(item?.category || receipt.category, translations.tr),
+              String(item?.amount || ''),
+              Number(item?.amount || 0).toFixed(2).replace('.', ','),
+              String(item?.quantity || ''),
+              item?.unit || '',
+            ].join(' ');
+          })
           .join(' ')
       : '';
-    const haystack = `${receipt.store} ${receipt.date} ${itemText}`.toLocaleLowerCase('tr-TR');
+    const haystack = [
+      receipt.store,
+      receipt.date,
+      normalizedDate,
+      categoryLabel,
+      normalizeCategoryKey(receipt.category),
+      amountText,
+      itemText,
+    ]
+      .join(' ')
+      .toLocaleLowerCase('tr-TR');
     return haystack.includes(cleanQuery);
   });
 }
@@ -3302,6 +3337,9 @@ function ReportScreen({
         onChangeText={setReportSearchText}
         placeholder={t.searchReceipts}
       />
+      {Boolean(reportSearchText.trim()) && (
+        <Text style={styles.searchResultText}>{t.searchResultCount(receipts.length)}</Text>
+      )}
 
       <Text style={styles.sectionTitle}>{t.categoryBreakdown}</Text>
       <View style={styles.reportCard}>
@@ -4460,6 +4498,12 @@ const styles = StyleSheet.create({
     marginTop: 12,
     paddingHorizontal: 14,
     paddingVertical: 13,
+  },
+  searchResultText: {
+    color: '#68766b',
+    fontSize: 12,
+    fontWeight: '800',
+    marginTop: 8,
   },
   heroAmount: {
     color: '#172018',
