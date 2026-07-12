@@ -116,6 +116,8 @@ const translations = {
     storeName: 'Mağaza / işletme adı',
     totalAmount: 'Toplam tutar',
     category: 'Kategori',
+    customCategory: 'Özel kategori',
+    customCategoryPlaceholder: 'Örn. Oto bakım, okul, vergi...',
     readItems: 'Okunan ürünler',
     addToSpending: 'Harcamalara Ekle',
     manualSaveHelp: 'Analiz olmadan kaydetmek için mağaza adı ve toplam tutarı yazman yeterli.',
@@ -322,6 +324,8 @@ const translations = {
     storeName: 'Store / business name',
     totalAmount: 'Total amount',
     category: 'Category',
+    customCategory: 'Custom category',
+    customCategoryPlaceholder: 'Example: car care, school, tax...',
     readItems: 'Read items',
     addToSpending: 'Add to spending',
     manualSaveHelp: 'To save without analysis, enter the store name and total amount.',
@@ -528,6 +532,8 @@ const translations = {
     storeName: 'Nom du magasin',
     totalAmount: 'Montant total',
     category: 'Categorie',
+    customCategory: 'Categorie personnalisee',
+    customCategoryPlaceholder: 'Ex. voiture, ecole, taxe...',
     readItems: 'Articles lus',
     addToSpending: 'Ajouter aux depenses',
     manualSaveHelp: 'Pour enregistrer sans analyse, indiquez le magasin et le montant total.',
@@ -734,6 +740,8 @@ const translations = {
     storeName: 'Geschaeftsname',
     totalAmount: 'Gesamtbetrag',
     category: 'Kategorie',
+    customCategory: 'Eigene Kategorie',
+    customCategoryPlaceholder: 'Z.B. Auto, Schule, Steuer...',
     readItems: 'Gelesene Artikel',
     addToSpending: 'Zu Ausgaben hinzufuegen',
     manualSaveHelp: 'Zum Speichern ohne Analyse reichen Geschaeftsname und Gesamtbetrag.',
@@ -940,6 +948,8 @@ const translations = {
     storeName: 'Nombre de tienda',
     totalAmount: 'Importe total',
     category: 'Categoria',
+    customCategory: 'Categoria personalizada',
+    customCategoryPlaceholder: 'Ej. coche, escuela, impuesto...',
     readItems: 'Productos leidos',
     addToSpending: 'Anadir a gastos',
     manualSaveHelp: 'Para guardar sin analisis, introduce la tienda y el importe total.',
@@ -1114,6 +1124,31 @@ const categoryOptions = [
   { key: 'other', color: '#6b7280' },
 ];
 
+function buildCategorySummary(receiptList) {
+  const totals = new Map();
+
+  receiptList.forEach((receipt) => {
+    const key = normalizeCategoryKey(receipt.category);
+    const existing = totals.get(key) || 0;
+    totals.set(key, existing + (Number(receipt.amount) || 0));
+  });
+
+  const fixedCategories = categoryOptions.map((category) => ({
+    ...category,
+    amount: totals.get(category.key) || 0,
+  }));
+
+  const customCategories = Array.from(totals.entries())
+    .filter(([key]) => isCustomCategory(key))
+    .map(([key, amount]) => ({
+      key,
+      color: '#6b7280',
+      amount,
+    }));
+
+  return [...fixedCategories, ...customCategories];
+}
+
 const legacyCategoryMap = {
   Market: 'grocery',
   Groceries: 'grocery',
@@ -1157,11 +1192,36 @@ const legacyCategoryMap = {
 };
 
 function normalizeCategoryKey(category) {
-  return legacyCategoryMap[category] || category || 'other';
+  const categoryText = String(category || '').trim();
+
+  if (categoryText.startsWith('custom:')) {
+    const customLabel = categoryText.slice('custom:'.length).trim();
+    return customLabel ? `custom:${customLabel}` : 'other';
+  }
+
+  return legacyCategoryMap[categoryText] || categoryText || 'other';
+}
+
+function makeCustomCategoryKey(label) {
+  const cleanLabel = String(label || '').trim();
+  return cleanLabel ? `custom:${cleanLabel}` : 'other';
+}
+
+function isCustomCategory(category) {
+  return String(category || '').startsWith('custom:');
+}
+
+function getCustomCategoryText(category) {
+  return isCustomCategory(category) ? String(category).slice('custom:'.length).trim() : '';
 }
 
 function getCategoryLabel(category, t) {
   const key = normalizeCategoryKey(category);
+
+  if (isCustomCategory(key)) {
+    return getCustomCategoryText(key);
+  }
+
   return t.categories?.[key] || translations.en.categories[key] || key;
 }
 
@@ -1771,6 +1831,7 @@ export default function App() {
   const [amountText, setAmountText] = useState('');
   const [receiptDateText, setReceiptDateText] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('grocery');
+  const [customCategoryText, setCustomCategoryText] = useState('');
   const [receiptImage, setReceiptImage] = useState(null);
   const [analysisStatus, setAnalysisStatus] = useState('idle');
   const [analysisConfidence, setAnalysisConfidence] = useState(null);
@@ -1785,6 +1846,7 @@ export default function App() {
   const [editAmountText, setEditAmountText] = useState('');
   const [editDateText, setEditDateText] = useState('');
   const [editCategory, setEditCategory] = useState('grocery');
+  const [editCustomCategoryText, setEditCustomCategoryText] = useState('');
   const [editItems, setEditItems] = useState([]);
   const [selectedLanguage, setSelectedLanguage] = useState(getDeviceLanguage);
   const [selectedCurrency, setSelectedCurrency] = useState('TRY');
@@ -1972,13 +2034,7 @@ export default function App() {
       ? Math.max(0, Math.round((remaining / totalIncomeUntilSelectedMonth) * 100))
       : 0;
   const categories = useMemo(
-    () =>
-      categoryOptions.map((category) => ({
-        ...category,
-        amount: selectedMonthReceipts
-          .filter((receipt) => normalizeCategoryKey(receipt.category) === category.key)
-          .reduce((sum, receipt) => sum + receipt.amount, 0),
-      })),
+    () => buildCategorySummary(selectedMonthReceipts),
     [selectedMonthReceipts]
   );
 
@@ -2021,13 +2077,7 @@ export default function App() {
     [reportReceipts]
   );
   const reportCategories = useMemo(
-    () =>
-      categoryOptions.map((category) => ({
-        ...category,
-        amount: reportReceipts
-          .filter((receipt) => normalizeCategoryKey(receipt.category) === category.key)
-          .reduce((sum, receipt) => sum + receipt.amount, 0),
-      })),
+    () => buildCategorySummary(reportReceipts),
     [reportReceipts]
   );
   const reportTopCategory = useMemo(
@@ -2131,7 +2181,8 @@ export default function App() {
     setEditStoreName(normalizedReceipt.store);
     setEditAmountText(String(normalizedReceipt.amount).replace('.', ','));
     setEditDateText(normalizeDateDisplay(normalizedReceipt.date, normalizedReceipt.createdAt));
-    setEditCategory(normalizedReceipt.category);
+    setEditCategory(isCustomCategory(normalizedReceipt.category) ? 'other' : normalizedReceipt.category);
+    setEditCustomCategoryText(getCustomCategoryText(normalizedReceipt.category));
     setEditItems(createEditableItems(normalizedReceipt));
     setScreen('detail');
   }
@@ -2144,7 +2195,8 @@ export default function App() {
     setEditStoreName(selectedReceipt.store);
     setEditAmountText(String(selectedReceipt.amount).replace('.', ','));
     setEditDateText(normalizeDateDisplay(selectedReceipt.date, selectedReceipt.createdAt));
-    setEditCategory(normalizeCategoryKey(selectedReceipt.category));
+    setEditCategory(isCustomCategory(selectedReceipt.category) ? 'other' : normalizeCategoryKey(selectedReceipt.category));
+    setEditCustomCategoryText(getCustomCategoryText(selectedReceipt.category));
     setEditItems(createEditableItems(selectedReceipt));
     setEditingReceipt(true);
   }
@@ -2196,6 +2248,10 @@ export default function App() {
 
     const amount = parseAmount(editAmountText);
     const cleanStoreName = editStoreName.trim();
+    const categoryForSave =
+      editCategory === 'other' && editCustomCategoryText.trim()
+        ? makeCustomCategoryKey(editCustomCategoryText)
+        : normalizeCategoryKey(editCategory);
 
     if (!cleanStoreName) {
       Alert.alert(t.missingInfo, t.enterStore);
@@ -2207,13 +2263,13 @@ export default function App() {
       return;
     }
 
-    const editedItemsForSave = cleanEditableItems(editItems, editCategory);
+    const editedItemsForSave = cleanEditableItems(editItems, categoryForSave);
     const updatedReceipt = {
       ...selectedReceipt,
       store: cleanStoreName,
       amount: normalizeReceiptAmount(amount, editedItemsForSave),
       date: editDateText.trim() || formatReceiptDate(selectedReceipt.createdAt),
-      category: normalizeCategoryKey(editCategory),
+      category: categoryForSave,
       items: editedItemsForSave,
     };
 
@@ -2327,6 +2383,7 @@ export default function App() {
     setAmountText('');
     setReceiptDateText('');
     setSelectedCategory('grocery');
+    setCustomCategoryText('');
     setReceiptImage(null);
     setReceiptItems([]);
     setAnalysisConfidence(null);
@@ -2462,6 +2519,7 @@ export default function App() {
       setAmountText(analysisResult.totalText || '');
       setReceiptDateText(analysisResult.dateText || formatReceiptDate(Date.now()));
       setSelectedCategory(normalizeCategoryKey(analysisResult.categoryKey));
+      setCustomCategoryText('');
       setAnalysisConfidence(analysisResult.confidence ?? null);
       setReceiptItems(analysisResult.items || []);
       incrementAnalysisUsage();
@@ -2503,6 +2561,10 @@ export default function App() {
     const cleanStoreName = storeName.trim();
     const now = Date.now();
     const cleanDateText = receiptDateText.trim() || formatReceiptDate(now);
+    const categoryForSave =
+      selectedCategory === 'other' && customCategoryText.trim()
+        ? makeCustomCategoryKey(customCategoryText)
+        : normalizeCategoryKey(selectedCategory);
 
     if (!cleanStoreName) {
       Alert.alert(t.missingInfo, t.enterStore);
@@ -2519,7 +2581,7 @@ export default function App() {
         ? item
         : {
             ...item,
-            category: normalizeCategoryKey(item.category || selectedCategory),
+            category: normalizeCategoryKey(item.category || categoryForSave),
             quantity: Number(item.quantity) > 0 ? Number(item.quantity) : 1,
             unit: String(item.unit || ''),
           }
@@ -2530,7 +2592,7 @@ export default function App() {
       createdAt: now,
       store: cleanStoreName,
       amount: normalizeReceiptAmount(amount, receiptItemsForSave),
-      category: normalizeCategoryKey(selectedCategory),
+      category: categoryForSave,
       date: cleanDateText,
       image: receiptImage,
       items: receiptItemsForSave,
@@ -2606,6 +2668,8 @@ export default function App() {
                   setReceiptDateText={setReceiptDateText}
                   selectedCategory={selectedCategory}
                   setSelectedCategory={setSelectedCategory}
+                  customCategoryText={customCategoryText}
+                  setCustomCategoryText={setCustomCategoryText}
                   receiptImage={receiptImage}
                   receiptItems={receiptItems}
                   onUpdateReceiptItemCategory={updateReceiptItemCategory}
@@ -2689,6 +2753,8 @@ export default function App() {
               setEditDateText={setEditDateText}
               editCategory={editCategory}
               setEditCategory={setEditCategory}
+              editCustomCategoryText={editCustomCategoryText}
+              setEditCustomCategoryText={setEditCustomCategoryText}
               editItems={editItems}
               onUpdateEditItem={updateEditItem}
               onAddEditItem={addEditItem}
@@ -2830,6 +2896,8 @@ function ReceiptScreen({
   setReceiptDateText,
   selectedCategory,
   setSelectedCategory,
+  customCategoryText,
+  setCustomCategoryText,
   receiptImage,
   receiptItems,
   onUpdateReceiptItemCategory,
@@ -2992,7 +3060,12 @@ function ReceiptScreen({
                   styles.receiptCategoryButton,
                   selectedCategory === category.key && styles.receiptCategoryButtonActive,
                 ]}
-                onPress={() => setSelectedCategory(category.key)}
+                onPress={() => {
+                  setSelectedCategory(category.key);
+                  if (category.key !== 'other') {
+                    setCustomCategoryText('');
+                  }
+                }}
               >
                 <Text
                   style={[
@@ -3005,6 +3078,17 @@ function ReceiptScreen({
               </Pressable>
             ))}
           </View>
+          {selectedCategory === 'other' && (
+            <>
+              <Text style={styles.inputLabel}>{t.customCategory}</Text>
+              <TextInput
+                style={styles.input}
+                value={customCategoryText}
+                onChangeText={setCustomCategoryText}
+                placeholder={t.customCategoryPlaceholder}
+              />
+            </>
+          )}
         </View>
       )}
 
@@ -3541,6 +3625,8 @@ function ReceiptDetailScreen({
   setEditDateText,
   editCategory,
   setEditCategory,
+  editCustomCategoryText,
+  setEditCustomCategoryText,
   editItems,
   onUpdateEditItem,
   onAddEditItem,
@@ -3616,7 +3702,12 @@ function ReceiptDetailScreen({
                   styles.categoryButton,
                   editCategory === category.key && styles.categoryButtonActive,
                 ]}
-                onPress={() => setEditCategory(category.key)}
+                onPress={() => {
+                  setEditCategory(category.key);
+                  if (category.key !== 'other') {
+                    setEditCustomCategoryText('');
+                  }
+                }}
               >
                 <View style={[styles.categoryDot, { backgroundColor: category.color }]} />
                 <Text
@@ -3630,6 +3721,17 @@ function ReceiptDetailScreen({
               </Pressable>
             ))}
           </View>
+          {editCategory === 'other' && (
+            <>
+              <Text style={styles.inputLabel}>{t.customCategory}</Text>
+              <TextInput
+                style={styles.input}
+                value={editCustomCategoryText}
+                onChangeText={setEditCustomCategoryText}
+                placeholder={t.customCategoryPlaceholder}
+              />
+            </>
+          )}
 
           <Text style={styles.sectionTitle}>{t.editItems}</Text>
           <View style={styles.card}>
