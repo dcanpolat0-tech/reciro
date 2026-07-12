@@ -38,7 +38,7 @@ const ANALYSIS_IMAGE_QUALITY = 0.55;
 const ANALYSIS_REQUEST_TIMEOUT_MS = 35000;
 const FREE_MONTHLY_ANALYSIS_LIMIT = 5;
 const IMAGE_PICKER_MEDIA_TYPES = ['images'];
-const FEEDBACK_EMAIL = 'support@nereye.app';
+const FEEDBACK_EMAIL = 'dcanpolat0@gmail.com';
 
 let activeCurrency = 'TRY';
 
