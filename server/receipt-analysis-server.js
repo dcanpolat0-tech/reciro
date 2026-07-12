@@ -51,7 +51,7 @@ const receiptSchema = {
     dateText: { type: 'string' },
     categoryKey: {
       type: 'string',
-      enum: ['grocery', 'food', 'transport', 'home', 'clothing', 'health', 'other'],
+      enum: ['grocery', 'food', 'transport', 'fuel', 'home', 'clothing', 'health', 'other'],
     },
     confidence: { type: 'number', minimum: 0, maximum: 1 },
     items: {
@@ -63,7 +63,7 @@ const receiptSchema = {
           name: { type: 'string' },
           category: {
             type: 'string',
-            enum: ['grocery', 'food', 'transport', 'home', 'clothing', 'health', 'other'],
+            enum: ['grocery', 'food', 'transport', 'fuel', 'home', 'clothing', 'health', 'other'],
           },
           amount: {
             type: 'number',
@@ -210,7 +210,7 @@ async function analyzeReceipt(imageBase64) {
                 'Never round prices. Preserve cents exactly: 0.99 must be 0.99, 25.60 must be 25.60, and 55.84 must be 55.84. ' +
                 'For item amount, return the exact line price printed on the receipt, not an estimated or rounded value. ' +
                 'For each item, also return quantity and unit. If the receipt shows "2 x", quantity is 2 and unit is "pcs". If it shows weight like "2.395 kg", quantity is 2.395 and unit is "kg". If quantity is unclear, use quantity 1 and unit "". ' +
-                'Classify each item and the whole receipt into one of: grocery, food, transport, home, clothing, health, other. ' +
+                'Classify each item and the whole receipt into one of: grocery, food, transport, fuel, home, clothing, health, other. Use fuel for gasoline, diesel, LPG, charging, gas stations, and fuel purchases. ' +
                 'If a field is unclear, use an empty string or confidence below 0.75.',
             },
             {

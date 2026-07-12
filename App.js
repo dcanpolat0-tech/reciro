@@ -28,8 +28,10 @@ const AUTH_CHOICE_STORAGE_KEY = 'paranereye.authChoice.v1';
 const ANALYSIS_USAGE_STORAGE_KEY = 'paranereye.analysisUsage.v1';
 const RECEIPT_IMAGE_DIR = `${FileSystem.documentDirectory}receipts/`;
 const BACKUP_DIR = `${FileSystem.documentDirectory}backups/`;
-const RECEIPT_ANALYSIS_ENDPOINT = process.env.EXPO_PUBLIC_RECEIPT_ANALYSIS_URL || '';
-const RECEIPT_ANALYSIS_CLIENT_TOKEN = process.env.EXPO_PUBLIC_ANALYSIS_CLIENT_TOKEN || '';
+const DEFAULT_RECEIPT_ANALYSIS_ENDPOINT = 'https://nereye-receipt-analysis.onrender.com/analyze-receipt';
+const DEFAULT_RECEIPT_ANALYSIS_CLIENT_TOKEN = '';
+const RECEIPT_ANALYSIS_ENDPOINT = process.env.EXPO_PUBLIC_RECEIPT_ANALYSIS_URL || DEFAULT_RECEIPT_ANALYSIS_ENDPOINT;
+const RECEIPT_ANALYSIS_CLIENT_TOKEN = process.env.EXPO_PUBLIC_ANALYSIS_CLIENT_TOKEN || DEFAULT_RECEIPT_ANALYSIS_CLIENT_TOKEN;
 const ANALYSIS_IMAGE_MAX_WIDTH = 1024;
 const ANALYSIS_IMAGE_QUALITY = 0.55;
 const ANALYSIS_REQUEST_TIMEOUT_MS = 35000;
@@ -241,6 +243,7 @@ const translations = {
       grocery: 'Market',
       food: 'Yemek',
       transport: 'Ulaşım',
+      fuel: 'Yakıt',
       home: 'Ev',
       clothing: 'Giyim',
       health: 'Sağlık',
@@ -435,6 +438,7 @@ const translations = {
       grocery: 'Groceries',
       food: 'Food',
       transport: 'Transport',
+      fuel: 'Fuel',
       home: 'Home',
       clothing: 'Clothing',
       health: 'Health',
@@ -629,6 +633,7 @@ const translations = {
       grocery: 'Courses',
       food: 'Restaurant',
       transport: 'Transport',
+      fuel: 'Carburant',
       home: 'Maison',
       clothing: 'Vetements',
       health: 'Sante',
@@ -823,6 +828,7 @@ const translations = {
       grocery: 'Lebensmittel',
       food: 'Essen',
       transport: 'Transport',
+      fuel: 'Kraftstoff',
       home: 'Haushalt',
       clothing: 'Kleidung',
       health: 'Gesundheit',
@@ -1017,6 +1023,7 @@ const translations = {
       grocery: 'Supermercado',
       food: 'Comida',
       transport: 'Transporte',
+      fuel: 'Combustible',
       home: 'Hogar',
       clothing: 'Ropa',
       health: 'Salud',
@@ -1036,6 +1043,7 @@ const categoryOptions = [
   { key: 'grocery', color: '#157f3b' },
   { key: 'food', color: '#f5b942' },
   { key: 'transport', color: '#3d7ee8' },
+  { key: 'fuel', color: '#f97316' },
   { key: 'home', color: '#e35b4f' },
   { key: 'clothing', color: '#8b5cf6' },
   { key: 'health', color: '#14b8a6' },
@@ -1056,6 +1064,12 @@ const legacyCategoryMap = {
   Ulasim: 'transport',
   Transport: 'transport',
   Transporte: 'transport',
+  Yakit: 'fuel',
+  Yakıt: 'fuel',
+  Fuel: 'fuel',
+  Carburant: 'fuel',
+  Kraftstoff: 'fuel',
+  Combustible: 'fuel',
   Ev: 'home',
   Home: 'home',
   Maison: 'home',
@@ -3714,8 +3728,19 @@ function ImagePreviewModal({ imageUri, onClose, closeLabel }) {
   return (
     <Modal visible={Boolean(imageUri)} transparent animationType="fade" onRequestClose={onClose}>
       <View style={styles.previewOverlay}>
-        <Pressable style={styles.previewCloseArea} onPress={onClose} />
-        {imageUri && <Image source={{ uri: imageUri }} style={styles.previewImage} />}
+        {imageUri && (
+          <ScrollView
+            style={styles.previewZoomArea}
+            contentContainerStyle={styles.previewZoomContent}
+            maximumZoomScale={4}
+            minimumZoomScale={1}
+            showsHorizontalScrollIndicator={false}
+            showsVerticalScrollIndicator={false}
+            bouncesZoom
+          >
+            <Image source={{ uri: imageUri }} style={styles.previewImage} />
+          </ScrollView>
+        )}
         <Pressable style={styles.previewCloseButton} onPress={onClose}>
           <Text style={styles.previewCloseText}>{closeLabel}</Text>
         </Pressable>
@@ -4768,14 +4793,22 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#0b0f0d',
     justifyContent: 'center',
-    padding: 16,
+    paddingHorizontal: 16,
+    paddingBottom: 20,
+    paddingTop: 48,
   },
-  previewCloseArea: {
-    ...StyleSheet.absoluteFillObject,
+  previewZoomArea: {
+    flex: 1,
+    width: '100%',
+  },
+  previewZoomContent: {
+    alignItems: 'center',
+    flexGrow: 1,
+    justifyContent: 'center',
   },
   previewImage: {
     width: '100%',
-    height: '82%',
+    height: '100%',
     resizeMode: 'contain',
   },
   previewCloseButton: {
