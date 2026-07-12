@@ -1317,7 +1317,14 @@ function createEditableItems(receipt) {
   const receiptCategory = normalizeCategoryKey(receipt.category);
   const items = Array.isArray(receipt.items) ? receipt.items : [];
 
-  return items.map((item, index) => {
+  return createEditableItemsFromList(items, receiptCategory);
+}
+
+function createEditableItemsFromList(items, fallbackCategory) {
+  const normalizedFallbackCategory = normalizeCategoryKey(fallbackCategory);
+  const safeItems = Array.isArray(items) ? items : [];
+
+  return safeItems.map((item, index) => {
     if (typeof item === 'string') {
       return {
         id: `${Date.now()}-${index}`,
@@ -1325,7 +1332,7 @@ function createEditableItems(receipt) {
         amountText: '',
         quantityText: '1',
         unit: '',
-        category: receiptCategory,
+        category: normalizedFallbackCategory,
       };
     }
 
@@ -1335,7 +1342,7 @@ function createEditableItems(receipt) {
       amountText: typeof item.amount === 'number' ? String(item.amount).replace('.', ',') : '',
       quantityText: Number(item.quantity) > 0 ? String(item.quantity).replace('.', ',') : '1',
       unit: item.unit || '',
-      category: normalizeCategoryKey(item.category || receiptCategory),
+      category: normalizeCategoryKey(item.category || normalizedFallbackCategory),
     };
   });
 }
@@ -2429,6 +2436,43 @@ export default function App() {
     );
   }
 
+  function updateReceiptItem(itemId, field, value) {
+    setReceiptItems((currentItems) =>
+      currentItems.map((item) => (item.id === itemId ? { ...item, [field]: value } : item))
+    );
+  }
+
+  function addReceiptItem() {
+    const fallbackCategory =
+      selectedCategory === 'other' && customCategoryText.trim()
+        ? makeCustomCategoryKey(customCategoryText)
+        : normalizeCategoryKey(selectedCategory);
+
+    setReceiptItems((currentItems) => [
+      ...currentItems,
+      {
+        id: `${Date.now()}-${currentItems.length}`,
+        name: '',
+        amountText: '',
+        quantityText: '1',
+        unit: '',
+        category: fallbackCategory,
+      },
+    ]);
+  }
+
+  function removeReceiptItem(itemId) {
+    setReceiptItems((currentItems) => currentItems.filter((item) => item.id !== itemId));
+  }
+
+  function setTotalFromReceiptItems() {
+    const total = receiptItems.reduce((sum, item) => sum + parseAmount(item.amountText), 0);
+
+    if (total > 0) {
+      setAmountText(String(Number(total.toFixed(2))).replace('.', ','));
+    }
+  }
+
   async function pickReceiptImage() {
     const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
 
@@ -2518,10 +2562,11 @@ export default function App() {
       setStoreName(analysisResult.storeName || '');
       setAmountText(analysisResult.totalText || '');
       setReceiptDateText(analysisResult.dateText || formatReceiptDate(Date.now()));
-      setSelectedCategory(normalizeCategoryKey(analysisResult.categoryKey));
+      const analyzedCategory = normalizeCategoryKey(analysisResult.categoryKey);
+      setSelectedCategory(analyzedCategory);
       setCustomCategoryText('');
       setAnalysisConfidence(analysisResult.confidence ?? null);
-      setReceiptItems(analysisResult.items || []);
+      setReceiptItems(createEditableItemsFromList(analysisResult.items || [], analyzedCategory));
       incrementAnalysisUsage();
       setAnalysisStatus('done');
     } catch (error) {
@@ -2576,16 +2621,7 @@ export default function App() {
       return;
     }
 
-    const receiptItemsForSave = receiptItems.map((item) =>
-      typeof item === 'string'
-        ? item
-        : {
-            ...item,
-            category: normalizeCategoryKey(item.category || categoryForSave),
-            quantity: Number(item.quantity) > 0 ? Number(item.quantity) : 1,
-            unit: String(item.unit || ''),
-          }
-    );
+    const receiptItemsForSave = cleanEditableItems(receiptItems, categoryForSave);
 
     const newReceipt = {
       id: now,
@@ -2673,6 +2709,10 @@ export default function App() {
                   receiptImage={receiptImage}
                   receiptItems={receiptItems}
                   onUpdateReceiptItemCategory={updateReceiptItemCategory}
+                  onUpdateReceiptItem={updateReceiptItem}
+                  onAddReceiptItem={addReceiptItem}
+                  onRemoveReceiptItem={removeReceiptItem}
+                  onSetTotalFromReceiptItems={setTotalFromReceiptItems}
                   analysisStatus={analysisStatus}
                   analysisConfidence={analysisConfidence}
                   usageText={freeUsageText}
@@ -2901,6 +2941,10 @@ function ReceiptScreen({
   receiptImage,
   receiptItems,
   onUpdateReceiptItemCategory,
+  onUpdateReceiptItem,
+  onAddReceiptItem,
+  onRemoveReceiptItem,
+  onSetTotalFromReceiptItems,
   analysisStatus,
   analysisConfidence,
   usageText,
@@ -3092,28 +3136,64 @@ function ReceiptScreen({
         </View>
       )}
 
-      {receiptItems.length > 0 && (
+      {(receiptItems.length > 0 || analysisStatus === 'done') && (
         <View>
           <Text style={styles.sectionTitle}>{t.readItems}</Text>
           <View style={styles.card}>
             {receiptItems.map((item, index) => {
               const normalizedItem =
                 typeof item === 'string'
-                  ? { name: item, category: selectedCategory, amount: null, quantity: 1, unit: '' }
+                  ? {
+                      id: `${index}-${item}`,
+                      name: item,
+                      category: selectedCategory,
+                      amountText: '',
+                      quantityText: '1',
+                      unit: '',
+                    }
                   : item;
               const itemCategory = normalizeCategoryKey(normalizedItem.category || selectedCategory);
 
               return (
-                <View style={styles.receiptItemEditCard} key={`${normalizedItem.name}-${index}`}>
-                  <View style={styles.row}>
-                    <View style={styles.receiptTextBlock}>
-                      <Text style={styles.rowText}>{normalizedItem.name}</Text>
-                      <Text style={styles.rowMeta}>{getCategoryLabel(itemCategory, t)}</Text>
-                      <Text style={styles.rowMeta}>{getItemQuantityText(normalizedItem, t)}</Text>
-                    </View>
-                    {typeof normalizedItem.amount === 'number' && (
-                      <Text style={styles.rowAmount}>{formatTL(normalizedItem.amount)}</Text>
-                    )}
+                <View style={styles.receiptItemEditCard} key={normalizedItem.id || `${normalizedItem.name}-${index}`}>
+                  <View style={styles.editItemHeader}>
+                    <Text style={styles.editItemTitle}>
+                      {t.items} {index + 1}
+                    </Text>
+                    <Pressable onPress={() => onRemoveReceiptItem(normalizedItem.id)}>
+                      <Text style={styles.removeItemText}>{t.removeItem}</Text>
+                    </Pressable>
+                  </View>
+
+                  <TextInput
+                    style={styles.itemInput}
+                    value={String(normalizedItem.name || '')}
+                    onChangeText={(value) => onUpdateReceiptItem(normalizedItem.id, 'name', value)}
+                    placeholder={t.itemName}
+                  />
+
+                  <TextInput
+                    style={styles.itemInput}
+                    value={String(normalizedItem.amountText || '')}
+                    onChangeText={(value) => onUpdateReceiptItem(normalizedItem.id, 'amountText', value)}
+                    keyboardType="decimal-pad"
+                    placeholder={t.itemAmount}
+                  />
+
+                  <View style={styles.itemInlineInputs}>
+                    <TextInput
+                      style={[styles.itemInput, styles.itemInlineInput]}
+                      value={String(normalizedItem.quantityText || '')}
+                      onChangeText={(value) => onUpdateReceiptItem(normalizedItem.id, 'quantityText', value)}
+                      keyboardType="decimal-pad"
+                      placeholder={t.quantity}
+                    />
+                    <TextInput
+                      style={[styles.itemInput, styles.itemInlineInput]}
+                      value={String(normalizedItem.unit || '')}
+                      onChangeText={(value) => onUpdateReceiptItem(normalizedItem.id, 'unit', value)}
+                      placeholder={t.unit}
+                    />
                   </View>
 
                   <View style={styles.receiptItemCategoryGrid}>
@@ -3124,7 +3204,7 @@ function ReceiptScreen({
                           styles.receiptItemCategoryButton,
                           itemCategory === category.key && styles.receiptItemCategoryButtonActive,
                         ]}
-                        onPress={() => onUpdateReceiptItemCategory(index, category.key)}
+                        onPress={() => onUpdateReceiptItem(normalizedItem.id, 'category', category.key)}
                       >
                         <Text
                           style={[
@@ -3140,6 +3220,14 @@ function ReceiptScreen({
                 </View>
               );
             })}
+
+            <Pressable style={styles.addItemButton} onPress={onAddReceiptItem}>
+              <Text style={styles.addItemText}>+ {t.addItem}</Text>
+            </Pressable>
+
+            <Pressable style={styles.calculateItemsButton} onPress={onSetTotalFromReceiptItems}>
+              <Text style={styles.calculateItemsText}>{t.autoTotalFromItems}</Text>
+            </Pressable>
           </View>
         </View>
       )}
