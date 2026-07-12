@@ -1,0 +1,38 @@
+{
+  "expo": {
+    "name": "Nereye",
+    "slug": "nereye",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "light",
+    "ios": {
+      "supportsTablet": true,
+      "infoPlist": {
+        "NSCameraUsageDescription": "Fis fotografi cekmek icin kameraya ihtiyac var.",
+        "NSPhotoLibraryUsageDescription": "Fis fotografi secmek icin galeriye ihtiyac var."
+      }
+    },
+    "android": {
+      "adaptiveIcon": {
+        "backgroundColor": "#E6F4FE",
+        "foregroundImage": "./assets/android-icon-foreground.png",
+        "backgroundImage": "./assets/android-icon-background.png",
+        "monochromeImage": "./assets/android-icon-monochrome.png"
+      }
+    },
+    "web": {
+      "favicon": "./assets/favicon.png"
+    },
+    "plugins": [
+      "expo-localization",
+      [
+        "expo-image-picker",
+        {
+          "cameraPermission": "Fis fotografi cekmek icin kameraya ihtiyac var.",
+          "photosPermission": "Fis fotografi secmek icin galeriye ihtiyac var."
+        }
+      ]
+    ]
+  }
+}
