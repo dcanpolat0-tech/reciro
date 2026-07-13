@@ -8,6 +8,8 @@ node_modules/
 dist/
 web-build/
 expo-env.d.ts
+expo-*.log
+expo-qr*.png
 
 # Native
 .kotlin/
@@ -40,3 +42,8 @@ yarn-error.*
 # generated native folders
 /ios
 /android
+
+# local assistant/project scratch files
+.claude/
+CLAUDE.md
+AGENTS.md

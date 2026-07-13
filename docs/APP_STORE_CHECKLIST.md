@@ -7,7 +7,7 @@ Use this checklist before sending Nereye to Apple review.
 ## App Identity
 
 - App name: `Nereye`
-- Bundle identifier is final and matches the Apple Developer app record.
+- Bundle identifier: `com.dcanpolat.nereye`
 - App icon is final and visible on iPhone home screen.
 - Splash screen opens cleanly.
 - App language defaults to the phone language when supported.
@@ -58,6 +58,9 @@ Current local drafts:
 - `docs/PRIVACY_POLICY.md`
 - `docs/TERMS_OF_USE.md`
 - `docs/PRODUCTION_BACKEND.md`
+- `docs/APP_PRIVACY_ANSWERS.md`
+- `docs/BUILD_IOS_WITH_EAS.md`
+- `docs/SCREENSHOT_GUIDE.md`
 
 ## Data And Trust
 

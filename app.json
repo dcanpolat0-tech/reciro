@@ -7,10 +7,12 @@
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
     "ios": {
+      "bundleIdentifier": "com.dcanpolat.nereye",
+      "buildNumber": "1",
       "supportsTablet": true,
       "infoPlist": {
-        "NSCameraUsageDescription": "Fis fotografi cekmek icin kameraya ihtiyac var.",
-        "NSPhotoLibraryUsageDescription": "Fis fotografi secmek icin galeriye ihtiyac var."
+        "NSCameraUsageDescription": "Nereye needs camera access so you can scan receipt photos.",
+        "NSPhotoLibraryUsageDescription": "Nereye needs photo library access so you can choose receipt photos."
       }
     },
     "android": {
@@ -29,8 +31,8 @@
       [
         "expo-image-picker",
         {
-          "cameraPermission": "Fis fotografi cekmek icin kameraya ihtiyac var.",
-          "photosPermission": "Fis fotografi secmek icin galeriye ihtiyac var."
+          "cameraPermission": "Nereye needs camera access so you can scan receipt photos.",
+          "photosPermission": "Nereye needs photo library access so you can choose receipt photos."
         }
       ]
     ]
