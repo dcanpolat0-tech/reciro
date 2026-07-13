@@ -3,13 +3,14 @@
     "name": "Nereye",
     "slug": "nereye",
     "version": "1.0.0",
+    "description": "AI receipt scanner and personal expense tracker.",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
     "ios": {
       "bundleIdentifier": "com.dcanpolat.nereye",
       "buildNumber": "1",
-      "supportsTablet": true,
+      "supportsTablet": false,
       "infoPlist": {
         "NSCameraUsageDescription": "Nereye needs camera access so you can scan receipt photos.",
         "NSPhotoLibraryUsageDescription": "Nereye needs photo library access so you can choose receipt photos."

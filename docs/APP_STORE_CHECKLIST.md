@@ -10,6 +10,7 @@ Use this checklist before sending Nereye to Apple review.
 - Bundle identifier: `com.dcanpolat.nereye`
 - App icon is final and visible on iPhone home screen.
 - Splash screen opens cleanly.
+- First release targets iPhone only. iPad support is disabled until tablet layouts are tested.
 - App language defaults to the phone language when supported.
 - If the phone language is not supported, the app opens in English.
 

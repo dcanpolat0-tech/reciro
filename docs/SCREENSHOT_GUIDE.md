@@ -6,7 +6,7 @@ Use clean sample data. Do not show private receipts, real addresses, phone numbe
 
 ## Recommended iPhone Screenshots
 
-Apple usually expects screenshots for current iPhone display sizes. Capture them from a real iPhone or simulator after the final build.
+The first release targets iPhone only. Capture screenshots from a real iPhone or simulator after the final build.
 
 ## Screens To Capture
 
