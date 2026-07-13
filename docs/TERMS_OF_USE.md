@@ -1,25 +1,48 @@
 # Nereye Terms of Use
 
-Last updated: July 12, 2026
+Last updated: July 13, 2026
 
-By using Nereye, you agree to use the app responsibly and understand that the app is designed for personal expense tracking.
+By using Nereye, you agree to these Terms of Use.
 
-## Receipt Analysis Accuracy
+## Purpose Of The App
 
-AI receipt analysis can make mistakes. Users should review store names, dates, totals, categories, and item details before relying on saved results.
+Nereye is designed for personal expense tracking. It helps users scan receipts, review spending, organize purchases by category, and understand monthly habits.
+
+## AI Receipt Analysis
+
+Nereye may use AI to read receipt photos and extract information such as store name, date, total amount, category, and item details.
+
+AI analysis is not guaranteed to be perfect. Users are responsible for reviewing and correcting results before saving or relying on them.
 
 ## Financial Disclaimer
 
-Nereye is not financial advice. The app provides personal tracking and reports based on the information entered or scanned by the user.
-
-## Premium
-
-Nereye may offer Premium features such as higher or unlimited receipt analysis limits, advanced reports, exports, and cloud backup. Premium access will require an active subscription once the payment system is connected.
+Nereye is not a bank, accountant, tax advisor, or financial advisor. Reports, summaries, and spending insights are based on the information scanned or entered by the user and are provided for personal tracking only.
 
 ## User Responsibility
 
-Users are responsible for the receipts and information they upload, enter, or store in the app.
+Users are responsible for:
+
+- The receipt photos and information they upload or enter
+- Reviewing AI analysis results
+- Correcting wrong totals, categories, dates, or items
+- Keeping their own device and account secure
+
+## Premium Features
+
+Nereye may offer Premium features such as higher or unlimited AI receipt analysis limits, advanced reports, exports, and future cloud backup.
+
+When Premium subscriptions are enabled, purchases and renewals will be handled through Apple's App Store subscription system. Subscription terms, cancellation, and billing are managed through the user's Apple account.
+
+## Availability
+
+Nereye may rely on external services such as receipt analysis servers and AI providers. Some features may be unavailable if those services are offline, rate-limited, or interrupted.
 
 ## Changes
 
-These terms may be updated before public App Store release.
+These terms may be updated as the app evolves. Continued use of the app after updates means the user accepts the updated terms.
+
+## Contact
+
+For questions or support, contact:
+
+dcanpolat0@gmail.com

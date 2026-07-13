@@ -1,15 +1,29 @@
 # Nereye App Store Checklist
 
-Use this before public release.
+Last updated: July 13, 2026
+
+Use this checklist before sending Nereye to Apple review.
+
+## App Identity
+
+- App name: `Nereye`
+- Bundle identifier is final and matches the Apple Developer app record.
+- App icon is final and visible on iPhone home screen.
+- Splash screen opens cleanly.
+- App language defaults to the phone language when supported.
+- If the phone language is not supported, the app opens in English.
 
 ## Apple Developer
 
-- Create or use an Apple Developer account.
-- Create the app record with the name `Nereye`.
-- Set the bundle identifier.
-- Add screenshots for iPhone sizes.
+- Create the app record in App Store Connect.
+- Add app category: Finance.
+- Add age rating.
 - Add support URL.
 - Add privacy policy URL.
+- Add terms of use URL if subscriptions are enabled.
+- Add iPhone screenshots.
+- Add App Store description, subtitle, keywords, and promotional text from `docs/APP_STORE_METADATA.md`.
+- Complete App Privacy answers based on the current privacy policy.
 
 ## Subscriptions
 
@@ -18,18 +32,22 @@ Use this before public release.
 - Suggested prices:
   - Monthly: EUR 2.99
   - Yearly: EUR 24.99
-- Connect the app purchase state to `isPremium` in `App.js`.
+- Free plan limit: 5 AI receipt analyses per month.
+- Premium should unlock unlimited AI receipt analysis.
+- Apple purchase state still needs to be connected to the app before paid release.
 
 ## Backend
 
-- Deploy `server/receipt-analysis-server.js` to a public HTTPS host.
-- Set `OPENAI_API_KEY` only on the server.
-- Set `ANALYSIS_CLIENT_TOKEN` on the server.
-- Update `EXPO_PUBLIC_RECEIPT_ANALYSIS_URL` to the public HTTPS endpoint.
-- Set `EXPO_PUBLIC_ANALYSIS_CLIENT_TOKEN` in the app env.
-- Test receipt analysis outside the home Wi-Fi network.
+- Render service is deployed and healthy.
+- `OPENAI_API_KEY` exists only on Render, never inside the app.
+- `ANALYSIS_CLIENT_TOKEN` exists on Render.
+- App uses the matching public analysis URL and client token.
+- Receipt analysis works on mobile data, not only home Wi-Fi.
+- If analysis fails, the user can still enter receipt details manually.
 
-## Required Pages
+## Required Public Pages
+
+These need public web URLs before App Store submission:
 
 - Privacy Policy
 - Terms of Use
@@ -41,14 +59,15 @@ Current local drafts:
 - `docs/TERMS_OF_USE.md`
 - `docs/PRODUCTION_BACKEND.md`
 
+## Data And Trust
+
+- Receipt photos are shown again in saved receipt detail.
+- Users can edit AI analysis results before saving.
+- Users can re-analyze a receipt when AI reads it badly.
+- Users can add a custom category from `Other`.
+- Feedback email opens to `dcanpolat0@gmail.com`.
+- No real API keys are committed to GitHub.
+
 ## Final Device Test
 
-- Fresh install
-- Login choice
-- Add receipt with camera
-- Add receipt with gallery
-- Confirm receipt save
-- Check Home, Report, Products, Settings
-- Verify free monthly limit
-- Verify Premium screen
-- Verify language and currency selection
+Follow `docs/RELEASE_TEST_PLAN.md` before release.

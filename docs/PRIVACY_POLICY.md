@@ -1,33 +1,60 @@
 # Nereye Privacy Policy
 
-Last updated: July 12, 2026
+Last updated: July 13, 2026
 
-Nereye helps users scan receipts, track expenses, review spending, and understand monthly product and merchant habits.
+Nereye helps users scan receipts, track expenses, organize spending by category, and review monthly product and merchant habits.
 
-## Data We Handle
+This Privacy Policy explains what information the app handles, how it is used, and what users should know before uploading receipt photos.
 
-Nereye may store:
+## Information The App May Handle
 
-- Receipt photos added by the user
-- Receipt details such as store name, date, total, category, and items
+Nereye may handle the following information:
+
+- Receipt photos selected or captured by the user
+- Receipt details such as store name, date, total amount, category, item names, quantities, and prices
 - Monthly income values entered by the user
 - App preferences such as language, currency, and account choice
-- Receipt analysis usage count for the free monthly limit
+- Receipt analysis usage count used for the free monthly analysis limit
+- Feedback messages sent by the user through the app
 
-## Receipt Analysis
+## Receipt Photos And AI Analysis
 
-When AI receipt analysis is used, the receipt image is sent to the configured receipt analysis server so it can be read and converted into structured expense data. The server may use OpenAI services to process the image.
+When the user chooses AI receipt analysis, the receipt image is sent to Nereye's receipt analysis server. The server processes the image and may use OpenAI services to extract structured receipt information such as store name, date, total amount, category, and item details.
 
-Do not upload receipts that contain information you do not want processed by the analysis service.
+AI analysis can make mistakes. Users should review and edit the analysis result before saving or relying on it.
+
+Users should not upload receipts that contain information they do not want processed by the analysis service.
 
 ## Local Storage
 
-During the MVP phase, receipt data and settings are stored on the user's device. Cloud sync is planned but not fully connected yet.
+During the current MVP phase, receipt data, receipt photos, income entries, language, currency, and related settings are stored locally on the user's device.
 
-## Payments
+Cloud sync is planned for a future version but is not fully connected yet.
 
-Nereye plans to offer Premium subscriptions through App Store purchases. Payment processing will be handled by Apple or the configured subscription provider. Nereye should not directly store card details.
+## Feedback
+
+If users send feedback from the app, the message opens in the user's email app and is sent to the configured support email address. The feedback may include the message written by the user and basic app context such as selected language and currency.
+
+## Payments And Premium
+
+Nereye may offer Premium features through App Store subscriptions. Payment processing is handled by Apple. Nereye does not directly collect or store card details.
+
+## Data Security
+
+Nereye uses reasonable technical measures for the MVP phase, including server-side environment variables for API keys and token-protected receipt analysis requests.
+
+No system can be guaranteed to be perfectly secure. Users should avoid uploading sensitive documents that are not needed for personal expense tracking.
+
+## Children's Privacy
+
+Nereye is designed for personal finance tracking and is not directed to children.
+
+## Changes To This Policy
+
+This Privacy Policy may be updated as the app evolves, especially when cloud sync, subscriptions, or additional account features are connected.
 
 ## Contact
 
-For privacy questions, contact the app owner through the support email that will be added before App Store release.
+For privacy questions or support, contact:
+
+dcanpolat0@gmail.com
