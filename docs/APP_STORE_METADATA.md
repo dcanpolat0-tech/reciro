@@ -47,31 +47,15 @@ receipt,scanner,expense,budget,spending,money,tracker,AI,shopping,finance,invoic
 
 ## Support URL
 
-To be created before release.
-
-Suggested simple support page content:
-
-- App name: Nereye
-- Support email: dcanpolat0@gmail.com
-- Short FAQ
-- Privacy Policy link
-- Terms of Use link
+https://dcanpolat0-tech.github.io/nereye/
 
 ## Privacy Policy URL
 
-To be hosted before release.
-
-Current local draft:
-
-`docs/PRIVACY_POLICY.md`
+https://dcanpolat0-tech.github.io/nereye/privacy.html
 
 ## Terms Of Use URL
 
-To be hosted before release.
-
-Current local draft:
-
-`docs/TERMS_OF_USE.md`
+https://dcanpolat0-tech.github.io/nereye/terms.html
 
 ## Subscription Draft
 

@@ -49,9 +49,9 @@ Use this checklist before sending Nereye to Apple review.
 
 These need public web URLs before App Store submission:
 
-- Privacy Policy
-- Terms of Use
-- Support / Contact page
+- Privacy Policy: `https://dcanpolat0-tech.github.io/nereye/privacy.html`
+- Terms of Use: `https://dcanpolat0-tech.github.io/nereye/terms.html`
+- Support / Contact page: `https://dcanpolat0-tech.github.io/nereye/`
 
 Current local drafts:
 
