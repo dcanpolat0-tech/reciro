@@ -14,7 +14,7 @@ Nereye is technically prepared for the first iPhone release path. The remaining 
 - iOS build number: `1`
 - First release target: iPhone only
 - Android package is reserved as `com.dcanpolat.nereye`.
-- Android microphone permission is explicitly blocked because receipt scanning does not need audio.
+- Android microphone permission is not requested because receipt scanning does not need audio.
 - Support URL works: `https://dcanpolat0-tech.github.io/nereye/`
 - Privacy Policy URL works: `https://dcanpolat0-tech.github.io/nereye/privacy.html`
 - Terms of Use URL works: `https://dcanpolat0-tech.github.io/nereye/terms.html`

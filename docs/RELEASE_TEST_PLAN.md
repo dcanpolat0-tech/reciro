@@ -1,6 +1,6 @@
 # Nereye Release Test Plan
 
-Last updated: July 13, 2026
+Last updated: July 14, 2026
 
 Run this test on a real iPhone before each release.
 
@@ -22,7 +22,7 @@ Run this test on a real iPhone before each release.
 
 ## Receipt Adding
 
-- Tap `Fis Ekle` on Home.
+- Tap `Fiş Ekle` on Home.
 - Confirm camera and gallery choices open above the button.
 - Add a receipt with camera.
 - Add a receipt with gallery.
@@ -55,7 +55,7 @@ Run this test on a real iPhone before each release.
 - Confirm monthly total matches saved receipts.
 - Confirm remaining money uses the selected month income correctly.
 - Confirm category totals are correct.
-- Confirm fuel receipts appear under Fuel/Yakit.
+- Confirm fuel receipts appear under Fuel/Yakıt.
 - Tap a store in Markets and stores.
 - Confirm only that store's receipts are shown.
 - Search by store, product, category, date, and amount.

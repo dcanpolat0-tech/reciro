@@ -1,6 +1,6 @@
 # Nereye App Store Checklist
 
-Last updated: July 13, 2026
+Last updated: July 14, 2026
 
 Use this checklist before sending Nereye to Apple review.
 

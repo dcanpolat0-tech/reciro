@@ -38,7 +38,8 @@
         "expo-image-picker",
         {
           "cameraPermission": "Nereye needs camera access so you can scan receipt photos.",
-          "photosPermission": "Nereye needs photo library access so you can choose receipt photos."
+          "photosPermission": "Nereye needs photo library access so you can choose receipt photos.",
+          "microphonePermission": false
         }
       ]
     ]

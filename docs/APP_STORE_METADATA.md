@@ -1,6 +1,6 @@
 # Nereye App Store Metadata Draft
 
-Last updated: July 13, 2026
+Last updated: July 14, 2026
 
 ## App Name
 
@@ -116,19 +116,19 @@ Use clean sample data and hide personal information.
    - Caption idea: "Find what you buy most often"
 
 7. Settings
-   - Shows language, currency, income, feedback, premium
+   - Shows language, currency, income, and feedback
    - Caption idea: "Customize the app for your daily use"
 
 ## Turkish Store Text Draft
 
-### Kisa Aciklama
+### Kısa Açıklama
 
-Fislerini tara, harcamalarini takip et, paran nereye gidiyor kolayca gor.
+Fişlerini tara, harcamalarını takip et, paran nereye gidiyor kolayca gör.
 
-### Uzun Aciklama
+### Uzun Açıklama
 
-Nereye, harcamalarini elle tek tek yazmadan takip etmeni kolaylastirir.
+Nereye, harcamalarını elle tek tek yazmadan takip etmeni kolaylaştırır.
 
-Fis fotografini cek, yapay zeka bilgileri okusun, sonucu kontrol et ve arsivine kaydet. Harcamalarini kategoriye, magazaya, urune ve aya gore duzenleyerek paran nereye gidiyor daha net gormenizi saglar.
+Fiş fotoğrafını çek, yapay zeka bilgileri okusun, sonucu kontrol et ve arşivine kaydet. Harcamalarını kategoriye, mağazaya, ürüne ve aya göre düzenleyerek paran nereye gidiyor daha net görmeni sağlar.
 
-Yapay zeka hata yapabilir. Bu yuzden kaydetmeden once magazayi, tarihi, toplam tutari ve urunleri kontrol etmeniz onerilir.
+Yapay zeka hata yapabilir. Bu yüzden kaydetmeden önce mağazayı, tarihi, toplam tutarı ve ürünleri kontrol etmeniz önerilir.

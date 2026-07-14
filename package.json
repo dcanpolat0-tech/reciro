@@ -19,7 +19,7 @@
     "analysis": "node server/receipt-analysis-server.js",
     "backend:start": "node server/receipt-analysis-server.js",
     "check:config": "expo config --type public",
-    "check:doctor": "expo-doctor",
+    "check:doctor": "npx --yes expo-doctor",
     "check:ios-export": "expo export --platform ios --output-dir dist-check",
     "android": "expo start --android",
     "ios": "expo start --ios",

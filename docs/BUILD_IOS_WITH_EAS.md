@@ -1,6 +1,6 @@
 # Nereye iOS Build Guide
 
-Last updated: July 13, 2026
+Last updated: July 14, 2026
 
 Use this guide after the Apple Developer Program enrollment is approved.
 

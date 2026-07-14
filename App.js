@@ -1157,40 +1157,48 @@ function buildCategorySummary(receiptList) {
 }
 
 const legacyCategoryMap = {
+  grocery: 'grocery',
   Market: 'grocery',
   Groceries: 'grocery',
   Courses: 'grocery',
   Lebensmittel: 'grocery',
   Supermercado: 'grocery',
+  food: 'food',
   Yemek: 'food',
   Food: 'food',
   Restaurant: 'food',
   Essen: 'food',
   Comida: 'food',
+  transport: 'transport',
   Ulasim: 'transport',
   Transport: 'transport',
   Transporte: 'transport',
+  fuel: 'fuel',
   Yakit: 'fuel',
   Yakıt: 'fuel',
   Fuel: 'fuel',
   Carburant: 'fuel',
   Kraftstoff: 'fuel',
   Combustible: 'fuel',
+  home: 'home',
   Ev: 'home',
   Home: 'home',
   Maison: 'home',
   Haushalt: 'home',
   Hogar: 'home',
+  clothing: 'clothing',
   Giyim: 'clothing',
   Clothing: 'clothing',
   Vetements: 'clothing',
   Kleidung: 'clothing',
   Ropa: 'clothing',
+  health: 'health',
   Saglik: 'health',
   Health: 'health',
   Sante: 'health',
   Gesundheit: 'health',
   Salud: 'health',
+  other: 'other',
   Diger: 'other',
   Other: 'other',
   Autre: 'other',
@@ -1206,7 +1214,13 @@ function normalizeCategoryKey(category) {
     return customLabel ? `custom:${customLabel}` : 'other';
   }
 
-  return legacyCategoryMap[categoryText] || categoryText || 'other';
+  const directMatch = legacyCategoryMap[categoryText];
+  const normalizedCategoryText = categoryText.toLocaleLowerCase('tr-TR');
+  const caseInsensitiveMatch = Object.entries(legacyCategoryMap).find(
+    ([legacyLabel]) => legacyLabel.toLocaleLowerCase('tr-TR') === normalizedCategoryText
+  )?.[1];
+
+  return directMatch || caseInsensitiveMatch || categoryText || 'other';
 }
 
 function makeCustomCategoryKey(label) {
@@ -1394,17 +1408,41 @@ function isSeedReceipt(receipt) {
   return [1, 2, 3, 4, 5].includes(receipt.id) && !receipt.image && !receipt.createdAt;
 }
 
-function getDateFromReceipt(receipt) {
-  if (receipt.createdAt) {
-    return new Date(receipt.createdAt);
-  }
+function parseReceiptDateText(dateText) {
+  const match = String(dateText || '').trim().match(/^(\d{1,2})\.(\d{1,2})\.(\d{4})$/);
 
-  const match = String(receipt.date || '').match(/^(\d{2})\.(\d{2})\.(\d{4})$/);
   if (!match) {
     return null;
   }
 
-  return new Date(Number(match[3]), Number(match[2]) - 1, Number(match[1]));
+  const day = Number(match[1]);
+  const month = Number(match[2]);
+  const year = Number(match[3]);
+  const parsedDate = new Date(year, month - 1, day);
+
+  if (
+    parsedDate.getFullYear() !== year ||
+    parsedDate.getMonth() !== month - 1 ||
+    parsedDate.getDate() !== day
+  ) {
+    return null;
+  }
+
+  return parsedDate;
+}
+
+function getDateFromReceipt(receipt) {
+  const receiptDate = parseReceiptDateText(receipt.date);
+
+  if (receiptDate) {
+    return receiptDate;
+  }
+
+  if (receipt.createdAt) {
+    return new Date(receipt.createdAt);
+  }
+
+  return null;
 }
 
 function filterReceiptsByPeriod(receipts, period) {
@@ -1626,18 +1664,79 @@ function formatReceiptDate(timestamp, languageCode = 'tr') {
 }
 
 function normalizeDateDisplay(dateText, timestamp) {
-  if (timestamp) {
-    return formatReceiptDate(timestamp);
-  }
-
   const monthMap = {
+    ocak: '01',
+    january: '01',
+    janvier: '01',
+    januar: '01',
+    enero: '01',
+    subat: '02',
+    şubat: '02',
+    february: '02',
+    fevrier: '02',
+    février: '02',
+    februar: '02',
+    febrero: '02',
+    mart: '03',
+    march: '03',
+    mars: '03',
+    marzo: '03',
+    nisan: '04',
+    april: '04',
+    avril: '04',
+    abril: '04',
+    mayis: '05',
+    mayıs: '05',
+    may: '05',
+    mai: '05',
+    mayo: '05',
+    haziran: '06',
+    june: '06',
+    juin: '06',
+    juni: '06',
+    junio: '06',
     temmuz: '07',
     july: '07',
     juillet: '07',
     juli: '07',
     julio: '07',
+    agustos: '08',
+    ağustos: '08',
+    august: '08',
+    aout: '08',
+    août: '08',
+    agosto: '08',
+    eylul: '09',
+    eylül: '09',
+    september: '09',
+    septembre: '09',
+    septiembre: '09',
+    ekim: '10',
+    october: '10',
+    octobre: '10',
+    oktober: '10',
+    octubre: '10',
+    kasim: '11',
+    kasım: '11',
+    november: '11',
+    novembre: '11',
+    noviembre: '11',
+    aralik: '12',
+    aralık: '12',
+    december: '12',
+    decembre: '12',
+    décembre: '12',
+    dezember: '12',
+    diciembre: '12',
   };
   const normalizedText = String(dateText || '').trim();
+
+  const parsedDate = parseReceiptDateText(normalizedText);
+
+  if (parsedDate) {
+    return formatReceiptDate(parsedDate.getTime());
+  }
+
   const match = normalizedText.match(/(\d{1,2})\s+([^\s]+)\s+(\d{4})/i);
 
   if (match) {
@@ -1650,7 +1749,7 @@ function normalizeDateDisplay(dateText, timestamp) {
     }
   }
 
-  return normalizedText;
+  return normalizedText || formatReceiptDate(timestamp);
 }
 
 const initialReceipts = [];
@@ -2930,7 +3029,9 @@ function HomeScreen({
         <Text style={styles.label}>{t.totalThisMonth}</Text>
         <Text style={styles.homeAmount}>{formatTL(totalSpend)}</Text>
         <Text style={styles.homeHeroText}>
-          {t.topCategorySentence(topCategoryLabel, formatTL(topCategory.amount))}
+          {receiptCount > 0
+            ? t.topCategorySentence(topCategoryLabel, formatTL(topCategory.amount))
+            : t.noReceiptsText}
         </Text>
 
         <View style={styles.homeSummaryRow}>

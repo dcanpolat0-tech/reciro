@@ -231,7 +231,13 @@ async function analyzeReceipt(imageBase64) {
     }),
   });
 
-  const responseBody = await openaiResponse.json();
+  let responseBody = {};
+
+  try {
+    responseBody = await openaiResponse.json();
+  } catch (error) {
+    responseBody = {};
+  }
 
   if (!openaiResponse.ok) {
     const message = responseBody.error?.message || `OpenAI request failed: ${openaiResponse.status}`;
@@ -242,7 +248,14 @@ async function analyzeReceipt(imageBase64) {
   }
 
   const responseText = extractResponseText(responseBody);
-  return normalizeAnalysis(JSON.parse(responseText));
+
+  try {
+    return normalizeAnalysis(JSON.parse(responseText));
+  } catch (error) {
+    const parseError = new Error('AI response could not be parsed.');
+    parseError.code = 'AI_RESPONSE_PARSE_FAILED';
+    throw parseError;
+  }
 }
 
 const server = http.createServer(async (request, response) => {
