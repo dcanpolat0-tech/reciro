@@ -265,7 +265,7 @@ const server = http.createServer(async (request, response) => {
   }
 
   if (request.method === 'GET' && request.url === '/') {
-    sendJson(response, 200, { ok: true, service: 'nereye-receipt-analysis' });
+    sendJson(response, 200, { ok: true, service: 'reciro-receipt-analysis' });
     return;
   }
 

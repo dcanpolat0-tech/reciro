@@ -1,13 +1,13 @@
-# Nereye App Store Checklist
+# Reciro App Store Checklist
 
 Last updated: July 14, 2026
 
-Use this checklist before sending Nereye to Apple review.
+Use this checklist before sending Reciro to Apple review.
 
 ## App Identity
 
-- App name: `Nereye`
-- Bundle identifier: `com.dcanpolat.nereye`
+- App name: `Reciro`
+- Bundle identifier: `com.dcanpolat.reciro`
 - App icon is final and visible on iPhone home screen.
 - Splash screen opens cleanly.
 - First release targets iPhone only. iPad support is disabled until tablet layouts are tested.
@@ -31,8 +31,8 @@ Use this checklist before sending Nereye to Apple review.
 - First release mode: Premium paywall is hidden until Apple purchases are connected.
 - Current app setting: `ENABLE_PREMIUM_PAYWALL = false`.
 - When paid release is ready:
-  - Create monthly subscription: `Nereye Premium Monthly`.
-  - Create yearly subscription: `Nereye Premium Yearly`.
+  - Create monthly subscription: `Reciro Premium Monthly`.
+  - Create yearly subscription: `Reciro Premium Yearly`.
   - Suggested prices:
     - Monthly: EUR 2.99
     - Yearly: EUR 24.99
@@ -53,9 +53,9 @@ Use this checklist before sending Nereye to Apple review.
 
 These need public web URLs before App Store submission:
 
-- Privacy Policy: `https://dcanpolat0-tech.github.io/nereye/privacy.html`
-- Terms of Use: `https://dcanpolat0-tech.github.io/nereye/terms.html`
-- Support / Contact page: `https://dcanpolat0-tech.github.io/nereye/`
+- Privacy Policy: `https://dcanpolat0-tech.github.io/reciro/privacy.html`
+- Terms of Use: `https://dcanpolat0-tech.github.io/reciro/terms.html`
+- Support / Contact page: `https://dcanpolat0-tech.github.io/reciro/`
 
 Current local drafts:
 

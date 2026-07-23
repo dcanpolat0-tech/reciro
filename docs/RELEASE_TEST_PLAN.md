@@ -1,4 +1,4 @@
-# Nereye Release Test Plan
+# Reciro Release Test Plan
 
 Last updated: July 14, 2026
 

@@ -1,6 +1,6 @@
 services:
   - type: web
-    name: nereye-receipt-analysis
+    name: reciro-receipt-analysis
     env: node
     plan: starter
     buildCommand: npm install

@@ -1,4 +1,4 @@
-# Nereye App Privacy Answers
+# Reciro App Privacy Answers
 
 Last updated: July 13, 2026
 
@@ -30,7 +30,7 @@ Purpose:
 Linked to user:
 
 - In the current release, receipt data is mainly stored on the device.
-- If AI analysis is used, the receipt image is sent to the Nereye analysis server and processed by AI.
+- If AI analysis is used, the receipt image is sent to the Reciro analysis server and processed by AI.
 
 Tracking:
 
@@ -93,4 +93,4 @@ Tracking:
 
 ## Notes For Apple Review
 
-Nereye uses receipt photos only when the user chooses a photo or takes a photo. The app explains that AI can make mistakes and allows users to edit results before saving.
+Reciro uses receipt photos only when the user chooses a photo or takes a photo. The app explains that AI can make mistakes and allows users to edit results before saving.

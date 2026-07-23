@@ -1,29 +1,29 @@
 {
   "expo": {
-    "name": "Nereye",
-    "slug": "nereye",
+    "name": "Reciro",
+    "slug": "reciro",
     "version": "1.0.0",
-    "description": "AI receipt scanner and personal expense tracker.",
+    "description": "Reciro - Smart Receipt Scanner. Scan. Save. Simplify.",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
     "ios": {
-      "bundleIdentifier": "com.dcanpolat.nereye",
+      "bundleIdentifier": "com.dcanpolat.reciro",
       "buildNumber": "1",
       "supportsTablet": false,
       "infoPlist": {
-        "NSCameraUsageDescription": "Nereye needs camera access so you can scan receipt photos.",
-        "NSPhotoLibraryUsageDescription": "Nereye needs photo library access so you can choose receipt photos."
+        "NSCameraUsageDescription": "Reciro needs camera access so you can scan receipt photos.",
+        "NSPhotoLibraryUsageDescription": "Reciro needs photo library access so you can choose receipt photos."
       }
     },
     "android": {
-      "package": "com.dcanpolat.nereye",
+      "package": "com.dcanpolat.reciro",
       "permissions": [],
       "blockedPermissions": [
         "android.permission.RECORD_AUDIO"
       ],
       "adaptiveIcon": {
-        "backgroundColor": "#E6F4FE",
+        "backgroundColor": "#E0F6E8",
         "foregroundImage": "./assets/android-icon-foreground.png",
         "backgroundImage": "./assets/android-icon-background.png",
         "monochromeImage": "./assets/android-icon-monochrome.png"
@@ -37,8 +37,8 @@
       [
         "expo-image-picker",
         {
-          "cameraPermission": "Nereye needs camera access so you can scan receipt photos.",
-          "photosPermission": "Nereye needs photo library access so you can choose receipt photos.",
+          "cameraPermission": "Reciro needs camera access so you can scan receipt photos.",
+          "photosPermission": "Reciro needs photo library access so you can choose receipt photos.",
           "microphonePermission": false
         }
       ]

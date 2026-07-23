@@ -1,4 +1,4 @@
-# Nereye Production Backend Notes
+# Reciro Production Backend Notes
 
 The current receipt analysis server is in `server/receipt-analysis-server.js`. It works locally and can be moved to a hosted Node.js environment.
 

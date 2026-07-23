@@ -1,4 +1,4 @@
-# Nereye Screenshot Guide
+# Reciro Screenshot Guide
 
 Last updated: July 13, 2026
 
@@ -28,7 +28,7 @@ The first release targets iPhone only. Capture screenshots from a real iPhone or
 
 5. Reports
    - Show category and store breakdown.
-   - Caption: `Understand where your money goes`
+   - Caption: `Understand your spending clearly`
 
 6. Products
    - Show most purchased products sorted by quantity.
@@ -36,7 +36,7 @@ The first release targets iPhone only. Capture screenshots from a real iPhone or
 
 7. Settings
    - Show language, currency, income, backup, and feedback.
-   - Caption: `Customize Nereye for daily use`
+   - Caption: `Customize Reciro for daily use`
 
 ## Screenshot Rules
 

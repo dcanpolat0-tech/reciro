@@ -1,14 +1,14 @@
-# Nereye Privacy Policy
+# Reciro Privacy Policy
 
 Last updated: July 13, 2026
 
-Nereye helps users scan receipts, track expenses, organize spending by category, and review monthly product and merchant habits.
+Reciro helps users scan receipts, track expenses, organize spending by category, and review monthly product and merchant habits.
 
 This Privacy Policy explains what information the app handles, how it is used, and what users should know before uploading receipt photos.
 
 ## Information The App May Handle
 
-Nereye may handle the following information:
+Reciro may handle the following information:
 
 - Receipt photos selected or captured by the user
 - Receipt details such as store name, date, total amount, category, item names, quantities, and prices
@@ -19,7 +19,7 @@ Nereye may handle the following information:
 
 ## Receipt Photos And AI Analysis
 
-When the user chooses AI receipt analysis, the receipt image is sent to Nereye's receipt analysis server. The server processes the image and may use OpenAI services to extract structured receipt information such as store name, date, total amount, category, and item details.
+When the user chooses AI receipt analysis, the receipt image is sent to Reciro's receipt analysis server. The server processes the image and may use OpenAI services to extract structured receipt information such as store name, date, total amount, category, and item details.
 
 AI analysis can make mistakes. Users should review and edit the analysis result before saving or relying on it.
 
@@ -35,17 +35,17 @@ If users send feedback from the app, the message opens in the user's email app a
 
 ## Payments And Premium
 
-If Nereye offers paid features in the future, payment processing will be handled by Apple. Nereye does not directly collect or store card details.
+If Reciro offers paid features in the future, payment processing will be handled by Apple. Reciro does not directly collect or store card details.
 
 ## Data Security
 
-Nereye uses reasonable technical measures, including server-side environment variables for API keys and token-protected receipt analysis requests.
+Reciro uses reasonable technical measures, including server-side environment variables for API keys and token-protected receipt analysis requests.
 
 No system can be guaranteed to be perfectly secure. Users should avoid uploading sensitive documents that are not needed for personal expense tracking.
 
 ## Children's Privacy
 
-Nereye is designed for personal finance tracking and is not directed to children.
+Reciro is designed for personal finance tracking and is not directed to children.
 
 ## Changes To This Policy
 

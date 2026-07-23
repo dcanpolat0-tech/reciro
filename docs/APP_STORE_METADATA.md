@@ -1,24 +1,32 @@
-# Nereye App Store Metadata Draft
+﻿# Reciro App Store Metadata Draft
 
-Last updated: July 14, 2026
+Last updated: July 23, 2026
 
 ## App Name
 
-Nereye
+Reciro
+
+## Brand
+
+Reciro
+
+## Slogan
+
+Scan. Save. Simplify.
 
 ## Subtitle
 
-AI receipt scanner and expense tracker
+Smart Receipt Scanner
 
 ## Short Description
 
-Scan receipts, track spending, and understand where your money goes.
+Scan receipts, save details, and simplify daily spending.
 
 ## Long Description
 
-Nereye helps you track your spending without manually typing every purchase.
+Reciro helps you track your spending without manually typing every purchase.
 
-Take a photo of a receipt, let AI read the details, review the result, and save it to your personal expense archive. Nereye organizes your spending by category, store, product, and month so you can quickly understand where your money goes.
+Take a photo of a receipt, let AI read the details, review the result, and save it to your personal expense archive. Reciro organizes your spending by category, store, product, and month so you can quickly understand your daily spending.
 
 Key features:
 
@@ -33,13 +41,13 @@ Key features:
 - Multi-language support: English, Turkish, French, German, and Spanish
 - Currency support for Turkish Lira, Euro, and British Pound
 
-Nereye is built for simple daily use: open the app, add a receipt, check the result, and move on.
+Reciro is built for simple daily use: scan, save, and simplify.
 
 AI can make mistakes, so users should always review receipt results before saving.
 
 ## Promotional Text
 
-Track receipts faster with AI. Scan, review, save, and understand your monthly spending.
+Scan. Save. Simplify. Track receipts faster with AI.
 
 ## Keywords
 
@@ -47,15 +55,15 @@ receipt,scanner,expense,budget,spending,money,tracker,AI,shopping,finance,invoic
 
 ## Support URL
 
-https://dcanpolat0-tech.github.io/nereye/
+https://dcanpolat0-tech.github.io/reciro/
 
 ## Privacy Policy URL
 
-https://dcanpolat0-tech.github.io/nereye/privacy.html
+https://dcanpolat0-tech.github.io/reciro/privacy.html
 
 ## Terms Of Use URL
 
-https://dcanpolat0-tech.github.io/nereye/terms.html
+https://dcanpolat0-tech.github.io/reciro/terms.html
 
 ## Subscription Draft
 
@@ -69,7 +77,7 @@ Subscriptions are planned but should stay hidden in the first App Store release 
 - Receipt archive
 - Basic reports
 
-### Nereye Premium Monthly
+### Reciro Premium Monthly
 
 Suggested price: EUR 2.99 / month
 
@@ -81,7 +89,7 @@ Benefits:
 - Ad-free experience
 - Future export and cloud backup features
 
-### Nereye Premium Yearly
+### Reciro Premium Yearly
 
 Suggested price: EUR 24.99 / year
 
@@ -109,7 +117,7 @@ Use clean sample data and hide personal information.
 
 5. Reports
    - Shows category breakdown and store list
-   - Caption idea: "Understand where your money goes"
+   - Caption idea: "Understand your spending clearly"
 
 6. Products
    - Shows monthly most purchased products
@@ -117,18 +125,18 @@ Use clean sample data and hide personal information.
 
 7. Settings
    - Shows language, currency, income, and feedback
-   - Caption idea: "Customize the app for your daily use"
+   - Caption idea: "Customize the app for daily use"
 
 ## Turkish Store Text Draft
 
 ### Kısa Açıklama
 
-Fişlerini tara, harcamalarını takip et, paran nereye gidiyor kolayca gör.
+Fişlerini tara, detayları kaydet, harcamalarını sadeleştir.
 
 ### Uzun Açıklama
 
-Nereye, harcamalarını elle tek tek yazmadan takip etmeni kolaylaştırır.
+Reciro, harcamalarını elle tek tek yazmadan takip etmeni kolaylaştırır.
 
-Fiş fotoğrafını çek, yapay zeka bilgileri okusun, sonucu kontrol et ve arşivine kaydet. Harcamalarını kategoriye, mağazaya, ürüne ve aya göre düzenleyerek paran nereye gidiyor daha net görmeni sağlar.
+Fiş fotoğrafını çek, yapay zeka bilgileri okusun, sonucu kontrol et ve arşivine kaydet. Reciro harcamalarını kategoriye, mağazaya, ürüne ve aya göre düzenleyerek günlük harcama alışkanlıklarını daha net görmeni sağlar.
 
 Yapay zeka hata yapabilir. Bu yüzden kaydetmeden önce mağazayı, tarihi, toplam tutarı ve ürünleri kontrol etmeniz önerilir.

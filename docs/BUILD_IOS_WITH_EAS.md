@@ -1,4 +1,4 @@
-# Nereye iOS Build Guide
+# Reciro iOS Build Guide
 
 Last updated: July 14, 2026
 
@@ -8,11 +8,11 @@ Use this guide after the Apple Developer Program enrollment is approved.
 
 - Apple Developer Program active.
 - App Store Connect access working.
-- App record created for `Nereye`.
-- Bundle ID: `com.dcanpolat.nereye`.
-- Support URL: `https://dcanpolat0-tech.github.io/nereye/`
-- Privacy Policy URL: `https://dcanpolat0-tech.github.io/nereye/privacy.html`
-- Terms of Use URL: `https://dcanpolat0-tech.github.io/nereye/terms.html`
+- App record created for `Reciro`.
+- Bundle ID: `com.dcanpolat.reciro`.
+- Support URL: `https://dcanpolat0-tech.github.io/reciro/`
+- Privacy Policy URL: `https://dcanpolat0-tech.github.io/reciro/privacy.html`
+- Terms of Use URL: `https://dcanpolat0-tech.github.io/reciro/terms.html`
 - EAS/Expo environment variables added for the mobile build.
 
 ## Required EAS Environment Variables
@@ -22,7 +22,7 @@ The backend OpenAI key must stay only on Render. The mobile app only needs the p
 Add these to the Expo/EAS project before the production build:
 
 ```bash
-npx eas-cli env:create --name EXPO_PUBLIC_RECEIPT_ANALYSIS_URL --value https://nereye-receipt-analysis.onrender.com/analyze-receipt --environment production
+npx eas-cli env:create --name EXPO_PUBLIC_RECEIPT_ANALYSIS_URL --value https://reciro-receipt-analysis.onrender.com/analyze-receipt --environment production
 npx eas-cli env:create --name EXPO_PUBLIC_ANALYSIS_CLIENT_TOKEN --environment production
 ```
 

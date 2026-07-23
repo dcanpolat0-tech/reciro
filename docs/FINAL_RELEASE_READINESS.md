@@ -1,24 +1,24 @@
-# Nereye Final Release Readiness
+# Reciro Final Release Readiness
 
 Last updated: July 14, 2026
 
 ## Current Status
 
-Nereye is technically prepared for the first iPhone release path. The remaining external blocker is Apple Developer Program enrollment approval.
+Reciro is technically prepared for the first iPhone release path. The remaining external blocker is Apple Developer Program enrollment approval.
 
 ## Confirmed
 
-- App name: `Nereye`
-- Bundle ID: `com.dcanpolat.nereye`
+- App name: `Reciro`
+- Bundle ID: `com.dcanpolat.reciro`
 - Version: `1.0.0`
 - iOS build number: `1`
 - First release target: iPhone only
-- Android package is reserved as `com.dcanpolat.nereye`.
+- Android package is reserved as `com.dcanpolat.reciro`.
 - Android microphone permission is not requested because receipt scanning does not need audio.
-- Support URL works: `https://dcanpolat0-tech.github.io/nereye/`
-- Privacy Policy URL works: `https://dcanpolat0-tech.github.io/nereye/privacy.html`
-- Terms of Use URL works: `https://dcanpolat0-tech.github.io/nereye/terms.html`
-- Render backend health check works: `https://nereye-receipt-analysis.onrender.com/health`
+- Support URL works: `https://dcanpolat0-tech.github.io/reciro/`
+- Privacy Policy URL works: `https://dcanpolat0-tech.github.io/reciro/privacy.html`
+- Terms of Use URL works: `https://dcanpolat0-tech.github.io/reciro/terms.html`
+- Render backend health check works: `https://reciro-receipt-analysis.onrender.com/health`
 - iOS Expo export completed successfully.
 - No real OpenAI API key is committed to GitHub.
 - `.env` is ignored and stays local.
@@ -44,7 +44,7 @@ Nereye is technically prepared for the first iPhone release path. The remaining 
 ## Next Steps After Apple Approval
 
 1. Create the App Store Connect app record.
-2. Use Bundle ID `com.dcanpolat.nereye`.
+2. Use Bundle ID `com.dcanpolat.reciro`.
 3. Add App Store metadata from `docs/APP_STORE_METADATA.md`.
 4. Add support, privacy, and terms URLs.
 5. Build with EAS using `docs/BUILD_IOS_WITH_EAS.md`.

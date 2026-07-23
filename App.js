@@ -22,16 +22,16 @@ import * as ImageManipulator from 'expo-image-manipulator';
 import Constants from 'expo-constants';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
-const RECEIPTS_STORAGE_KEY = 'paranereye.receipts.v2';
-const SALARY_STORAGE_KEY = 'paranereye.salary.v1';
-const INCOME_BY_MONTH_STORAGE_KEY = 'paranereye.incomeByMonth.v1';
-const CURRENCY_STORAGE_KEY = 'paranereye.currency.v1';
-const AUTH_CHOICE_STORAGE_KEY = 'paranereye.authChoice.v1';
-const ANALYSIS_USAGE_STORAGE_KEY = 'paranereye.analysisUsage.v1';
+const RECEIPTS_STORAGE_KEY = 'reciro.receipts.v2';
+const SALARY_STORAGE_KEY = 'reciro.salary.v1';
+const INCOME_BY_MONTH_STORAGE_KEY = 'reciro.incomeByMonth.v1';
+const CURRENCY_STORAGE_KEY = 'reciro.currency.v1';
+const AUTH_CHOICE_STORAGE_KEY = 'reciro.authChoice.v1';
+const ANALYSIS_USAGE_STORAGE_KEY = 'reciro.analysisUsage.v1';
 const RECEIPT_IMAGE_DIR = `${FileSystem.documentDirectory}receipts/`;
 const BACKUP_DIR = `${FileSystem.documentDirectory}backups/`;
 const APP_CONFIG_EXTRA = Constants.expoConfig?.extra || Constants.manifest?.extra || {};
-const DEFAULT_RECEIPT_ANALYSIS_ENDPOINT = 'https://nereye-receipt-analysis.onrender.com/analyze-receipt';
+const DEFAULT_RECEIPT_ANALYSIS_ENDPOINT = 'https://reciro-receipt-analysis.onrender.com/analyze-receipt';
 const RECEIPT_ANALYSIS_ENDPOINT =
   APP_CONFIG_EXTRA.receiptAnalysisUrl ||
   process.env.EXPO_PUBLIC_RECEIPT_ANALYSIS_URL ||
@@ -67,7 +67,7 @@ const currencies = [
 
 const translations = {
   tr: {
-    appSubtitle: 'Harcamanı kolayca takip et',
+    appSubtitle: 'Scan. Save. Simplify.',
     navHome: 'Ana',
     navReceipt: 'Fiş',
     navReport: 'Rapor',
@@ -94,7 +94,7 @@ const translations = {
     receiptCount: 'Fiş sayısı',
     searchResultCount: (count) => `${count} fiş bulundu`,
     dailyAverage: 'Günlük ort.',
-    spendingInsightTitle: 'En çok nereye gidiyor?',
+    spendingInsightTitle: 'En çok harcama nerede?',
     spendingInsightText: (category, amount) => `Bu ay en yüksek harcama ${category} kategorisinde. Toplam: ${amount}.`,
     recentSpending: 'Son harcamalar',
     newReceipt: 'Yeni fiş',
@@ -161,7 +161,7 @@ const translations = {
     selectedCurrency: (symbol, name) => `Seçili para birimi: ${symbol} ${name}`,
     premium: 'Premium',
     premiumInfo: 'Sınırsız AI fiş analizi ve gelişmiş raporlar.',
-    premiumTitle: 'Nereye Premium',
+    premiumTitle: 'Reciro Premium',
     premiumSubtitle: 'Sınırsız fiş analizi, ürün raporları ve reklamsız kullanım.',
     premiumMonthly: 'Aylık: €2,99',
     premiumYearly: 'Yıllık: €24,99',
@@ -280,7 +280,7 @@ const translations = {
     },
   },
   en: {
-    appSubtitle: 'Track your spending easily',
+    appSubtitle: 'Scan. Save. Simplify.',
     navHome: 'Home',
     navReceipt: 'Receipt',
     navReport: 'Report',
@@ -374,7 +374,7 @@ const translations = {
     selectedCurrency: (symbol, name) => `Selected currency: ${symbol} ${name}`,
     premium: 'Premium',
     premiumInfo: 'Unlimited AI receipt scans and advanced reports.',
-    premiumTitle: 'Nereye Premium',
+    premiumTitle: 'Reciro Premium',
     premiumSubtitle: 'Unlimited receipt scans, product reports, and ad-free use.',
     premiumMonthly: 'Monthly: €2.99',
     premiumYearly: 'Yearly: €24.99',
@@ -493,7 +493,7 @@ const translations = {
     },
   },
   fr: {
-    appSubtitle: 'Suivez vos depenses facilement',
+    appSubtitle: 'Scan. Save. Simplify.',
     navHome: 'Accueil',
     navReceipt: 'Ticket',
     navReport: 'Rapport',
@@ -587,7 +587,7 @@ const translations = {
     selectedCurrency: (symbol, name) => `Devise selectionnee: ${symbol} ${name}`,
     premium: 'Premium',
     premiumInfo: 'Analyses AI illimitees et rapports avances.',
-    premiumTitle: 'Nereye Premium',
+    premiumTitle: 'Reciro Premium',
     premiumSubtitle: 'Analyses illimitees, rapports produits et sans publicite.',
     premiumMonthly: 'Mensuel: €2,99',
     premiumYearly: 'Annuel: €24,99',
@@ -706,7 +706,7 @@ const translations = {
     },
   },
   de: {
-    appSubtitle: 'Ausgaben einfach verfolgen',
+    appSubtitle: 'Scan. Save. Simplify.',
     navHome: 'Start',
     navReceipt: 'Beleg',
     navReport: 'Bericht',
@@ -800,7 +800,7 @@ const translations = {
     selectedCurrency: (symbol, name) => `Ausgewaehlte Waehrung: ${symbol} ${name}`,
     premium: 'Premium',
     premiumInfo: 'Unbegrenzte AI-Beleganalysen und erweiterte Berichte.',
-    premiumTitle: 'Nereye Premium',
+    premiumTitle: 'Reciro Premium',
     premiumSubtitle: 'Unbegrenzte Beleganalysen, Produktberichte und werbefrei.',
     premiumMonthly: 'Monatlich: €2,99',
     premiumYearly: 'Jaehrlich: €24,99',
@@ -919,7 +919,7 @@ const translations = {
     },
   },
   es: {
-    appSubtitle: 'Controla tus gastos facilmente',
+    appSubtitle: 'Scan. Save. Simplify.',
     navHome: 'Inicio',
     navReceipt: 'Ticket',
     navReport: 'Informe',
@@ -1013,7 +1013,7 @@ const translations = {
     selectedCurrency: (symbol, name) => `Moneda seleccionada: ${symbol} ${name}`,
     premium: 'Premium',
     premiumInfo: 'Analisis AI ilimitado y reportes avanzados.',
-    premiumTitle: 'Nereye Premium',
+    premiumTitle: 'Reciro Premium',
     premiumSubtitle: 'Tickets ilimitados, reportes de productos y sin anuncios.',
     premiumMonthly: 'Mensual: €2,99',
     premiumYearly: 'Anual: €24,99',
@@ -2507,7 +2507,7 @@ export default function App() {
       await ensureDirectory(BACKUP_DIR);
 
       const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
-      const fileName = `paranereye-backup-${timestamp}.json`;
+      const fileName = `reciro-backup-${timestamp}.json`;
       const targetUri = `${BACKUP_DIR}${fileName}`;
       const backupData = {
         version: 1,
@@ -2830,7 +2830,7 @@ export default function App() {
         <View style={styles.app}>
           <View style={styles.header}>
             <View style={styles.headerTitle}>
-              <Text style={styles.appName}>Nereye</Text>
+              <Text style={styles.appName}>Reciro</Text>
               <Text style={styles.muted}>{t.appSubtitle}</Text>
             </View>
           </View>
@@ -2861,7 +2861,7 @@ export default function App() {
             </Pressable>
           )}
           <View style={styles.headerTitle}>
-            <Text style={styles.appName}>Nereye</Text>
+            <Text style={styles.appName}>Reciro</Text>
             <Text style={styles.muted}>{t.appSubtitle}</Text>
           </View>
         </View>
@@ -3675,7 +3675,7 @@ function SettingsScreen({
       return;
     }
 
-    const subject = encodeURIComponent('Nereye feedback');
+    const subject = encodeURIComponent('Reciro feedback');
     const body = encodeURIComponent(`${message}\n\n---\nLanguage: ${selectedLanguage}\nCurrency: ${selectedCurrency}`);
     const mailUrl = `mailto:${FEEDBACK_EMAIL}?subject=${subject}&body=${body}`;
 
@@ -4338,7 +4338,7 @@ function AuthStartScreen({ onChoose, t }) {
         <View style={styles.authLogoLarge}>
           <Text style={styles.authLogoText}>N</Text>
         </View>
-        <Text style={styles.authBrandName}>Nereye</Text>
+        <Text style={styles.authBrandName}>Reciro</Text>
         <Text style={styles.authTitle}>{t.welcomeTitle}</Text>
         <Text style={styles.authText}>{t.welcomeText}</Text>
       </View>
@@ -5954,4 +5954,3 @@ const styles = StyleSheet.create({
     color: '#ffffff',
   },
 });
-
