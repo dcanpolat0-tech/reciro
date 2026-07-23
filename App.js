@@ -2,6 +2,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import {
   Alert,
+  AppState,
   Image,
   Linking,
   Modal,
@@ -24,7 +25,6 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 const RECEIPTS_STORAGE_KEY = 'paranereye.receipts.v2';
 const SALARY_STORAGE_KEY = 'paranereye.salary.v1';
 const INCOME_BY_MONTH_STORAGE_KEY = 'paranereye.incomeByMonth.v1';
-const LANGUAGE_STORAGE_KEY = 'paranereye.language.v1';
 const CURRENCY_STORAGE_KEY = 'paranereye.currency.v1';
 const AUTH_CHOICE_STORAGE_KEY = 'paranereye.authChoice.v1';
 const ANALYSIS_USAGE_STORAGE_KEY = 'paranereye.analysisUsage.v1';
@@ -135,6 +135,7 @@ const translations = {
     looksGood: 'İyi görünüyor',
     backHome: 'Ana Ekrana Dön',
     totalSpending: 'Toplam harcama',
+    reportOverview: 'Genel rapor',
     highest: 'En yüksek',
     categoryBreakdown: 'Kategori dağılımı',
     merchantBreakdown: 'Marketler ve mağazalar',
@@ -260,7 +261,8 @@ const translations = {
     recordsReadError: 'Kayıtlı fişler açılırken bir sorun oluştu.',
     receiptsSaveError: 'Fişler telefona kaydedilemedi.',
     incomeSaveError: 'Gelir bilgisi kaydedilemedi.',
-    languageSaveError: 'Dil seçimi kaydedilemedi.',
+    languageAutomatic: 'Telefon diline göre otomatik',
+    languageAutomaticInfo: 'Uygulama her açıldığında telefonundaki dili kontrol eder. Desteklenmeyen dillerde İngilizce açılır.',
     currencySaveError: 'Para birimi kaydedilemedi.',
     photoSaveErrorTitle: 'Fotoğraf kaydedilemedi',
     photoSaveErrorText: 'Fiş fotoğrafı telefona kaydedilemedi.',
@@ -346,6 +348,7 @@ const translations = {
     looksGood: 'Looks good',
     backHome: 'Back to Home',
     totalSpending: 'Total spending',
+    reportOverview: 'Overview',
     highest: 'Highest',
     categoryBreakdown: 'Category breakdown',
     merchantBreakdown: 'Stores and merchants',
@@ -471,7 +474,8 @@ const translations = {
     recordsReadError: 'There was a problem loading saved receipts.',
     receiptsSaveError: 'Receipts could not be saved on the phone.',
     incomeSaveError: 'Income could not be saved.',
-    languageSaveError: 'Language selection could not be saved.',
+    languageAutomatic: 'Automatic from phone language',
+    languageAutomaticInfo: 'The app checks your phone language when it opens. Unsupported languages open in English.',
     currencySaveError: 'Currency could not be saved.',
     photoSaveErrorTitle: 'Photo could not be saved',
     photoSaveErrorText: 'Receipt photo could not be saved on the phone.',
@@ -557,6 +561,7 @@ const translations = {
     looksGood: 'Semble correct',
     backHome: 'Retour accueil',
     totalSpending: 'Depense totale',
+    reportOverview: 'Vue generale',
     highest: 'Plus elevee',
     categoryBreakdown: 'Repartition par categorie',
     merchantBreakdown: 'Magasins et commercants',
@@ -682,7 +687,8 @@ const translations = {
     recordsReadError: 'Probleme lors du chargement des tickets.',
     receiptsSaveError: 'Les tickets n ont pas pu etre enregistres.',
     incomeSaveError: 'Le revenu n a pas pu etre enregistre.',
-    languageSaveError: 'La langue n a pas pu etre enregistree.',
+    languageAutomatic: 'Automatique selon la langue du telephone',
+    languageAutomaticInfo: 'L app verifie la langue du telephone au demarrage. Les langues non prises en charge ouvrent l anglais.',
     currencySaveError: 'La devise n a pas pu etre enregistree.',
     photoSaveErrorTitle: 'Photo non enregistree',
     photoSaveErrorText: 'La photo du ticket n a pas pu etre enregistree.',
@@ -768,6 +774,7 @@ const translations = {
     looksGood: 'Sieht gut aus',
     backHome: 'Zurueck zur Startseite',
     totalSpending: 'Gesamtausgaben',
+    reportOverview: 'Uebersicht',
     highest: 'Hoechste',
     categoryBreakdown: 'Kategorieaufteilung',
     merchantBreakdown: 'Maerkte und Geschaefte',
@@ -893,7 +900,8 @@ const translations = {
     recordsReadError: 'Problem beim Laden gespeicherter Belege.',
     receiptsSaveError: 'Belege konnten nicht gespeichert werden.',
     incomeSaveError: 'Einkommen konnte nicht gespeichert werden.',
-    languageSaveError: 'Sprache konnte nicht gespeichert werden.',
+    languageAutomatic: 'Automatisch nach Telefonsprache',
+    languageAutomaticInfo: 'Die App prueft beim Start die Telefonsprache. Nicht unterstuetzte Sprachen werden auf Englisch geoeffnet.',
     currencySaveError: 'Waehrung konnte nicht gespeichert werden.',
     photoSaveErrorTitle: 'Foto konnte nicht gespeichert werden',
     photoSaveErrorText: 'Belegfoto konnte nicht gespeichert werden.',
@@ -979,6 +987,7 @@ const translations = {
     looksGood: 'Se ve bien',
     backHome: 'Volver al inicio',
     totalSpending: 'Gasto total',
+    reportOverview: 'Resumen',
     highest: 'Mas alto',
     categoryBreakdown: 'Desglose por categoria',
     merchantBreakdown: 'Tiendas y comercios',
@@ -1104,7 +1113,8 @@ const translations = {
     recordsReadError: 'Hubo un problema al cargar los tickets.',
     receiptsSaveError: 'No se pudieron guardar los tickets.',
     incomeSaveError: 'No se pudo guardar el ingreso.',
-    languageSaveError: 'No se pudo guardar el idioma.',
+    languageAutomatic: 'Automatico segun el idioma del telefono',
+    languageAutomaticInfo: 'La app revisa el idioma del telefono al abrirse. Los idiomas no compatibles se abren en ingles.',
     currencySaveError: 'No se pudo guardar la moneda.',
     photoSaveErrorTitle: 'No se pudo guardar la foto',
     photoSaveErrorText: 'No se pudo guardar la foto del ticket.',
@@ -2007,6 +2017,7 @@ export default function App() {
   const [analysisUsageByMonth, setAnalysisUsageByMonth] = useState({});
   const [settingsSection, setSettingsSection] = useState('main');
   const [reportPeriod, setReportPeriod] = useState('month');
+  const [reportView, setReportView] = useState('overview');
   const [reportSearchText, setReportSearchText] = useState('');
   const [selectedMerchantKey, setSelectedMerchantKey] = useState(null);
   const [storageReady, setStorageReady] = useState(false);
@@ -2018,7 +2029,6 @@ export default function App() {
           savedReceipts,
           savedSalary,
           savedIncomeByMonth,
-          savedLanguage,
           savedCurrency,
           savedAuthChoice,
           savedAnalysisUsage,
@@ -2026,7 +2036,6 @@ export default function App() {
           AsyncStorage.getItem(RECEIPTS_STORAGE_KEY),
           AsyncStorage.getItem(SALARY_STORAGE_KEY),
           AsyncStorage.getItem(INCOME_BY_MONTH_STORAGE_KEY),
-          AsyncStorage.getItem(LANGUAGE_STORAGE_KEY),
           AsyncStorage.getItem(CURRENCY_STORAGE_KEY),
           AsyncStorage.getItem(AUTH_CHOICE_STORAGE_KEY),
           AsyncStorage.getItem(ANALYSIS_USAGE_STORAGE_KEY),
@@ -2049,11 +2058,7 @@ export default function App() {
           setIncomeByMonth({ [getMonthKey()]: savedSalary });
         }
 
-        if (savedLanguage && languages.some((language) => language.code === savedLanguage)) {
-          setSelectedLanguage(savedLanguage);
-        } else {
-          setSelectedLanguage(getDeviceLanguage());
-        }
+        setSelectedLanguage(getDeviceLanguage());
 
         if (savedCurrency && currencies.some((currency) => currency.code === savedCurrency)) {
           setSelectedCurrency(savedCurrency);
@@ -2075,6 +2080,16 @@ export default function App() {
     }
 
     loadSavedData();
+  }, []);
+
+  useEffect(() => {
+    const subscription = AppState.addEventListener('change', (state) => {
+      if (state === 'active') {
+        setSelectedLanguage(getDeviceLanguage());
+      }
+    });
+
+    return () => subscription.remove();
   }, []);
 
   useEffect(() => {
@@ -2117,16 +2132,6 @@ export default function App() {
       Alert.alert(t.saveError, t.incomeSaveError);
     });
   }, [incomeByMonth, storageReady]);
-
-  useEffect(() => {
-    if (!storageReady) {
-      return;
-    }
-
-    AsyncStorage.setItem(LANGUAGE_STORAGE_KEY, selectedLanguage).catch(() => {
-      Alert.alert(t.saveError, t.languageSaveError);
-    });
-  }, [selectedLanguage, storageReady]);
 
   useEffect(() => {
     if (!storageReady) {
@@ -2253,6 +2258,12 @@ export default function App() {
     setSelectedMerchantKey(null);
   }
 
+  function updateReportView(view) {
+    setReportView(view);
+    setReportSearchText('');
+    setSelectedMerchantKey(null);
+  }
+
   function updateReportSearchText(value) {
     setReportSearchText(value);
     setSelectedMerchantKey(null);
@@ -2307,6 +2318,11 @@ export default function App() {
       return;
     }
 
+    if (screen === 'report' && reportView === 'merchants') {
+      setReportView('overview');
+      return;
+    }
+
     if (screen === 'report' && reportSearchText.trim()) {
       setReportSearchText('');
       return;
@@ -2342,12 +2358,13 @@ export default function App() {
           }
         },
       }),
-    [screen, settingsSection, previewImage, reportSearchText, selectedMerchantKey, photoOptionsOpen, detailReturnScreen]
+    [screen, settingsSection, previewImage, reportSearchText, reportView, selectedMerchantKey, photoOptionsOpen, detailReturnScreen]
   );
   const canShowBackControl =
     !previewImage &&
     ((screen === 'settings' && settingsSection !== 'main') ||
       (screen === 'report' && Boolean(selectedMerchantKey)) ||
+      (screen === 'report' && reportView === 'merchants') ||
       (screen === 'report' && Boolean(reportSearchText.trim())) ||
       (screen === 'home' && photoOptionsOpen) ||
       screen === 'detail');
@@ -2497,7 +2514,6 @@ export default function App() {
         createdAt: Date.now(),
         receipts,
         incomeByMonth,
-        selectedLanguage,
         selectedCurrency,
       };
 
@@ -2539,9 +2555,7 @@ export default function App() {
           : {}
       );
 
-      if (languages.some((language) => language.code === backupData.selectedLanguage)) {
-        setSelectedLanguage(backupData.selectedLanguage);
-      }
+      setSelectedLanguage(getDeviceLanguage());
 
       if (currencies.some((currency) => currency.code === backupData.selectedCurrency)) {
         setSelectedCurrency(backupData.selectedCurrency);
@@ -2936,6 +2950,8 @@ export default function App() {
               receipts={reportReceipts}
               merchantGroups={reportMerchantGroups}
               selectedMerchantGroup={selectedMerchantGroup}
+              reportView={reportView}
+              setReportView={updateReportView}
               reportPeriod={reportPeriod}
               setReportPeriod={updateReportPeriod}
               reportSearchText={reportSearchText}
@@ -2994,7 +3010,6 @@ export default function App() {
               totalSpend={selectedMonthSpend}
               remaining={remaining}
               selectedLanguage={selectedLanguage}
-              setSelectedLanguage={setSelectedLanguage}
               selectedCurrency={selectedCurrency}
               setSelectedCurrency={setSelectedCurrency}
               settingsSection={settingsSection}
@@ -3426,6 +3441,8 @@ function ReportScreen({
   receipts,
   merchantGroups,
   selectedMerchantGroup,
+  reportView,
+  setReportView,
   reportPeriod,
   setReportPeriod,
   reportSearchText,
@@ -3441,6 +3458,10 @@ function ReportScreen({
     { key: 'month', label: t.thisMonth },
     { key: 'week', label: t.thisWeek },
     { key: 'all', label: t.allTime },
+  ];
+  const reportViews = [
+    { key: 'overview', label: t.reportOverview },
+    { key: 'merchants', label: t.merchantBreakdown },
   ];
 
   return (
@@ -3460,6 +3481,20 @@ function ReportScreen({
         </View>
       </View>
 
+      <View style={styles.reportViewTabs}>
+        {reportViews.map((view) => (
+          <Pressable
+            key={view.key}
+            style={[styles.reportViewTab, reportView === view.key && styles.reportViewTabActive]}
+            onPress={() => setReportView(view.key)}
+          >
+            <Text style={[styles.reportViewTabText, reportView === view.key && styles.reportViewTabTextActive]}>
+              {view.label}
+            </Text>
+          </Pressable>
+        ))}
+      </View>
+
       <View style={styles.periodTabs}>
         {periodFilters.map((filter) => (
           <Pressable
@@ -3474,71 +3509,77 @@ function ReportScreen({
         ))}
       </View>
 
-      <TextInput
-        style={styles.searchInput}
-        value={reportSearchText}
-        onChangeText={setReportSearchText}
-        placeholder={t.searchReceipts}
-      />
-      {Boolean(reportSearchText.trim()) && (
-        <Text style={styles.searchResultText}>{t.searchResultCount(receipts.length)}</Text>
-      )}
+      {reportView === 'overview' ? (
+        <>
+          <TextInput
+            style={styles.searchInput}
+            value={reportSearchText}
+            onChangeText={setReportSearchText}
+            placeholder={t.searchReceipts}
+          />
+          {Boolean(reportSearchText.trim()) && (
+            <Text style={styles.searchResultText}>{t.searchResultCount(receipts.length)}</Text>
+          )}
 
-      <Text style={styles.sectionTitle}>{t.categoryBreakdown}</Text>
-      <View style={styles.reportCard}>
-        {categories.filter((category) => category.amount > 0).length === 0 && (
-          <Text style={styles.emptyText}>{t.noReportData}</Text>
-        )}
-        {categories.filter((category) => category.amount > 0).map((category) => (
-          <View style={styles.barItem} key={category.key}>
-            <View style={styles.barTop}>
-              <Text style={styles.barName}>{getCategoryLabel(category.key, t)}</Text>
-              <Text style={styles.barName}>{formatTL(category.amount)}</Text>
-            </View>
-            <View style={styles.barTrack}>
-              <View
-                style={[
-                  styles.barFill,
-                  {
-                    width: `${Math.max(4, Math.round((category.amount / maxAmount) * 100))}%`,
-                    backgroundColor: category.color,
-                  },
-                ]}
-              />
-            </View>
+          <Text style={styles.sectionTitle}>{t.categoryBreakdown}</Text>
+          <View style={styles.reportCard}>
+            {categories.filter((category) => category.amount > 0).length === 0 && (
+              <Text style={styles.emptyText}>{t.noReportData}</Text>
+            )}
+            {categories.filter((category) => category.amount > 0).map((category) => (
+              <View style={styles.barItem} key={category.key}>
+                <View style={styles.barTop}>
+                  <Text style={styles.barName}>{getCategoryLabel(category.key, t)}</Text>
+                  <Text style={styles.barName}>{formatTL(category.amount)}</Text>
+                </View>
+                <View style={styles.barTrack}>
+                  <View
+                    style={[
+                      styles.barFill,
+                      {
+                        width: `${Math.max(4, Math.round((category.amount / maxAmount) * 100))}%`,
+                        backgroundColor: category.color,
+                      },
+                    ]}
+                  />
+                </View>
+              </View>
+            ))}
           </View>
-        ))}
-      </View>
 
-      <MerchantList merchantGroups={merchantGroups} onSelectMerchant={onSelectMerchant} t={t} />
-
-      {selectedMerchantGroup && (
-        <View style={styles.selectedMerchantSection}>
-          <View style={styles.selectedMerchantHeader}>
-            <Text style={styles.selectedMerchantTitle}>
-              {t.merchantReceiptsTitle(selectedMerchantGroup.store)}
-            </Text>
-            <Pressable onPress={onClearSelectedMerchant} hitSlop={8}>
-              <Text style={styles.clearSelectionText}>{t.clearMerchantFilter}</Text>
-            </Pressable>
-          </View>
           <ReceiptList
-            title=""
-            subtitle={`${selectedMerchantGroup.count} ${t.receiptsShort}`}
-            receipts={selectedMerchantGroup.receipts}
+            title={t.receiptArchive}
+            subtitle={t.archiveInfo}
+            receipts={receipts}
             onSelectReceipt={onSelectReceipt}
             t={t}
           />
-        </View>
-      )}
+        </>
+      ) : (
+        <>
+          <MerchantList merchantGroups={merchantGroups} onSelectMerchant={onSelectMerchant} t={t} />
 
-      <ReceiptList
-        title={t.receiptArchive}
-        subtitle={t.archiveInfo}
-        receipts={receipts}
-        onSelectReceipt={onSelectReceipt}
-        t={t}
-      />
+          {selectedMerchantGroup && (
+            <View style={styles.selectedMerchantSection}>
+              <View style={styles.selectedMerchantHeader}>
+                <Text style={styles.selectedMerchantTitle}>
+                  {t.merchantReceiptsTitle(selectedMerchantGroup.store)}
+                </Text>
+                <Pressable onPress={onClearSelectedMerchant} hitSlop={8}>
+                  <Text style={styles.clearSelectionText}>{t.clearMerchantFilter}</Text>
+                </Pressable>
+              </View>
+              <ReceiptList
+                title=""
+                subtitle={`${selectedMerchantGroup.count} ${t.receiptsShort}`}
+                receipts={selectedMerchantGroup.receipts}
+                onSelectReceipt={onSelectReceipt}
+                t={t}
+              />
+            </View>
+          )}
+        </>
+      )}
     </View>
   );
 }
@@ -3609,7 +3650,6 @@ function SettingsScreen({
   totalSpend,
   remaining,
   selectedLanguage,
-  setSelectedLanguage,
   selectedCurrency,
   setSelectedCurrency,
   settingsSection,
@@ -3650,20 +3690,20 @@ function SettingsScreen({
     return (
       <View>
         <View style={styles.settingsList}>
+          <View style={styles.settingsRow}>
+            <View style={styles.receiptTextBlock}>
+              <Text style={styles.settingsTitle}>{t.languageAutomatic}</Text>
+              <Text style={styles.settingsText}>{t.languageAutomaticInfo}</Text>
+            </View>
+            <Text style={styles.settingsValue}>{selectedLanguageName}</Text>
+          </View>
           {languages.map((language) => (
-            <Pressable
-              key={language.code}
-              style={styles.settingsRow}
-              onPress={() => setSelectedLanguage(language.code)}
-            >
-              <View>
-                <Text style={styles.settingsTitle}>{language.name}</Text>
-                <Text style={styles.settingsText}>{language.code.toUpperCase()}</Text>
-              </View>
+            <View key={language.code} style={styles.settingsRowCompact}>
+              <Text style={styles.settingsText}>{language.name}</Text>
               <Text style={styles.settingsValue}>
-                {selectedLanguage === language.code ? t.selected : ''}
+                {selectedLanguage === language.code ? t.selected : language.code.toUpperCase()}
               </Text>
-            </Pressable>
+            </View>
           ))}
         </View>
 
@@ -4636,6 +4676,35 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: '900',
     marginTop: 6,
+  },
+  reportViewTabs: {
+    backgroundColor: '#ffffff',
+    borderColor: '#dfe8e0',
+    borderRadius: 8,
+    borderWidth: 1,
+    flexDirection: 'row',
+    gap: 6,
+    marginTop: 12,
+    padding: 5,
+  },
+  reportViewTab: {
+    alignItems: 'center',
+    borderRadius: 7,
+    flex: 1,
+    paddingHorizontal: 8,
+    paddingVertical: 11,
+  },
+  reportViewTabActive: {
+    backgroundColor: '#157f3b',
+  },
+  reportViewTabText: {
+    color: '#68766b',
+    fontSize: 12,
+    fontWeight: '900',
+    textAlign: 'center',
+  },
+  reportViewTabTextActive: {
+    color: '#ffffff',
   },
   periodTabs: {
     flexDirection: 'row',
@@ -5771,6 +5840,18 @@ const styles = StyleSheet.create({
     borderBottomColor: '#edf2ee',
     borderBottomWidth: 1,
     backgroundColor: '#fff',
+  },
+  settingsRowCompact: {
+    minHeight: 48,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: 12,
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    borderBottomColor: '#edf2ee',
+    borderBottomWidth: 1,
+    backgroundColor: '#fbfdfb',
   },
   settingsTextBlock: {
     flex: 1,
