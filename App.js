@@ -67,7 +67,7 @@ const currencies = [
 
 const translations = {
   tr: {
-    appSubtitle: 'Scan. Save. Simplify.',
+    appSubtitle: 'Tara. Kaydet. Kolaylaştır.',
     navHome: 'Ana',
     navReceipt: 'Fiş',
     navReport: 'Rapor',
@@ -197,12 +197,12 @@ const translations = {
     backupReady: 'Yedek hazır',
     backupReadyText: (fileName) => `Yedek oluşturuldu: ${fileName}`,
     backupRestored: 'Yedek yüklendi',
-    backupRestoredText: 'Son yedekteki fişler, gelir, dil ve para birimi geri yüklendi.',
+    backupRestoredText: 'Son yedekteki fişler, gelir ve para birimi geri yüklendi.',
     backupError: 'Yedekleme hatası',
     backupErrorText: 'Yedekleme işlemi tamamlanamadı.',
     noBackupTitle: 'Yedek yok',
     noBackupText: 'Geri yüklenecek bir yedek bulunamadı.',
-    backupInfo: 'Fişler, gelirler, dil ve para birimi telefonda yedeklenir.',
+    backupInfo: 'Fişler, gelirler ve para birimi telefonda yedeklenir.',
     feedback: 'Geri bildirim',
     feedbackInfo: 'Öneri, hata veya isteklerini bize gönder.',
     feedbackTitle: 'Bize neyi düzeltelim?',
@@ -410,12 +410,12 @@ const translations = {
     backupReady: 'Backup ready',
     backupReadyText: (fileName) => `Backup created: ${fileName}`,
     backupRestored: 'Backup restored',
-    backupRestoredText: 'Receipts, income, language, and currency were restored from the latest backup.',
+    backupRestoredText: 'Receipts, income, and currency were restored from the latest backup.',
     backupError: 'Backup error',
     backupErrorText: 'Backup could not be completed.',
     noBackupTitle: 'No backup',
     noBackupText: 'No backup was found to restore.',
-    backupInfo: 'Receipts, income, language, and currency are backed up on this phone.',
+    backupInfo: 'Receipts, income, and currency are backed up on this phone.',
     feedback: 'Feedback',
     feedbackInfo: 'Send suggestions, bugs, or feature requests.',
     feedbackTitle: 'What should we improve?',
@@ -493,7 +493,7 @@ const translations = {
     },
   },
   fr: {
-    appSubtitle: 'Scan. Save. Simplify.',
+    appSubtitle: 'Scannez. Enregistrez. Simplifiez.',
     navHome: 'Accueil',
     navReceipt: 'Ticket',
     navReport: 'Rapport',
@@ -623,12 +623,12 @@ const translations = {
     backupReady: 'Sauvegarde prete',
     backupReadyText: (fileName) => `Sauvegarde creee: ${fileName}`,
     backupRestored: 'Sauvegarde restauree',
-    backupRestoredText: 'Tickets, revenus, langue et devise ont ete restaures.',
+    backupRestoredText: 'Tickets, revenus et devise ont ete restaures.',
     backupError: 'Erreur de sauvegarde',
     backupErrorText: 'La sauvegarde n a pas pu etre terminee.',
     noBackupTitle: 'Aucune sauvegarde',
     noBackupText: 'Aucune sauvegarde a restaurer.',
-    backupInfo: 'Tickets, revenus, langue et devise sont sauvegardes sur ce telephone.',
+    backupInfo: 'Tickets, revenus et devise sont sauvegardes sur ce telephone.',
     feedback: 'Avis',
     feedbackInfo: 'Envoyez une idee, un bug ou une demande.',
     feedbackTitle: 'Que devons-nous ameliorer ?',
@@ -706,7 +706,7 @@ const translations = {
     },
   },
   de: {
-    appSubtitle: 'Scan. Save. Simplify.',
+    appSubtitle: 'Scannen. Speichern. Vereinfachen.',
     navHome: 'Start',
     navReceipt: 'Beleg',
     navReport: 'Bericht',
@@ -836,12 +836,12 @@ const translations = {
     backupReady: 'Backup bereit',
     backupReadyText: (fileName) => `Backup erstellt: ${fileName}`,
     backupRestored: 'Backup wiederhergestellt',
-    backupRestoredText: 'Belege, Einkommen, Sprache und Waehrung wurden wiederhergestellt.',
+    backupRestoredText: 'Belege, Einkommen und Waehrung wurden wiederhergestellt.',
     backupError: 'Backup-Fehler',
     backupErrorText: 'Backup konnte nicht abgeschlossen werden.',
     noBackupTitle: 'Kein Backup',
     noBackupText: 'Kein Backup zum Wiederherstellen gefunden.',
-    backupInfo: 'Belege, Einkommen, Sprache und Waehrung werden auf diesem Telefon gesichert.',
+    backupInfo: 'Belege, Einkommen und Waehrung werden auf diesem Telefon gesichert.',
     feedback: 'Feedback',
     feedbackInfo: 'Sende Ideen, Fehler oder Wuensche.',
     feedbackTitle: 'Was sollen wir verbessern?',
@@ -919,7 +919,7 @@ const translations = {
     },
   },
   es: {
-    appSubtitle: 'Scan. Save. Simplify.',
+    appSubtitle: 'Escanea. Guarda. Simplifica.',
     navHome: 'Inicio',
     navReceipt: 'Ticket',
     navReport: 'Informe',
@@ -1049,12 +1049,12 @@ const translations = {
     backupReady: 'Copia lista',
     backupReadyText: (fileName) => `Copia creada: ${fileName}`,
     backupRestored: 'Copia restaurada',
-    backupRestoredText: 'Tickets, ingresos, idioma y moneda fueron restaurados.',
+    backupRestoredText: 'Tickets, ingresos y moneda fueron restaurados.',
     backupError: 'Error de copia',
     backupErrorText: 'No se pudo completar la copia.',
     noBackupTitle: 'Sin copia',
     noBackupText: 'No se encontro ninguna copia para restaurar.',
-    backupInfo: 'Tickets, ingresos, idioma y moneda se guardan en este telefono.',
+    backupInfo: 'Tickets, ingresos y moneda se guardan en este telefono.',
     feedback: 'Comentarios',
     feedbackInfo: 'Envia sugerencias, errores o ideas.',
     feedbackTitle: 'Que deberiamos mejorar?',
@@ -1141,14 +1141,14 @@ function getDeviceLanguage() {
 }
 
 const categoryOptions = [
-  { key: 'grocery', color: '#157f3b' },
-  { key: 'food', color: '#f5b942' },
-  { key: 'transport', color: '#3d7ee8' },
-  { key: 'fuel', color: '#f97316' },
-  { key: 'home', color: '#e35b4f' },
-  { key: 'clothing', color: '#8b5cf6' },
-  { key: 'health', color: '#14b8a6' },
-  { key: 'other', color: '#6b7280' },
+  { key: 'grocery', color: '#157f3b', icon: '🛒' },
+  { key: 'food', color: '#f5b942', icon: '🍽️' },
+  { key: 'transport', color: '#3d7ee8', icon: '🚇' },
+  { key: 'fuel', color: '#f97316', icon: '⛽' },
+  { key: 'home', color: '#e35b4f', icon: '🏠' },
+  { key: 'clothing', color: '#8b5cf6', icon: '👕' },
+  { key: 'health', color: '#14b8a6', icon: '✚' },
+  { key: 'other', color: '#6b7280', icon: '⋯' },
 ];
 
 function buildCategorySummary(receiptList) {
@@ -1264,6 +1264,11 @@ function getCategoryLabel(category, t) {
   }
 
   return t.categories?.[key] || translations.en.categories[key] || key;
+}
+
+function getCategoryIcon(category) {
+  const key = normalizeCategoryKey(category);
+  return categoryOptions.find((option) => option.key === key)?.icon || '•';
 }
 
 function getAuthProviderLabel(authChoice, t) {
@@ -3031,21 +3036,25 @@ export default function App() {
         <View style={styles.navArea} pointerEvents="box-none">
           <View style={styles.nav}>
             <NavButton
+              icon="⌂"
               label={t.navHome}
               active={screen === 'home' || (screen === 'detail' && detailReturnScreen === 'home')}
               onPress={() => setScreen('home')}
             />
             <NavButton
+              icon="📊"
               label={t.navReport}
               active={screen === 'report' || (screen === 'detail' && detailReturnScreen === 'report')}
               onPress={() => setScreen('report')}
             />
             <NavButton
+              icon="🛍️"
               label={t.navProducts}
               active={screen === 'products' || (screen === 'detail' && detailReturnScreen === 'products')}
               onPress={() => setScreen('products')}
             />
             <NavButton
+              icon="⚙️"
               label={t.navSettings}
               active={screen === 'settings' || (screen === 'detail' && detailReturnScreen === 'settings')}
               onPress={() => setScreen('settings')}
@@ -3308,7 +3317,7 @@ function ReceiptScreen({
                     selectedCategory === category.key && styles.receiptCategoryTextActive,
                   ]}
                 >
-                  {getCategoryLabel(category.key, t)}
+                  {category.icon} {getCategoryLabel(category.key, t)}
                 </Text>
               </Pressable>
             ))}
@@ -3403,7 +3412,7 @@ function ReceiptScreen({
                             itemCategory === category.key && styles.receiptItemCategoryTextActive,
                           ]}
                         >
-                          {getCategoryLabel(category.key, t)}
+                          {category.icon} {getCategoryLabel(category.key, t)}
                         </Text>
                       </Pressable>
                     ))}
@@ -3460,14 +3469,14 @@ function ReportScreen({
     { key: 'all', label: t.allTime },
   ];
   const reportViews = [
-    { key: 'overview', label: t.reportOverview },
-    { key: 'merchants', label: t.merchantBreakdown },
+    { key: 'overview', label: `📊 ${t.reportOverview}` },
+    { key: 'merchants', label: `🏬 ${t.merchantBreakdown}` },
   ];
 
   return (
     <View>
       <View style={styles.reportHero}>
-        <Text style={styles.label}>{t.totalSpending}</Text>
+        <Text style={styles.label}>📌 {t.totalSpending}</Text>
         <Text style={styles.reportAmount}>{formatTL(totalSpend)}</Text>
         <View style={styles.reportInfoRow}>
           <View style={styles.reportInfoItem}>
@@ -3529,7 +3538,9 @@ function ReportScreen({
             {categories.filter((category) => category.amount > 0).map((category) => (
               <View style={styles.barItem} key={category.key}>
                 <View style={styles.barTop}>
-                  <Text style={styles.barName}>{getCategoryLabel(category.key, t)}</Text>
+                  <Text style={styles.barName}>
+                    {getCategoryIcon(category.key)} {getCategoryLabel(category.key, t)}
+                  </Text>
                   <Text style={styles.barName}>{formatTL(category.amount)}</Text>
                 </View>
                 <View style={styles.barTrack}>
@@ -3589,17 +3600,17 @@ function ProductsScreen({ productGroups, monthKey, t }) {
 
   return (
     <View>
-      <View style={styles.reportHero}>
-        <Text style={styles.label}>{formatMonthKey(monthKey)}</Text>
-        <Text style={styles.reportAmount}>{t.productsTitle}</Text>
-        <Text style={styles.sectionSubtitle}>{t.productsInfo}</Text>
+      <View style={[styles.reportHero, styles.productsHero]}>
+        <Text style={styles.label}>🛍️ {formatMonthKey(monthKey)}</Text>
+        <Text style={styles.productsHeroTitle}>{t.productsTitle}</Text>
+        <Text style={styles.productsHeroText}>{t.productsInfo}</Text>
       </View>
 
       {topProduct ? (
-        <View style={styles.card}>
-          <Text style={styles.label}>{t.topProduct}</Text>
+        <View style={styles.productTopCard}>
+          <Text style={styles.label}>⭐ {t.topProduct}</Text>
           <View style={styles.productHeroRow}>
-            <View style={styles.receiptTextBlock}>
+            <View style={styles.productHeroTextBlock}>
               <Text style={styles.productHeroName}>{topProduct.name}</Text>
               <Text style={styles.rowMeta}>
                 {t.quantity}: {formatQuantity(topProduct.quantity)}
@@ -3618,7 +3629,7 @@ function ProductsScreen({ productGroups, monthKey, t }) {
         </View>
       )}
 
-      <Text style={styles.sectionTitle}>{t.productBreakdown}</Text>
+      <Text style={styles.sectionTitle}>📦 {t.productBreakdown}</Text>
       <View style={styles.card}>
         {productGroups.length === 0 && <Text style={styles.emptyText}>{t.noProductDataText}</Text>}
         {productGroups.map((product, index) => (
@@ -3626,7 +3637,7 @@ function ProductsScreen({ productGroups, monthKey, t }) {
             <View style={styles.productRank}>
               <Text style={styles.productRankText}>{index + 1}</Text>
             </View>
-            <View style={styles.receiptTextBlock}>
+            <View style={styles.productRowTextBlock}>
               <Text style={styles.rowText}>{product.name}</Text>
               <Text style={styles.rowMeta}>
                 {t.quantity}: {formatQuantity(product.quantity)}
@@ -3662,8 +3673,6 @@ function SettingsScreen({
   t,
 }) {
   const [feedbackText, setFeedbackText] = useState('');
-  const selectedLanguageName =
-    languages.find((language) => language.code === selectedLanguage)?.name || 'English';
   const selectedCurrencyItem =
     currencies.find((currency) => currency.code === selectedCurrency) || currencies[0];
 
@@ -3684,32 +3693,6 @@ function SettingsScreen({
     } catch (error) {
       Alert.alert(t.feedbackMailTitle, t.feedbackMailText);
     }
-  }
-
-  if (settingsSection === 'language') {
-    return (
-      <View>
-        <View style={styles.settingsList}>
-          <View style={styles.settingsRow}>
-            <View style={styles.receiptTextBlock}>
-              <Text style={styles.settingsTitle}>{t.languageAutomatic}</Text>
-              <Text style={styles.settingsText}>{t.languageAutomaticInfo}</Text>
-            </View>
-            <Text style={styles.settingsValue}>{selectedLanguageName}</Text>
-          </View>
-          {languages.map((language) => (
-            <View key={language.code} style={styles.settingsRowCompact}>
-              <Text style={styles.settingsText}>{language.name}</Text>
-              <Text style={styles.settingsValue}>
-                {selectedLanguage === language.code ? t.selected : language.code.toUpperCase()}
-              </Text>
-            </View>
-          ))}
-        </View>
-
-        <SecondaryButton label={t.back} onPress={() => setSettingsSection('main')} />
-      </View>
-    );
   }
 
   if (settingsSection === 'currency') {
@@ -3886,6 +3869,7 @@ function SettingsScreen({
       <View style={styles.settingsList}>
         {ENABLE_PREMIUM_PAYWALL && (
           <SettingsRow
+            icon="✨"
             title={t.premium}
             subtitle={t.premiumInfo}
             value=">"
@@ -3894,6 +3878,7 @@ function SettingsScreen({
         )}
         {ENABLE_START_ACCOUNT_GATE && (
           <SettingsRow
+            icon="☁️"
             title={t.accountSync}
             subtitle={t.accountSyncInfo}
             value=">"
@@ -3901,30 +3886,28 @@ function SettingsScreen({
           />
         )}
         <SettingsRow
-          title={t.language}
-          subtitle={selectedLanguageName}
-          value=">"
-          onPress={() => setSettingsSection('language')}
-        />
-        <SettingsRow
+          icon="💶"
           title={t.income}
           subtitle={`${formatTL(salary)} / ${t.remainingMoney}: ${formatTL(remaining)}`}
           value=">"
           onPress={() => setSettingsSection('income')}
         />
         <SettingsRow
+          icon="💱"
           title={t.currency}
           subtitle={`${selectedCurrencyItem.symbol} ${selectedCurrencyItem.code}`}
           value=">"
           onPress={() => setSettingsSection('currency')}
         />
         <SettingsRow
+          icon="🗂️"
           title={t.dataBackup}
           subtitle={t.backupInfo}
           value=">"
           onPress={() => setSettingsSection('backup')}
         />
         <SettingsRow
+          icon="✉️"
           title={t.feedback}
           subtitle={t.feedbackInfo}
           value=">"
@@ -3935,9 +3918,14 @@ function SettingsScreen({
   );
 }
 
-function SettingsRow({ title, subtitle, value, onPress }) {
+function SettingsRow({ icon, title, subtitle, value, onPress }) {
   return (
     <Pressable style={styles.settingsRow} onPress={onPress} disabled={!onPress}>
+      {icon && (
+        <View style={styles.settingsIconBox}>
+          <Text style={styles.settingsIconText}>{icon}</Text>
+        </View>
+      )}
       <View style={styles.settingsTextBlock}>
         <Text style={styles.settingsTitle}>{title}</Text>
         <Text style={styles.settingsText}>{subtitle}</Text>
@@ -4049,7 +4037,7 @@ function ReceiptDetailScreen({
                     editCategory === category.key && styles.categoryButtonTextActive,
                   ]}
                 >
-                  {getCategoryLabel(category.key, t)}
+                  {category.icon} {getCategoryLabel(category.key, t)}
                 </Text>
               </Pressable>
             ))}
@@ -4126,7 +4114,7 @@ function ReceiptDetailScreen({
                           item.category === category.key && styles.itemCategoryTextActive,
                         ]}
                       >
-                        {getCategoryLabel(category.key, t)}
+                        {category.icon} {getCategoryLabel(category.key, t)}
                       </Text>
                     </Pressable>
                   ))}
@@ -4444,9 +4432,10 @@ function GalleryGlyph() {
   );
 }
 
-function NavButton({ label, active, onPress }) {
+function NavButton({ icon, label, active, onPress }) {
   return (
     <Pressable style={[styles.navButton, active && styles.navButtonActive]} onPress={onPress}>
+      <Text style={[styles.navIcon, active && styles.navTextActive]}>{icon}</Text>
       <Text style={[styles.navText, active && styles.navTextActive]}>{label}</Text>
     </Pressable>
   );
@@ -4643,6 +4632,7 @@ const styles = StyleSheet.create({
     marginTop: 5,
   },
   reportHero: {
+    alignItems: 'center',
     backgroundColor: '#ffffff',
     borderColor: '#dfe8e0',
     borderWidth: 1,
@@ -4654,11 +4644,13 @@ const styles = StyleSheet.create({
     fontSize: 40,
     fontWeight: '900',
     marginTop: 8,
+    textAlign: 'center',
   },
   reportInfoRow: {
     flexDirection: 'row',
     gap: 8,
     marginTop: 18,
+    width: '100%',
   },
   reportInfoItem: {
     flex: 1,
@@ -5420,15 +5412,50 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     marginTop: 10,
   },
+  productsHero: {
+    paddingVertical: 24,
+  },
+  productsHeroTitle: {
+    color: '#172018',
+    fontSize: 34,
+    fontWeight: '900',
+    lineHeight: 39,
+    marginTop: 9,
+    textAlign: 'center',
+  },
+  productsHeroText: {
+    color: '#4f5d52',
+    fontSize: 14,
+    fontWeight: '700',
+    lineHeight: 20,
+    marginTop: 9,
+    textAlign: 'center',
+  },
+  productTopCard: {
+    alignItems: 'center',
+    backgroundColor: '#ffffff',
+    borderColor: '#dfe8e0',
+    borderRadius: 8,
+    borderWidth: 1,
+    marginTop: 16,
+    padding: 18,
+  },
+  productHeroTextBlock: {
+    flex: 1,
+    alignItems: 'center',
+  },
   productHeroName: {
     color: '#172018',
     fontSize: 22,
     fontWeight: '900',
+    textAlign: 'center',
   },
   productHeroAmount: {
     color: '#0d5f2b',
     fontSize: 18,
     fontWeight: '900',
+    minWidth: 76,
+    textAlign: 'right',
   },
   productRow: {
     alignItems: 'center',
@@ -5437,6 +5464,10 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     gap: 12,
     paddingVertical: 13,
+  },
+  productRowTextBlock: {
+    flex: 1,
+    justifyContent: 'center',
   },
   productRank: {
     alignItems: 'center',
@@ -5856,6 +5887,17 @@ const styles = StyleSheet.create({
   settingsTextBlock: {
     flex: 1,
   },
+  settingsIconBox: {
+    alignItems: 'center',
+    backgroundColor: '#e6f5ea',
+    borderRadius: 999,
+    height: 34,
+    justifyContent: 'center',
+    width: 34,
+  },
+  settingsIconText: {
+    fontSize: 16,
+  },
   settingsTitle: {
     color: '#172018',
     fontSize: 16,
@@ -5939,7 +5981,7 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     alignItems: 'center',
     justifyContent: 'center',
-    minHeight: 48,
+    minHeight: 54,
     paddingHorizontal: 4,
   },
   navButtonActive: {
@@ -5949,6 +5991,12 @@ const styles = StyleSheet.create({
     color: '#68766b',
     fontSize: 11,
     fontWeight: '900',
+  },
+  navIcon: {
+    color: '#68766b',
+    fontSize: 15,
+    fontWeight: '900',
+    marginBottom: 2,
   },
   navTextActive: {
     color: '#ffffff',
