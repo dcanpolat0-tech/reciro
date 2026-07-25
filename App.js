@@ -65,6 +65,40 @@ const currencies = [
   { code: 'GBP', name: 'Sterlin', symbol: '£' },
 ];
 
+const countryCurrencyMap = {
+  TR: 'TRY',
+  GB: 'GBP',
+  GG: 'GBP',
+  IM: 'GBP',
+  JE: 'GBP',
+  AD: 'EUR',
+  AT: 'EUR',
+  BE: 'EUR',
+  CY: 'EUR',
+  DE: 'EUR',
+  EE: 'EUR',
+  ES: 'EUR',
+  FI: 'EUR',
+  FR: 'EUR',
+  GR: 'EUR',
+  HR: 'EUR',
+  IE: 'EUR',
+  IT: 'EUR',
+  LT: 'EUR',
+  LU: 'EUR',
+  LV: 'EUR',
+  MC: 'EUR',
+  ME: 'EUR',
+  MT: 'EUR',
+  NL: 'EUR',
+  PT: 'EUR',
+  SI: 'EUR',
+  SK: 'EUR',
+  SM: 'EUR',
+  VA: 'EUR',
+  XK: 'EUR',
+};
+
 const translations = {
   tr: {
     appSubtitle: 'Tara. Kaydet. Kolaylaştır.',
@@ -1140,6 +1174,12 @@ function getDeviceLanguage() {
   return supportedLanguage?.code || 'en';
 }
 
+function getDeviceCurrency() {
+  const locales = Localization.getLocales?.() || [];
+  const regionCode = String(locales[0]?.regionCode || locales[0]?.countryCode || '').toUpperCase();
+  return countryCurrencyMap[regionCode] || 'EUR';
+}
+
 const categoryOptions = [
   { key: 'grocery', color: '#157f3b', icon: '🛒' },
   { key: 'food', color: '#f5b942', icon: '🍽️' },
@@ -2017,7 +2057,7 @@ export default function App() {
   const [editCustomCategoryText, setEditCustomCategoryText] = useState('');
   const [editItems, setEditItems] = useState([]);
   const [selectedLanguage, setSelectedLanguage] = useState(getDeviceLanguage);
-  const [selectedCurrency, setSelectedCurrency] = useState('TRY');
+  const [selectedCurrency, setSelectedCurrency] = useState(getDeviceCurrency);
   const [authChoice, setAuthChoice] = useState(null);
   const [analysisUsageByMonth, setAnalysisUsageByMonth] = useState({});
   const [settingsSection, setSettingsSection] = useState('main');
@@ -2067,6 +2107,8 @@ export default function App() {
 
         if (savedCurrency && currencies.some((currency) => currency.code === savedCurrency)) {
           setSelectedCurrency(savedCurrency);
+        } else {
+          setSelectedCurrency(getDeviceCurrency());
         }
 
         if (savedAuthChoice) {
@@ -3031,6 +3073,7 @@ export default function App() {
               remaining={remaining}
               selectedLanguage={selectedLanguage}
               selectedCurrency={selectedCurrency}
+              setSelectedCurrency={setSelectedCurrency}
               settingsSection={settingsSection}
               setSettingsSection={setSettingsSection}
               onReport={() => setScreen('report')}
@@ -3676,6 +3719,7 @@ function SettingsScreen({
   remaining,
   selectedLanguage,
   selectedCurrency,
+  setSelectedCurrency,
   settingsSection,
   setSettingsSection,
   onReport,
@@ -3686,6 +3730,8 @@ function SettingsScreen({
   t,
 }) {
   const [feedbackText, setFeedbackText] = useState('');
+  const selectedCurrencyItem =
+    currencies.find((currency) => currency.code === selectedCurrency) || currencies[0];
 
   async function sendFeedback() {
     const message = feedbackText.trim();
@@ -3749,6 +3795,40 @@ function SettingsScreen({
         </View>
 
         <PrimaryButton label={t.reportButton} onPress={onReport} />
+        <SecondaryButton label={t.back} onPress={() => setSettingsSection('main')} />
+      </View>
+    );
+  }
+
+  if (settingsSection === 'currency') {
+    return (
+      <View>
+        <View style={styles.card}>
+          <Text style={styles.analysisTitle}>{t.currency}</Text>
+          <Text style={styles.analysisText}>{t.selectedCurrency(selectedCurrencyItem.symbol, selectedCurrencyItem.name)}</Text>
+        </View>
+
+        <View style={styles.settingsList}>
+          {currencies.map((currency) => (
+            <Pressable
+              key={currency.code}
+              style={styles.settingsRow}
+              onPress={() => setSelectedCurrency(currency.code)}
+            >
+              <View style={styles.settingsIconBox}>
+                <Text style={styles.settingsIconText}>{currency.symbol}</Text>
+              </View>
+              <View style={styles.settingsTextBlock}>
+                <Text style={styles.settingsTitle}>{currency.name}</Text>
+                <Text style={styles.settingsText}>{currency.code}</Text>
+              </View>
+              <Text style={styles.settingsValue}>
+                {selectedCurrency === currency.code ? t.selected : ''}
+              </Text>
+            </Pressable>
+          ))}
+        </View>
+
         <SecondaryButton label={t.back} onPress={() => setSettingsSection('main')} />
       </View>
     );
@@ -3874,6 +3954,13 @@ function SettingsScreen({
           subtitle={`${formatTL(salary)} / ${t.remainingMoney}: ${formatTL(remaining)}`}
           value=">"
           onPress={() => setSettingsSection('income')}
+        />
+        <SettingsRow
+          icon="💱"
+          title={t.currency}
+          subtitle={`${selectedCurrencyItem.symbol} ${selectedCurrencyItem.code}`}
+          value=">"
+          onPress={() => setSettingsSection('currency')}
         />
         <SettingsRow
           icon="🗂️"
