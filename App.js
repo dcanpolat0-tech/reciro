@@ -43,6 +43,7 @@ const RECEIPT_ANALYSIS_CLIENT_TOKEN =
 const ANALYSIS_IMAGE_MAX_WIDTH = 1024;
 const ANALYSIS_IMAGE_QUALITY = 0.55;
 const ANALYSIS_REQUEST_TIMEOUT_MS = 35000;
+const EXCHANGE_RATE_ENDPOINT = 'https://api.frankfurter.dev/v2/rates';
 const FREE_MONTHLY_ANALYSIS_LIMIT = 5;
 const ENABLE_START_ACCOUNT_GATE = false;
 const ENABLE_PREMIUM_PAYWALL = false;
@@ -63,10 +64,12 @@ const currencies = [
   { code: 'TRY', name: 'Türk Lirası', symbol: '₺' },
   { code: 'EUR', name: 'Euro', symbol: '€' },
   { code: 'GBP', name: 'Sterlin', symbol: '£' },
+  { code: 'USD', name: 'US Dollar', symbol: '$' },
 ];
 
 const countryCurrencyMap = {
   TR: 'TRY',
+  US: 'USD',
   GB: 'GBP',
   GG: 'GBP',
   IM: 'GBP',
@@ -152,6 +155,11 @@ const translations = {
     reanalyzeReceipt: 'Tekrar Analiz Et',
     storeName: 'Mağaza / işletme adı',
     totalAmount: 'Toplam tutar',
+    receiptCurrency: 'Fiş para birimi',
+    originalAmount: 'Fişteki tutar',
+    convertedAmount: 'Rapor tutarı',
+    exchangeRateErrorTitle: 'Kur alınamadı',
+    exchangeRateErrorText: 'Bu fişi ana para birimine çeviremedik. İnterneti kontrol edip tekrar dene.',
     category: 'Kategori',
     customCategory: 'Özel kategori',
     customCategoryPlaceholder: 'Örn. Oto bakım, okul, vergi...',
@@ -365,6 +373,11 @@ const translations = {
     reanalyzeReceipt: 'Analyze Again',
     storeName: 'Store / business name',
     totalAmount: 'Total amount',
+    receiptCurrency: 'Receipt currency',
+    originalAmount: 'Original amount',
+    convertedAmount: 'Report amount',
+    exchangeRateErrorTitle: 'Exchange rate unavailable',
+    exchangeRateErrorText: 'This receipt could not be converted to your main currency. Check your connection and try again.',
     category: 'Category',
     customCategory: 'Custom category',
     customCategoryPlaceholder: 'Example: car care, school, tax...',
@@ -578,6 +591,11 @@ const translations = {
     reanalyzeReceipt: 'Analyser encore',
     storeName: 'Nom du magasin',
     totalAmount: 'Montant total',
+    receiptCurrency: 'Devise du ticket',
+    originalAmount: 'Montant original',
+    convertedAmount: 'Montant du rapport',
+    exchangeRateErrorTitle: 'Taux indisponible',
+    exchangeRateErrorText: 'Ce ticket n a pas pu etre converti dans votre devise principale. Verifiez la connexion et reessayez.',
     category: 'Categorie',
     customCategory: 'Categorie personnalisee',
     customCategoryPlaceholder: 'Ex. voiture, ecole, taxe...',
@@ -791,6 +809,11 @@ const translations = {
     reanalyzeReceipt: 'Erneut analysieren',
     storeName: 'Geschaeftsname',
     totalAmount: 'Gesamtbetrag',
+    receiptCurrency: 'Belegwaehrung',
+    originalAmount: 'Originalbetrag',
+    convertedAmount: 'Berichtsbetrag',
+    exchangeRateErrorTitle: 'Wechselkurs nicht verfuegbar',
+    exchangeRateErrorText: 'Dieser Beleg konnte nicht in deine Hauptwaehrung umgerechnet werden. Pruefe die Verbindung und versuche es erneut.',
     category: 'Kategorie',
     customCategory: 'Eigene Kategorie',
     customCategoryPlaceholder: 'Z.B. Auto, Schule, Steuer...',
@@ -1004,6 +1027,11 @@ const translations = {
     reanalyzeReceipt: 'Analizar otra vez',
     storeName: 'Nombre de tienda',
     totalAmount: 'Importe total',
+    receiptCurrency: 'Moneda del ticket',
+    originalAmount: 'Importe original',
+    convertedAmount: 'Importe del reporte',
+    exchangeRateErrorTitle: 'Tipo de cambio no disponible',
+    exchangeRateErrorText: 'No pudimos convertir este ticket a tu moneda principal. Revisa la conexion e intentalo de nuevo.',
     category: 'Categoria',
     customCategory: 'Categoria personalizada',
     customCategoryPlaceholder: 'Ej. coche, escuela, impuesto...',
@@ -1180,6 +1208,17 @@ function getDeviceCurrency() {
   return countryCurrencyMap[regionCode] || 'EUR';
 }
 
+function normalizeCurrencyCode(currencyCode, fallbackCurrency = activeCurrency) {
+  const normalizedCode = String(currencyCode || '').trim().toUpperCase();
+  return currencies.some((currency) => currency.code === normalizedCode)
+    ? normalizedCode
+    : fallbackCurrency;
+}
+
+function getCurrencySymbol(currencyCode) {
+  return currencies.find((currency) => currency.code === currencyCode)?.symbol || currencyCode;
+}
+
 const categoryOptions = [
   { key: 'grocery', color: '#157f3b', icon: '🛒' },
   { key: 'food', color: '#f5b942', icon: '🍽️' },
@@ -1340,7 +1379,7 @@ function isValidReceiptRecord(receipt) {
   return Boolean(receipt && typeof receipt === 'object' && !Array.isArray(receipt));
 }
 
-function normalizeReceiptCategories(receipt) {
+function normalizeReceiptCategories(receipt, fallbackCurrency = activeCurrency) {
   if (!isValidReceiptRecord(receipt)) {
     return null;
   }
@@ -1360,11 +1399,21 @@ function normalizeReceiptCategories(receipt) {
       )
     : [];
   const normalizedAmount = normalizeReceiptAmount(receipt.amount, normalizedItems);
+  const reportCurrency = normalizeCurrencyCode(receipt.currency, fallbackCurrency);
+  const originalCurrency = normalizeCurrencyCode(receipt.originalCurrency, reportCurrency);
+  const originalAmount =
+    typeof receipt.originalAmount === 'number'
+      ? receipt.originalAmount
+      : normalizedAmount;
 
   return {
     ...receipt,
     category: normalizedCategory,
     amount: normalizedAmount,
+    currency: reportCurrency,
+    originalAmount,
+    originalCurrency,
+    exchangeRate: Number(receipt.exchangeRate) > 0 ? Number(receipt.exchangeRate) : 1,
     items: normalizedItems,
   };
 }
@@ -1899,6 +1948,7 @@ async function analyzeReceiptPhoto(imageUri) {
   return {
     storeName: result.storeName || result.store || '',
     totalText: String(result.totalText || result.total || ''),
+    currencyCode: normalizeCurrencyCode(result.currencyCode, activeCurrency),
     dateText: result.dateText || result.date || formatReceiptDate(Date.now()),
     categoryKey: normalizeCategoryKey(result.categoryKey || result.category),
     confidence: typeof result.confidence === 'number' ? result.confidence : null,
@@ -1915,15 +1965,75 @@ async function analyzeReceiptPhoto(imageUri) {
 }
 
 function formatTL(value) {
+  return formatCurrencyAmount(value, activeCurrency);
+}
+
+function formatCurrencyAmount(value, currencyCode = activeCurrency) {
   const numericValue = Number(value) || 0;
   const hasCents = Math.abs(numericValue % 1) > 0.001;
 
   return new Intl.NumberFormat('tr-TR', {
     style: 'currency',
-    currency: activeCurrency,
+    currency: normalizeCurrencyCode(currencyCode, activeCurrency),
     minimumFractionDigits: hasCents ? 2 : 0,
     maximumFractionDigits: 2,
   }).format(numericValue);
+}
+
+async function getExchangeRate(fromCurrency, toCurrency) {
+  const from = normalizeCurrencyCode(fromCurrency, activeCurrency);
+  const to = normalizeCurrencyCode(toCurrency, activeCurrency);
+
+  if (from === to) {
+    return 1;
+  }
+
+  const response = await fetch(`${EXCHANGE_RATE_ENDPOINT}?base=${encodeURIComponent(from)}&quotes=${encodeURIComponent(to)}`);
+
+  if (!response.ok) {
+    throw new Error(`Exchange rate request failed: ${response.status}`);
+  }
+
+  const result = await response.json();
+  const rate = Array.isArray(result)
+    ? Number(result.find((entry) => entry?.quote === to)?.rate)
+    : Number(result?.rates?.[to]);
+
+  if (!Number.isFinite(rate) || rate <= 0) {
+    throw new Error('Exchange rate is missing.');
+  }
+
+  return rate;
+}
+
+async function buildReceiptMoneyFields(originalAmount, originalCurrency, reportCurrency, items) {
+  const cleanOriginalCurrency = normalizeCurrencyCode(originalCurrency, reportCurrency);
+  const cleanReportCurrency = normalizeCurrencyCode(reportCurrency, activeCurrency);
+  const exchangeRate = await getExchangeRate(cleanOriginalCurrency, cleanReportCurrency);
+  const convertedAmount = Number((originalAmount * exchangeRate).toFixed(2));
+  const convertedItems = Array.isArray(items)
+    ? items.map((item) => {
+        if (typeof item.amount !== 'number' || item.amount <= 0) {
+          return item;
+        }
+
+        return {
+          ...item,
+          originalAmount: item.originalAmount ?? item.amount,
+          originalCurrency: item.originalCurrency || cleanOriginalCurrency,
+          amount: Number((item.amount * exchangeRate).toFixed(2)),
+        };
+      })
+    : [];
+
+  return {
+    amount: convertedAmount,
+    currency: cleanReportCurrency,
+    originalAmount: Number(originalAmount.toFixed(2)),
+    originalCurrency: cleanOriginalCurrency,
+    exchangeRate,
+    items: convertedItems,
+  };
 }
 
 function formatQuantity(value) {
@@ -2037,6 +2147,7 @@ export default function App() {
   const [incomeMonthKey, setIncomeMonthKey] = useState(getMonthKey());
   const [storeName, setStoreName] = useState('');
   const [amountText, setAmountText] = useState('');
+  const [receiptCurrency, setReceiptCurrency] = useState(getDeviceCurrency);
   const [receiptDateText, setReceiptDateText] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('grocery');
   const [customCategoryText, setCustomCategoryText] = useState('');
@@ -2086,12 +2197,18 @@ export default function App() {
           AsyncStorage.getItem(ANALYSIS_USAGE_STORAGE_KEY),
         ]);
 
+        const startupCurrency =
+          savedCurrency && currencies.some((currency) => currency.code === savedCurrency)
+            ? savedCurrency
+            : getDeviceCurrency();
+        activeCurrency = startupCurrency;
+
         const parsedReceipts = safeParseStoredJson(savedReceipts, null);
         if (Array.isArray(parsedReceipts)) {
           const cleanReceipts = parsedReceipts
             .filter(isValidReceiptRecord)
             .filter((receipt) => !isSeedReceipt(receipt))
-            .map(normalizeReceiptCategories)
+            .map((receipt) => normalizeReceiptCategories(receipt, startupCurrency))
             .filter(Boolean);
           setReceipts(cleanReceipts);
         }
@@ -2105,11 +2222,7 @@ export default function App() {
 
         setSelectedLanguage(getDeviceLanguage());
 
-        if (savedCurrency && currencies.some((currency) => currency.code === savedCurrency)) {
-          setSelectedCurrency(savedCurrency);
-        } else {
-          setSelectedCurrency(getDeviceCurrency());
-        }
+        setSelectedCurrency(startupCurrency);
 
         if (savedAuthChoice) {
           setAuthChoice(savedAuthChoice);
@@ -2511,6 +2624,10 @@ export default function App() {
       ...selectedReceipt,
       store: cleanStoreName,
       amount: normalizeReceiptAmount(amount, editedItemsForSave),
+      currency: selectedCurrency,
+      originalAmount: normalizeReceiptAmount(amount, editedItemsForSave),
+      originalCurrency: selectedCurrency,
+      exchangeRate: 1,
       date: editDateText.trim() || formatReceiptDate(selectedReceipt.createdAt),
       category: categoryForSave,
       items: editedItemsForSave,
@@ -2621,6 +2738,7 @@ export default function App() {
   function resetReceiptForm() {
     setStoreName('');
     setAmountText('');
+    setReceiptCurrency(selectedCurrency);
     setReceiptDateText('');
     setSelectedCategory('grocery');
     setCustomCategoryText('');
@@ -2729,6 +2847,7 @@ export default function App() {
         setReceiptImage(savedImageUri);
         setStoreName('');
         setAmountText('');
+        setReceiptCurrency(selectedCurrency);
         setReceiptDateText(formatReceiptDate(Date.now()));
         setAnalysisConfidence(null);
         setReceiptItems([]);
@@ -2770,6 +2889,7 @@ export default function App() {
         setReceiptImage(savedImageUri);
         setStoreName('');
         setAmountText('');
+        setReceiptCurrency(selectedCurrency);
         setReceiptDateText(formatReceiptDate(Date.now()));
         setAnalysisConfidence(null);
         setReceiptItems([]);
@@ -2808,6 +2928,7 @@ export default function App() {
 
       setStoreName(analysisResult.storeName || '');
       setAmountText(analysisResult.totalText || '');
+      setReceiptCurrency(normalizeCurrencyCode(analysisResult.currencyCode, selectedCurrency));
       setReceiptDateText(analysisResult.dateText || formatReceiptDate(Date.now()));
       const analyzedCategory = normalizeCategoryKey(analysisResult.categoryKey);
       setSelectedCategory(analyzedCategory);
@@ -2849,7 +2970,7 @@ export default function App() {
     setScreen('detail');
   }
 
-  function saveManualReceipt() {
+  async function saveManualReceipt() {
     const amount = parseAmount(amountText);
     const cleanStoreName = storeName.trim();
     const now = Date.now();
@@ -2870,16 +2991,35 @@ export default function App() {
     }
 
     const receiptItemsForSave = cleanEditableItems(receiptItems, categoryForSave);
+    const originalReceiptAmount = normalizeReceiptAmount(amount, receiptItemsForSave);
+    let moneyFields;
+
+    try {
+      moneyFields = await buildReceiptMoneyFields(
+        originalReceiptAmount,
+        receiptCurrency,
+        selectedCurrency,
+        receiptItemsForSave
+      );
+    } catch (error) {
+      console.warn('Exchange rate conversion failed.', error);
+      Alert.alert(t.exchangeRateErrorTitle, t.exchangeRateErrorText);
+      return;
+    }
 
     const newReceipt = {
       id: now,
       createdAt: now,
       store: cleanStoreName,
-      amount: normalizeReceiptAmount(amount, receiptItemsForSave),
+      amount: moneyFields.amount,
+      currency: moneyFields.currency,
+      originalAmount: moneyFields.originalAmount,
+      originalCurrency: moneyFields.originalCurrency,
+      exchangeRate: moneyFields.exchangeRate,
       category: categoryForSave,
       date: cleanDateText,
       image: receiptImage,
-      items: receiptItemsForSave,
+      items: moneyFields.items,
     };
 
     commitNewReceipt(newReceipt);
@@ -2948,6 +3088,8 @@ export default function App() {
                   setStoreName={setStoreName}
                   amountText={amountText}
                   setAmountText={setAmountText}
+                  receiptCurrency={receiptCurrency}
+                  setReceiptCurrency={setReceiptCurrency}
                   receiptDateText={receiptDateText}
                   setReceiptDateText={setReceiptDateText}
                   selectedCategory={selectedCategory}
@@ -3189,6 +3331,8 @@ function ReceiptScreen({
   setStoreName,
   amountText,
   setAmountText,
+  receiptCurrency,
+  setReceiptCurrency,
   receiptDateText,
   setReceiptDateText,
   selectedCategory,
@@ -3339,6 +3483,29 @@ function ReceiptScreen({
             keyboardType="decimal-pad"
             placeholder=""
           />
+
+          <Text style={styles.inputLabel}>{t.receiptCurrency}</Text>
+          <View style={styles.currencyChipRow}>
+            {currencies.map((currency) => (
+              <Pressable
+                key={currency.code}
+                style={[
+                  styles.currencyChip,
+                  receiptCurrency === currency.code && styles.currencyChipActive,
+                ]}
+                onPress={() => setReceiptCurrency(currency.code)}
+              >
+                <Text
+                  style={[
+                    styles.currencyChipText,
+                    receiptCurrency === currency.code && styles.currencyChipTextActive,
+                  ]}
+                >
+                  {currency.symbol} {currency.code}
+                </Text>
+              </Pressable>
+            ))}
+          </View>
 
           <Text style={styles.inputLabel}>{t.date}</Text>
           <TextInput
@@ -4200,9 +4367,17 @@ function ReceiptDetailScreen({
       ) : (
         <View style={styles.card}>
           <View style={styles.row}>
-            <Text style={styles.rowText}>{t.total}</Text>
+            <Text style={styles.rowText}>{t.convertedAmount}</Text>
             <Text style={styles.rowAmount}>{formatTL(receipt.amount)}</Text>
           </View>
+          {receipt.originalCurrency && receipt.originalCurrency !== receipt.currency && (
+            <View style={styles.row}>
+              <Text style={styles.rowText}>{t.originalAmount}</Text>
+              <Text style={styles.rowAmount}>
+                {formatCurrencyAmount(receipt.originalAmount, receipt.originalCurrency)}
+              </Text>
+            </View>
+          )}
           <View style={styles.row}>
             <Text style={styles.rowText}>{t.category}</Text>
             <Text style={styles.rowAmount}>{getCategoryLabel(receipt.category, t)}</Text>
@@ -4233,7 +4408,11 @@ function ReceiptDetailScreen({
                     <Text style={styles.rowMeta}>{getItemQuantityText(normalizedItem, t)}</Text>
                   </View>
                   {typeof normalizedItem.amount === 'number' && (
-                    <Text style={styles.rowAmount}>{formatTL(normalizedItem.amount)}</Text>
+                    <Text style={styles.rowAmount}>
+                      {normalizedItem.originalCurrency && normalizedItem.originalCurrency !== receipt.currency
+                        ? formatCurrencyAmount(normalizedItem.originalAmount, normalizedItem.originalCurrency)
+                        : formatTL(normalizedItem.amount)}
+                    </Text>
                   )}
                 </View>
               );
@@ -5816,6 +5995,33 @@ const styles = StyleSheet.create({
     flexWrap: 'wrap',
     gap: 8,
     marginTop: 2,
+  },
+  currencyChipRow: {
+    flexDirection: 'row',
+    gap: 8,
+    marginBottom: 8,
+  },
+  currencyChip: {
+    alignItems: 'center',
+    backgroundColor: '#ffffff',
+    borderColor: '#dfe8e0',
+    borderRadius: 8,
+    borderWidth: 1,
+    flex: 1,
+    paddingHorizontal: 10,
+    paddingVertical: 12,
+  },
+  currencyChipActive: {
+    backgroundColor: '#e6f5ea',
+    borderColor: '#157f3b',
+  },
+  currencyChipText: {
+    color: '#68766b',
+    fontSize: 13,
+    fontWeight: '900',
+  },
+  currencyChipTextActive: {
+    color: '#0d5f2b',
   },
   receiptCategoryButton: {
     borderColor: '#dfe8e0',

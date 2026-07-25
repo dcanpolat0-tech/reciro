@@ -48,6 +48,10 @@ const receiptSchema = {
   properties: {
     storeName: { type: 'string' },
     totalText: { type: 'string' },
+    currencyCode: {
+      type: 'string',
+      enum: ['TRY', 'EUR', 'GBP', 'USD', 'UNKNOWN'],
+    },
     dateText: { type: 'string' },
     categoryKey: {
       type: 'string',
@@ -76,7 +80,7 @@ const receiptSchema = {
       },
     },
   },
-  required: ['storeName', 'totalText', 'dateText', 'categoryKey', 'confidence', 'items'],
+  required: ['storeName', 'totalText', 'currencyCode', 'dateText', 'categoryKey', 'confidence', 'items'],
 };
 
 function sendJson(response, statusCode, payload) {
@@ -166,6 +170,7 @@ function normalizeAnalysis(result) {
   return {
     storeName: String(result.storeName || '').trim(),
     totalText: String(result.totalText || '').trim(),
+    currencyCode: ['TRY', 'EUR', 'GBP', 'USD'].includes(result.currencyCode) ? result.currencyCode : 'UNKNOWN',
     dateText: String(result.dateText || '').trim(),
     categoryKey: result.categoryKey || 'other',
     confidence: typeof result.confidence === 'number' ? result.confidence : 0,
@@ -207,6 +212,7 @@ async function analyzeReceipt(imageBase64) {
               text:
                 'Read this receipt/invoice image. Return only structured JSON. ' +
                 'Use dateText as DD.MM.YYYY when possible. totalText must be the final paid total. ' +
+                'Detect currencyCode from printed symbols/currency text. Use TRY for TL/₺/TRY, EUR for €/EUR, GBP for £/GBP, USD for $/USD. If unclear, use UNKNOWN. ' +
                 'Never round prices. Preserve cents exactly: 0.99 must be 0.99, 25.60 must be 25.60, and 55.84 must be 55.84. ' +
                 'For item amount, return the exact line price printed on the receipt, not an estimated or rounded value. ' +
                 'For each item, also return quantity and unit. If the receipt shows "2 x", quantity is 2 and unit is "pcs". If it shows weight like "2.395 kg", quantity is 2.395 and unit is "kg". If quantity is unclear, use quantity 1 and unit "". ' +
