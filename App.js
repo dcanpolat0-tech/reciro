@@ -1328,10 +1328,6 @@ const featureTranslations = {
     highestPrice: 'High',
     privacyMode: 'Privacy-first',
     privacyModeInfo: 'No bank connection is required. Your receipts stay on this phone unless you export or back them up.',
-    bulkUpload: 'Bulk upload',
-    bulkUploadInfo: 'Select more than one receipt photo from your gallery.',
-    bulkUploadDone: (count) => `${count} receipts were imported.`,
-    bulkUploadPartial: (success, failed) => `${success} receipts imported, ${failed} could not be read.`,
     oneTapCamera: 'One-tap camera',
     oneTapCameraInfo: 'The green add button opens receipt capture immediately.',
     markedImportant: 'Important',
@@ -1375,10 +1371,6 @@ const featureTranslations = {
     highestPrice: 'En yüksek',
     privacyMode: 'Gizlilik odaklı',
     privacyModeInfo: 'Banka bağlantısı gerekmez. Dışa aktarmadıkça veya yedeklemedikçe fişlerin bu telefonda kalır.',
-    bulkUpload: 'Toplu yükleme',
-    bulkUploadInfo: 'Galeriden birden fazla fiş fotoğrafı seç.',
-    bulkUploadDone: (count) => `${count} fiş içe aktarıldı.`,
-    bulkUploadPartial: (success, failed) => `${success} fiş eklendi, ${failed} fiş okunamadı.`,
     oneTapCamera: 'Tek dokunuş kamera',
     oneTapCameraInfo: 'Yeşil ekleme butonu fiş yakalamayı hızlı başlatır.',
     markedImportant: 'Önemli',
@@ -1422,10 +1414,6 @@ const featureTranslations = {
     highestPrice: 'Haut',
     privacyMode: 'Confidentialite',
     privacyModeInfo: 'Aucune connexion bancaire requise. Les tickets restent sur ce telephone sauf export ou sauvegarde.',
-    bulkUpload: 'Import multiple',
-    bulkUploadInfo: 'Selectionnez plusieurs photos de tickets depuis la galerie.',
-    bulkUploadDone: (count) => `${count} tickets importes.`,
-    bulkUploadPartial: (success, failed) => `${success} tickets importes, ${failed} non lus.`,
     oneTapCamera: 'Camera rapide',
     oneTapCameraInfo: 'Le bouton vert lance rapidement l ajout de ticket.',
     markedImportant: 'Important',
@@ -1469,10 +1457,6 @@ const featureTranslations = {
     highestPrice: 'Hoch',
     privacyMode: 'Datenschutz',
     privacyModeInfo: 'Keine Bankverbindung erforderlich. Belege bleiben auf diesem Telefon, ausser Export oder Backup.',
-    bulkUpload: 'Mehrfach-Upload',
-    bulkUploadInfo: 'Mehrere Belegfotos aus der Galerie auswaehlen.',
-    bulkUploadDone: (count) => `${count} Belege importiert.`,
-    bulkUploadPartial: (success, failed) => `${success} Belege importiert, ${failed} nicht gelesen.`,
     oneTapCamera: 'Schnelle Kamera',
     oneTapCameraInfo: 'Der gruene Button startet das Beleg-Erfassen schnell.',
     markedImportant: 'Wichtig',
@@ -1516,10 +1500,6 @@ const featureTranslations = {
     highestPrice: 'Alto',
     privacyMode: 'Privacidad',
     privacyModeInfo: 'No requiere conexion bancaria. Tus tickets quedan en este telefono salvo exportacion o copia.',
-    bulkUpload: 'Carga multiple',
-    bulkUploadInfo: 'Selecciona varias fotos de tickets desde la galeria.',
-    bulkUploadDone: (count) => `${count} tickets importados.`,
-    bulkUploadPartial: (success, failed) => `${success} tickets importados, ${failed} no leidos.`,
     oneTapCamera: 'Camara rapida',
     oneTapCameraInfo: 'El boton verde inicia rapidamente la captura del ticket.',
     markedImportant: 'Importante',
@@ -3614,17 +3594,10 @@ export default function App() {
       const result = await ImagePicker.launchImageLibraryAsync({
         mediaTypes: IMAGE_PICKER_MEDIA_TYPES,
         allowsEditing: false,
-        allowsMultipleSelection: true,
         quality: 0.85,
       });
 
       if (!result.canceled && result.assets?.[0]?.uri) {
-        if (result.assets.length > 1) {
-          setPhotoOptionsOpen(false);
-          await importBulkReceiptImages(result.assets);
-          return;
-        }
-
         const selectedAsset = result.assets[0];
         if (shouldWarnImageQuality(selectedAsset)) {
           const shouldContinue = await confirmAlert(
@@ -3665,90 +3638,6 @@ export default function App() {
     if (savedImageUri) {
       await analyzeReceiptImage(savedImageUri);
     }
-  }
-
-  async function importBulkReceiptImages(assets) {
-    setAnalysisStatus('analyzing');
-    let successCount = 0;
-    let failedCount = 0;
-    const importedReceipts = [];
-    const learnedMemory = {};
-
-    for (const asset of assets) {
-      if (!asset?.uri) {
-        failedCount += 1;
-        continue;
-      }
-
-      try {
-        const savedImageUri = await saveReceiptImageToDevice(asset.uri);
-        const analysisResult = await analyzeReceiptPhoto(savedImageUri);
-        const analyzedCategory = normalizeCategoryKey(analysisResult.categoryKey);
-        const analyzedItems = createEditableItemsFromList(
-          applyCategoryMemory(analysisResult.items || [], categoryMemory),
-          analyzedCategory
-        );
-        const cleanItems = cleanEditableItems(analyzedItems, analyzedCategory);
-        const originalAmount = normalizeReceiptAmount(parseAmount(analysisResult.totalText), cleanItems);
-        const cleanDateText = analysisResult.dateText || formatReceiptDate(Date.now());
-        const moneyFields = await buildReceiptMoneyFields(
-          originalAmount,
-          analysisResult.currencyCode,
-          selectedCurrency,
-          cleanItems,
-          cleanDateText
-        );
-        const createdAt = Date.now() + successCount;
-
-        importedReceipts.push({
-          id: createdAt,
-          createdAt,
-          store: analysisResult.storeName || t.noReceipts,
-          amount: moneyFields.amount,
-          currency: moneyFields.currency,
-          originalAmount: moneyFields.originalAmount,
-          originalCurrency: moneyFields.originalCurrency,
-          exchangeRate: moneyFields.exchangeRate,
-          subtotalAmount: Number((parseAmount(analysisResult.subtotalText) * moneyFields.exchangeRate).toFixed(2)) || 0,
-          taxAmount: Number((parseAmount(analysisResult.taxText) * moneyFields.exchangeRate).toFixed(2)) || 0,
-          originalSubtotalAmount: parseAmount(analysisResult.subtotalText) || 0,
-          originalTaxAmount: parseAmount(analysisResult.taxText) || 0,
-          category: analyzedCategory,
-          date: cleanDateText,
-          kind: 'expense',
-          important: false,
-          warrantyUntil: '',
-          note: '',
-          space: activeSpace,
-          image: savedImageUri,
-          file: null,
-          items: moneyFields.items,
-        });
-
-        Object.assign(learnedMemory, buildCategoryMemoryFromItems(analyzedItems));
-        incrementAnalysisUsage();
-        successCount += 1;
-      } catch (error) {
-        console.warn('Bulk receipt import failed for one image.', error);
-        failedCount += 1;
-      }
-    }
-
-    if (importedReceipts.length > 0) {
-      setReceipts((currentReceipts) => [...currentReceipts, ...importedReceipts]);
-      if (Object.keys(learnedMemory).length > 0) {
-        setCategoryMemory((currentMemory) => ({
-          ...currentMemory,
-          ...learnedMemory,
-        }));
-      }
-    }
-
-    setAnalysisStatus('idle');
-    Alert.alert(
-      t.bulkUpload,
-      failedCount > 0 ? t.bulkUploadPartial(successCount, failedCount) : t.bulkUploadDone(successCount)
-    );
   }
 
   async function takeReceiptPhoto() {
@@ -5484,12 +5373,6 @@ function SettingsScreen({
           icon="📷"
           title={t.oneTapCamera}
           subtitle={t.oneTapCameraInfo}
-          value=""
-        />
-        <SettingsRow
-          icon="🖼️"
-          title={t.bulkUpload}
-          subtitle={t.bulkUploadInfo}
           value=""
         />
         <SettingsRow
