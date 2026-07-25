@@ -2673,15 +2673,17 @@ export default function App() {
       return;
     }
 
-    const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: IMAGE_PICKER_MEDIA_TYPES,
-      allowsEditing: false,
-      quality: 0.85,
-    });
+    let savedImageUri = '';
 
-    if (!result.canceled && result.assets?.[0]?.uri) {
-      try {
-        const savedImageUri = await saveReceiptImageToDevice(result.assets[0].uri);
+    try {
+      const result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: IMAGE_PICKER_MEDIA_TYPES,
+        allowsEditing: false,
+        quality: 0.85,
+      });
+
+      if (!result.canceled && result.assets?.[0]?.uri) {
+        savedImageUri = await saveReceiptImageToDevice(result.assets[0].uri);
         setReceiptImage(savedImageUri);
         setStoreName('');
         setAmountText('');
@@ -2689,16 +2691,24 @@ export default function App() {
         setAnalysisConfidence(null);
         setReceiptItems([]);
         setPhotoOptionsOpen(false);
-        await analyzeReceiptImage(savedImageUri);
-      } catch (error) {
-        Alert.alert(t.photoSaveErrorTitle, t.photoSaveErrorText);
+      } else {
+        setPhotoOptionsOpen(false);
       }
-    } else {
+    } catch (error) {
+      console.warn('Gallery receipt photo could not be saved.', error);
       setPhotoOptionsOpen(false);
+      Alert.alert(t.photoSaveErrorTitle, t.photoSaveErrorText);
+      return;
+    }
+
+    if (savedImageUri) {
+      await analyzeReceiptImage(savedImageUri);
     }
   }
 
   async function takeReceiptPhoto() {
+    let savedImageUri = '';
+
     try {
       const permission = await ImagePicker.requestCameraPermissionsAsync();
 
@@ -2714,7 +2724,7 @@ export default function App() {
       });
 
       if (!result.canceled && result.assets?.[0]?.uri) {
-        const savedImageUri = await saveReceiptImageToDevice(result.assets[0].uri);
+        savedImageUri = await saveReceiptImageToDevice(result.assets[0].uri);
         setReceiptImage(savedImageUri);
         setStoreName('');
         setAmountText('');
@@ -2722,7 +2732,6 @@ export default function App() {
         setAnalysisConfidence(null);
         setReceiptItems([]);
         setPhotoOptionsOpen(false);
-        await analyzeReceiptImage(savedImageUri);
       } else {
         setPhotoOptionsOpen(false);
       }
@@ -2730,6 +2739,11 @@ export default function App() {
       console.warn('Camera launch failed.', error);
       setPhotoOptionsOpen(false);
       Alert.alert(t.cameraOpenErrorTitle, t.cameraOpenErrorText);
+      return;
+    }
+
+    if (savedImageUri) {
+      await analyzeReceiptImage(savedImageUri);
     }
   }
 
@@ -2761,6 +2775,7 @@ export default function App() {
       incrementAnalysisUsage();
       setAnalysisStatus('done');
     } catch (error) {
+      console.warn('Receipt analysis failed.', error);
       setAnalysisStatus('ready');
       if (error.code === 'ANALYSIS_NOT_CONFIGURED') {
         Alert.alert(t.analysisUnavailableTitle, t.analysisUnavailableText);
