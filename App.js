@@ -3016,7 +3016,6 @@ export default function App() {
               remaining={remaining}
               selectedLanguage={selectedLanguage}
               selectedCurrency={selectedCurrency}
-              setSelectedCurrency={setSelectedCurrency}
               settingsSection={settingsSection}
               setSettingsSection={setSettingsSection}
               onReport={() => setScreen('report')}
@@ -3036,7 +3035,7 @@ export default function App() {
         <View style={styles.navArea} pointerEvents="box-none">
           <View style={styles.nav}>
             <NavButton
-              icon="⌂"
+              icon="🏠"
               label={t.navHome}
               active={screen === 'home' || (screen === 'detail' && detailReturnScreen === 'home')}
               onPress={() => setScreen('home')}
@@ -3662,7 +3661,6 @@ function SettingsScreen({
   remaining,
   selectedLanguage,
   selectedCurrency,
-  setSelectedCurrency,
   settingsSection,
   setSettingsSection,
   onReport,
@@ -3673,8 +3671,6 @@ function SettingsScreen({
   t,
 }) {
   const [feedbackText, setFeedbackText] = useState('');
-  const selectedCurrencyItem =
-    currencies.find((currency) => currency.code === selectedCurrency) || currencies[0];
 
   async function sendFeedback() {
     const message = feedbackText.trim();
@@ -3693,34 +3689,6 @@ function SettingsScreen({
     } catch (error) {
       Alert.alert(t.feedbackMailTitle, t.feedbackMailText);
     }
-  }
-
-  if (settingsSection === 'currency') {
-    return (
-      <View>
-        <View style={styles.settingsList}>
-          {currencies.map((currency) => (
-            <Pressable
-              key={currency.code}
-              style={styles.settingsRow}
-              onPress={() => setSelectedCurrency(currency.code)}
-            >
-              <View>
-                <Text style={styles.settingsTitle}>{currency.name}</Text>
-                <Text style={styles.settingsText}>
-                  {currency.code} - {currency.symbol}
-                </Text>
-              </View>
-              <Text style={styles.settingsValue}>
-                {selectedCurrency === currency.code ? t.selected : ''}
-              </Text>
-            </Pressable>
-          ))}
-        </View>
-
-        <SecondaryButton label={t.back} onPress={() => setSettingsSection('main')} />
-      </View>
-    );
   }
 
   if (settingsSection === 'income') {
@@ -3891,13 +3859,6 @@ function SettingsScreen({
           subtitle={`${formatTL(salary)} / ${t.remainingMoney}: ${formatTL(remaining)}`}
           value=">"
           onPress={() => setSettingsSection('income')}
-        />
-        <SettingsRow
-          icon="💱"
-          title={t.currency}
-          subtitle={`${selectedCurrencyItem.symbol} ${selectedCurrencyItem.code}`}
-          value=">"
-          onPress={() => setSettingsSection('currency')}
         />
         <SettingsRow
           icon="🗂️"
@@ -4585,6 +4546,7 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   homeHero: {
+    alignItems: 'center',
     backgroundColor: '#ffffff',
     borderColor: '#dfe8e0',
     borderWidth: 1,
@@ -4595,6 +4557,7 @@ const styles = StyleSheet.create({
     color: '#0d5f2b',
     fontSize: 12,
     fontWeight: '900',
+    textAlign: 'center',
     textTransform: 'uppercase',
   },
   homeAmount: {
@@ -4602,19 +4565,23 @@ const styles = StyleSheet.create({
     fontSize: 44,
     fontWeight: '900',
     marginTop: 8,
+    textAlign: 'center',
   },
   homeHeroText: {
     color: '#4f5d52',
     fontSize: 14,
     lineHeight: 20,
     marginTop: 8,
+    textAlign: 'center',
   },
   homeSummaryRow: {
     flexDirection: 'row',
     gap: 10,
     marginTop: 18,
+    width: '100%',
   },
   homeSummaryItem: {
+    alignItems: 'center',
     flex: 1,
     backgroundColor: '#eaf8ec',
     borderRadius: 8,
@@ -4624,12 +4591,14 @@ const styles = StyleSheet.create({
     color: '#68766b',
     fontSize: 12,
     fontWeight: '800',
+    textAlign: 'center',
   },
   homeSummaryValue: {
     color: '#172018',
     fontSize: 18,
     fontWeight: '900',
     marginTop: 5,
+    textAlign: 'center',
   },
   reportHero: {
     alignItems: 'center',
@@ -5188,6 +5157,7 @@ const styles = StyleSheet.create({
     marginTop: 16,
   },
   metric: {
+    alignItems: 'center',
     width: '48.5%',
     backgroundColor: '#fff',
     borderColor: '#dfe8e0',
@@ -5200,11 +5170,13 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontWeight: '800',
     marginBottom: 8,
+    textAlign: 'center',
   },
   metricValue: {
     color: '#172018',
     fontSize: 19,
     fontWeight: '900',
+    textAlign: 'center',
   },
   homeReceiptComposer: {
     marginTop: 10,
