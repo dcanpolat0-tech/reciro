@@ -16,9 +16,11 @@ import {
   View,
 } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
+import * as DocumentPicker from 'expo-document-picker';
 import * as FileSystem from 'expo-file-system/legacy';
 import * as Localization from 'expo-localization';
 import * as ImageManipulator from 'expo-image-manipulator';
+import * as Sharing from 'expo-sharing';
 import Constants from 'expo-constants';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
@@ -28,8 +30,11 @@ const INCOME_BY_MONTH_STORAGE_KEY = 'reciro.incomeByMonth.v1';
 const CURRENCY_STORAGE_KEY = 'reciro.currency.v1';
 const AUTH_CHOICE_STORAGE_KEY = 'reciro.authChoice.v1';
 const ANALYSIS_USAGE_STORAGE_KEY = 'reciro.analysisUsage.v1';
+const CATEGORY_MEMORY_STORAGE_KEY = 'reciro.categoryMemory.v1';
 const RECEIPT_IMAGE_DIR = `${FileSystem.documentDirectory}receipts/`;
+const RECEIPT_FILE_DIR = `${FileSystem.documentDirectory}receipt-files/`;
 const BACKUP_DIR = `${FileSystem.documentDirectory}backups/`;
+const EXPORT_DIR = `${FileSystem.documentDirectory}exports/`;
 const APP_CONFIG_EXTRA = Constants.expoConfig?.extra || Constants.manifest?.extra || {};
 const DEFAULT_RECEIPT_ANALYSIS_ENDPOINT = 'https://reciro-receipt-analysis.onrender.com/analyze-receipt';
 const RECEIPT_ANALYSIS_ENDPOINT =
@@ -160,6 +165,23 @@ const translations = {
     convertedAmount: 'Rapor tutarı',
     exchangeRateErrorTitle: 'Kur alınamadı',
     exchangeRateErrorText: 'Bu fişi ana para birimine çeviremedik. İnterneti kontrol edip tekrar dene.',
+    taxAmount: 'Vergi / KDV',
+    subtotalAmount: 'Ara toplam',
+    exchangeRate: 'Kur',
+    duplicateReceiptTitle: 'Bu fiş eklenmiş olabilir',
+    duplicateReceiptText: 'Aynı mağaza, tarih ve tutara benzeyen bir fiş zaten var. Yine de kaydedilsin mi?',
+    saveAnyway: 'Yine de kaydet',
+    imageQualityTitle: 'Fotoğraf net olmayabilir',
+    imageQualityText: 'Bu fotoğraf düşük çözünürlüklü görünüyor. Analiz yanlış olabilir.',
+    usePhotoAnyway: 'Yine de kullan',
+    pickFile: 'Dosya seç',
+    pickFileHelp: 'PDF veya fotoğraf dosyası yükle.',
+    fileSaved: 'Dosya kaydedildi',
+    fileSavedText: 'PDF dosyası saklandı. Bilgileri elle doldurup kaydedebilirsin.',
+    exportCsv: 'CSV Dışa Aktar',
+    exportReady: 'Dışa aktarma hazır',
+    exportError: 'Dışa aktarma hatası',
+    exportErrorText: 'CSV dosyası oluşturulamadı.',
     category: 'Kategori',
     customCategory: 'Özel kategori',
     customCategoryPlaceholder: 'Örn. Oto bakım, okul, vergi...',
@@ -378,6 +400,23 @@ const translations = {
     convertedAmount: 'Report amount',
     exchangeRateErrorTitle: 'Exchange rate unavailable',
     exchangeRateErrorText: 'This receipt could not be converted to your main currency. Check your connection and try again.',
+    taxAmount: 'Tax / VAT',
+    subtotalAmount: 'Subtotal',
+    exchangeRate: 'Exchange rate',
+    duplicateReceiptTitle: 'This receipt may already exist',
+    duplicateReceiptText: 'A similar receipt with the same store, date, and amount already exists. Save it anyway?',
+    saveAnyway: 'Save anyway',
+    imageQualityTitle: 'Photo may not be clear',
+    imageQualityText: 'This photo looks low resolution. The analysis may be wrong.',
+    usePhotoAnyway: 'Use anyway',
+    pickFile: 'Choose file',
+    pickFileHelp: 'Upload a PDF or photo file.',
+    fileSaved: 'File saved',
+    fileSavedText: 'The PDF file was saved. Fill in the details manually and save.',
+    exportCsv: 'Export CSV',
+    exportReady: 'Export ready',
+    exportError: 'Export error',
+    exportErrorText: 'CSV file could not be created.',
     category: 'Category',
     customCategory: 'Custom category',
     customCategoryPlaceholder: 'Example: car care, school, tax...',
@@ -596,6 +635,23 @@ const translations = {
     convertedAmount: 'Montant du rapport',
     exchangeRateErrorTitle: 'Taux indisponible',
     exchangeRateErrorText: 'Ce ticket n a pas pu etre converti dans votre devise principale. Verifiez la connexion et reessayez.',
+    taxAmount: 'Taxe / TVA',
+    subtotalAmount: 'Sous-total',
+    exchangeRate: 'Taux',
+    duplicateReceiptTitle: 'Ce ticket existe peut-etre deja',
+    duplicateReceiptText: 'Un ticket similaire avec le meme magasin, la meme date et le meme montant existe deja. Enregistrer quand meme ?',
+    saveAnyway: 'Enregistrer quand meme',
+    imageQualityTitle: 'Photo peut-etre floue',
+    imageQualityText: 'Cette photo semble en basse resolution. L analyse peut etre incorrecte.',
+    usePhotoAnyway: 'Utiliser quand meme',
+    pickFile: 'Choisir un fichier',
+    pickFileHelp: 'Importer un PDF ou une photo.',
+    fileSaved: 'Fichier enregistre',
+    fileSavedText: 'Le PDF a ete enregistre. Remplissez les details manuellement.',
+    exportCsv: 'Exporter CSV',
+    exportReady: 'Export pret',
+    exportError: 'Erreur export',
+    exportErrorText: 'Le fichier CSV n a pas pu etre cree.',
     category: 'Categorie',
     customCategory: 'Categorie personnalisee',
     customCategoryPlaceholder: 'Ex. voiture, ecole, taxe...',
@@ -814,6 +870,23 @@ const translations = {
     convertedAmount: 'Berichtsbetrag',
     exchangeRateErrorTitle: 'Wechselkurs nicht verfuegbar',
     exchangeRateErrorText: 'Dieser Beleg konnte nicht in deine Hauptwaehrung umgerechnet werden. Pruefe die Verbindung und versuche es erneut.',
+    taxAmount: 'Steuer / MwSt.',
+    subtotalAmount: 'Zwischensumme',
+    exchangeRate: 'Wechselkurs',
+    duplicateReceiptTitle: 'Dieser Beleg koennte schon existieren',
+    duplicateReceiptText: 'Ein aehnlicher Beleg mit gleichem Laden, Datum und Betrag existiert bereits. Trotzdem speichern?',
+    saveAnyway: 'Trotzdem speichern',
+    imageQualityTitle: 'Foto ist moeglicherweise unscharf',
+    imageQualityText: 'Dieses Foto wirkt niedrig aufgeloest. Die Analyse kann falsch sein.',
+    usePhotoAnyway: 'Trotzdem nutzen',
+    pickFile: 'Datei waehlen',
+    pickFileHelp: 'PDF oder Foto hochladen.',
+    fileSaved: 'Datei gespeichert',
+    fileSavedText: 'Die PDF-Datei wurde gespeichert. Details manuell ausfuellen und speichern.',
+    exportCsv: 'CSV exportieren',
+    exportReady: 'Export bereit',
+    exportError: 'Exportfehler',
+    exportErrorText: 'CSV-Datei konnte nicht erstellt werden.',
     category: 'Kategorie',
     customCategory: 'Eigene Kategorie',
     customCategoryPlaceholder: 'Z.B. Auto, Schule, Steuer...',
@@ -1032,6 +1105,23 @@ const translations = {
     convertedAmount: 'Importe del reporte',
     exchangeRateErrorTitle: 'Tipo de cambio no disponible',
     exchangeRateErrorText: 'No pudimos convertir este ticket a tu moneda principal. Revisa la conexion e intentalo de nuevo.',
+    taxAmount: 'Impuesto / IVA',
+    subtotalAmount: 'Subtotal',
+    exchangeRate: 'Tipo de cambio',
+    duplicateReceiptTitle: 'Este ticket puede existir ya',
+    duplicateReceiptText: 'Ya existe un ticket parecido con la misma tienda, fecha e importe. Guardarlo igualmente?',
+    saveAnyway: 'Guardar igualmente',
+    imageQualityTitle: 'La foto puede no estar clara',
+    imageQualityText: 'Esta foto parece de baja resolucion. El analisis puede fallar.',
+    usePhotoAnyway: 'Usar igualmente',
+    pickFile: 'Elegir archivo',
+    pickFileHelp: 'Sube un PDF o una foto.',
+    fileSaved: 'Archivo guardado',
+    fileSavedText: 'El PDF fue guardado. Rellena los detalles manualmente y guarda.',
+    exportCsv: 'Exportar CSV',
+    exportReady: 'Export listo',
+    exportError: 'Error de exportacion',
+    exportErrorText: 'No se pudo crear el CSV.',
     category: 'Categoria',
     customCategory: 'Categoria personalizada',
     customCategoryPlaceholder: 'Ej. coche, escuela, impuesto...',
@@ -1206,6 +1296,13 @@ function getDeviceCurrency() {
   const locales = Localization.getLocales?.() || [];
   const regionCode = String(locales[0]?.regionCode || locales[0]?.countryCode || '').toUpperCase();
   return countryCurrencyMap[regionCode] || 'EUR';
+}
+
+function normalizeLookupText(value) {
+  return String(value || '')
+    .toLocaleLowerCase('tr-TR')
+    .replace(/[^\p{L}\p{N}]+/gu, ' ')
+    .trim();
 }
 
 function normalizeCurrencyCode(currencyCode, fallbackCurrency = activeCurrency) {
@@ -1405,6 +1502,14 @@ function normalizeReceiptCategories(receipt, fallbackCurrency = activeCurrency) 
     typeof receipt.originalAmount === 'number'
       ? receipt.originalAmount
       : normalizedAmount;
+  const subtotalAmount =
+    typeof receipt.subtotalAmount === 'number'
+      ? receipt.subtotalAmount
+      : parseAmount(String(receipt.subtotalAmount || ''));
+  const taxAmount =
+    typeof receipt.taxAmount === 'number'
+      ? receipt.taxAmount
+      : parseAmount(String(receipt.taxAmount || ''));
 
   return {
     ...receipt,
@@ -1414,6 +1519,8 @@ function normalizeReceiptCategories(receipt, fallbackCurrency = activeCurrency) 
     originalAmount,
     originalCurrency,
     exchangeRate: Number(receipt.exchangeRate) > 0 ? Number(receipt.exchangeRate) : 1,
+    subtotalAmount,
+    taxAmount,
     items: normalizedItems,
   };
 }
@@ -1948,6 +2055,8 @@ async function analyzeReceiptPhoto(imageUri) {
   return {
     storeName: result.storeName || result.store || '',
     totalText: String(result.totalText || result.total || ''),
+    subtotalText: String(result.subtotalText || ''),
+    taxText: String(result.taxText || ''),
     currencyCode: normalizeCurrencyCode(result.currencyCode, activeCurrency),
     dateText: result.dateText || result.date || formatReceiptDate(Date.now()),
     categoryKey: normalizeCategoryKey(result.categoryKey || result.category),
@@ -1980,7 +2089,7 @@ function formatCurrencyAmount(value, currencyCode = activeCurrency) {
   }).format(numericValue);
 }
 
-async function getExchangeRate(fromCurrency, toCurrency) {
+async function getExchangeRate(fromCurrency, toCurrency, dateText = '') {
   const from = normalizeCurrencyCode(fromCurrency, activeCurrency);
   const to = normalizeCurrencyCode(toCurrency, activeCurrency);
 
@@ -1988,7 +2097,9 @@ async function getExchangeRate(fromCurrency, toCurrency) {
     return 1;
   }
 
-  const response = await fetch(`${EXCHANGE_RATE_ENDPOINT}?base=${encodeURIComponent(from)}&quotes=${encodeURIComponent(to)}`);
+  const rateDate = getReceiptDateForRate(dateText);
+  const dateQuery = rateDate ? `&date=${encodeURIComponent(rateDate)}` : '';
+  const response = await fetch(`${EXCHANGE_RATE_ENDPOINT}?base=${encodeURIComponent(from)}&quotes=${encodeURIComponent(to)}${dateQuery}`);
 
   if (!response.ok) {
     throw new Error(`Exchange rate request failed: ${response.status}`);
@@ -2006,10 +2117,10 @@ async function getExchangeRate(fromCurrency, toCurrency) {
   return rate;
 }
 
-async function buildReceiptMoneyFields(originalAmount, originalCurrency, reportCurrency, items) {
+async function buildReceiptMoneyFields(originalAmount, originalCurrency, reportCurrency, items, dateText = '') {
   const cleanOriginalCurrency = normalizeCurrencyCode(originalCurrency, reportCurrency);
   const cleanReportCurrency = normalizeCurrencyCode(reportCurrency, activeCurrency);
-  const exchangeRate = await getExchangeRate(cleanOriginalCurrency, cleanReportCurrency);
+  const exchangeRate = await getExchangeRate(cleanOriginalCurrency, cleanReportCurrency, dateText);
   const convertedAmount = Number((originalAmount * exchangeRate).toFixed(2));
   const convertedItems = Array.isArray(items)
     ? items.map((item) => {
@@ -2116,6 +2227,21 @@ async function saveReceiptImageToDevice(sourceUri) {
   }
 }
 
+async function saveReceiptFileToDevice(sourceUri, fileName = '') {
+  try {
+    await ensureDirectory(RECEIPT_FILE_DIR);
+
+    const safeExtension = fileName.split('.').pop() || sourceUri.split('.').pop()?.split('?')[0] || 'pdf';
+    const targetUri = `${RECEIPT_FILE_DIR}${Date.now()}.${safeExtension}`;
+    await FileSystem.copyAsync({ from: sourceUri, to: targetUri });
+
+    return targetUri;
+  } catch (error) {
+    console.warn('Receipt file copy failed, using original uri:', error);
+    return sourceUri;
+  }
+}
+
 async function deleteReceiptImage(imageUri) {
   if (!imageUri || !imageUri.startsWith(RECEIPT_IMAGE_DIR)) {
     return;
@@ -2132,12 +2258,137 @@ async function deleteReceiptImage(imageUri) {
   }
 }
 
+async function deleteReceiptFile(fileRecord) {
+  const fileUri = typeof fileRecord === 'string' ? fileRecord : fileRecord?.uri;
+
+  if (!fileUri || !fileUri.startsWith(RECEIPT_FILE_DIR)) {
+    return;
+  }
+
+  try {
+    const fileInfo = await FileSystem.getInfoAsync(fileUri);
+
+    if (fileInfo.exists) {
+      await FileSystem.deleteAsync(fileUri, { idempotent: true });
+    }
+  } catch (error) {
+    console.warn('Receipt file delete failed:', error);
+  }
+}
+
 async function ensureDirectory(directoryUri) {
   const directoryInfo = await FileSystem.getInfoAsync(directoryUri);
 
   if (!directoryInfo.exists) {
     await FileSystem.makeDirectoryAsync(directoryUri, { intermediates: true });
   }
+}
+
+function getReceiptDateForRate(dateText) {
+  const match = String(dateText || '').match(/^(\d{1,2})\.(\d{1,2})\.(\d{4})$/);
+
+  if (!match) {
+    return '';
+  }
+
+  const day = match[1].padStart(2, '0');
+  const month = match[2].padStart(2, '0');
+  const year = match[3];
+  const date = new Date(`${year}-${month}-${day}T00:00:00Z`);
+
+  if (Number.isNaN(date.getTime()) || date.getTime() > Date.now()) {
+    return '';
+  }
+
+  return `${year}-${month}-${day}`;
+}
+
+function isReceiptDuplicate(candidateReceipt, receiptList) {
+  const candidateStore = normalizeLookupText(candidateReceipt.store);
+  const candidateDate = String(candidateReceipt.date || '').trim();
+  const candidateAmount = Number(candidateReceipt.amount) || 0;
+
+  return receiptList.some((receipt) => {
+    const receiptStore = normalizeLookupText(receipt.store);
+    const sameDate = candidateDate && candidateDate === String(receipt.date || '').trim();
+    const sameAmount = Math.abs((Number(receipt.amount) || 0) - candidateAmount) < 0.02;
+    const sameStore =
+      candidateStore &&
+      receiptStore &&
+      (candidateStore === receiptStore || candidateStore.includes(receiptStore) || receiptStore.includes(candidateStore));
+
+    return sameDate && sameAmount && sameStore;
+  });
+}
+
+function shouldWarnImageQuality(asset) {
+  const width = Number(asset?.width) || 0;
+  const height = Number(asset?.height) || 0;
+
+  return (width > 0 && width < 900) || (height > 0 && height < 900);
+}
+
+function confirmAlert(title, message, confirmLabel, cancelLabel) {
+  return new Promise((resolve) => {
+    Alert.alert(title, message, [
+      { text: cancelLabel, style: 'cancel', onPress: () => resolve(false) },
+      { text: confirmLabel, onPress: () => resolve(true) },
+    ]);
+  });
+}
+
+function buildCategoryMemoryFromItems(items) {
+  return cleanEditableItems(items, 'other').reduce((memory, item) => {
+    const key = normalizeLookupText(item.name);
+
+    if (key && item.category) {
+      memory[key] = item.category;
+    }
+
+    return memory;
+  }, {});
+}
+
+function applyCategoryMemory(items, memory) {
+  if (!Array.isArray(items)) {
+    return [];
+  }
+
+  return items.map((item) => {
+    const key = normalizeLookupText(item.name);
+    const rememberedCategory = memory[key];
+
+    return rememberedCategory
+      ? { ...item, category: rememberedCategory }
+      : item;
+  });
+}
+
+function csvEscape(value) {
+  const text = String(value ?? '');
+  return `"${text.replace(/"/g, '""')}"`;
+}
+
+function buildReceiptsCsv(receiptList) {
+  const rows = [
+    ['Date', 'Store', 'Category', 'Amount', 'Currency', 'Original Amount', 'Original Currency', 'Tax', 'Subtotal', 'Items'],
+    ...receiptList.map((receipt) => [
+      receipt.date || '',
+      receipt.store || '',
+      receipt.category || '',
+      Number(receipt.amount) || 0,
+      receipt.currency || activeCurrency,
+      Number(receipt.originalAmount ?? receipt.amount) || 0,
+      receipt.originalCurrency || receipt.currency || activeCurrency,
+      Number(receipt.taxAmount) || 0,
+      Number(receipt.subtotalAmount) || 0,
+      Array.isArray(receipt.items)
+        ? receipt.items.map((item) => (typeof item === 'string' ? item : item.name)).filter(Boolean).join('; ')
+        : '',
+    ]),
+  ];
+
+  return rows.map((row) => row.map(csvEscape).join(',')).join('\n');
 }
 
 export default function App() {
@@ -2148,10 +2399,13 @@ export default function App() {
   const [storeName, setStoreName] = useState('');
   const [amountText, setAmountText] = useState('');
   const [receiptCurrency, setReceiptCurrency] = useState(getDeviceCurrency);
+  const [subtotalText, setSubtotalText] = useState('');
+  const [taxText, setTaxText] = useState('');
   const [receiptDateText, setReceiptDateText] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('grocery');
   const [customCategoryText, setCustomCategoryText] = useState('');
   const [receiptImage, setReceiptImage] = useState(null);
+  const [receiptFile, setReceiptFile] = useState(null);
   const [analysisStatus, setAnalysisStatus] = useState('idle');
   const [analysisConfidence, setAnalysisConfidence] = useState(null);
   const [receiptItems, setReceiptItems] = useState([]);
@@ -2171,6 +2425,7 @@ export default function App() {
   const [selectedCurrency, setSelectedCurrency] = useState(getDeviceCurrency);
   const [authChoice, setAuthChoice] = useState(null);
   const [analysisUsageByMonth, setAnalysisUsageByMonth] = useState({});
+  const [categoryMemory, setCategoryMemory] = useState({});
   const [settingsSection, setSettingsSection] = useState('main');
   const [reportPeriod, setReportPeriod] = useState('month');
   const [reportView, setReportView] = useState('overview');
@@ -2188,6 +2443,7 @@ export default function App() {
           savedCurrency,
           savedAuthChoice,
           savedAnalysisUsage,
+          savedCategoryMemory,
         ] = await Promise.all([
           AsyncStorage.getItem(RECEIPTS_STORAGE_KEY),
           AsyncStorage.getItem(SALARY_STORAGE_KEY),
@@ -2195,6 +2451,7 @@ export default function App() {
           AsyncStorage.getItem(CURRENCY_STORAGE_KEY),
           AsyncStorage.getItem(AUTH_CHOICE_STORAGE_KEY),
           AsyncStorage.getItem(ANALYSIS_USAGE_STORAGE_KEY),
+          AsyncStorage.getItem(CATEGORY_MEMORY_STORAGE_KEY),
         ]);
 
         const startupCurrency =
@@ -2232,6 +2489,11 @@ export default function App() {
         if (parsedAnalysisUsage && typeof parsedAnalysisUsage === 'object' && !Array.isArray(parsedAnalysisUsage)) {
           setAnalysisUsageByMonth(parsedAnalysisUsage);
         }
+
+        const parsedCategoryMemory = safeParseStoredJson(savedCategoryMemory, null);
+        if (parsedCategoryMemory && typeof parsedCategoryMemory === 'object' && !Array.isArray(parsedCategoryMemory)) {
+          setCategoryMemory(parsedCategoryMemory);
+        }
       } catch (error) {
         console.warn('Saved app data could not be loaded:', error);
       } finally {
@@ -2267,6 +2529,10 @@ export default function App() {
 
       if (action === 'gallery') {
         pickReceiptImage();
+      }
+
+      if (action === 'file') {
+        pickReceiptFile();
       }
     }, 650);
 
@@ -2318,6 +2584,16 @@ export default function App() {
       });
     }
   }, [authChoice, storageReady]);
+
+  useEffect(() => {
+    if (!storageReady) {
+      return;
+    }
+
+    AsyncStorage.setItem(CATEGORY_MEMORY_STORAGE_KEY, JSON.stringify(categoryMemory)).catch(() => {
+      console.warn('Category memory could not be saved.');
+    });
+  }, [categoryMemory, storageReady]);
 
   useEffect(() => {
     if (!storageReady) {
@@ -2638,6 +2914,13 @@ export default function App() {
         receipt.id === selectedReceipt.id ? updatedReceipt : receipt
       )
     );
+    const learnedCategories = buildCategoryMemoryFromItems(editItems);
+    if (Object.keys(learnedCategories).length > 0) {
+      setCategoryMemory((currentMemory) => ({
+        ...currentMemory,
+        ...learnedCategories,
+      }));
+    }
     setSelectedReceipt(updatedReceipt);
     setEditingReceipt(false);
   }
@@ -2659,6 +2942,7 @@ export default function App() {
             currentReceipts.filter((receipt) => receipt.id !== receiptToDelete.id)
           );
           await deleteReceiptImage(receiptToDelete.image);
+          await deleteReceiptFile(receiptToDelete.file);
           setSelectedReceipt(null);
           setScreen(detailReturnScreen);
         },
@@ -2679,6 +2963,7 @@ export default function App() {
         receipts,
         incomeByMonth,
         selectedCurrency,
+        categoryMemory,
       };
 
       await FileSystem.writeAsStringAsync(targetUri, JSON.stringify(backupData, null, 2));
@@ -2725,6 +3010,12 @@ export default function App() {
         setSelectedCurrency(backupData.selectedCurrency);
       }
 
+      setCategoryMemory(
+        backupData.categoryMemory && typeof backupData.categoryMemory === 'object'
+          ? backupData.categoryMemory
+          : {}
+      );
+
       setSelectedReceipt(null);
       setSettingsSection('main');
       setDetailReturnScreen('report');
@@ -2735,14 +3026,41 @@ export default function App() {
     }
   }
 
+  async function exportReceiptsCsv() {
+    try {
+      await ensureDirectory(EXPORT_DIR);
+
+      const timestamp = new Date().toISOString().slice(0, 10);
+      const fileName = `reciro-receipts-${timestamp}.csv`;
+      const targetUri = `${EXPORT_DIR}${fileName}`;
+      await FileSystem.writeAsStringAsync(targetUri, buildReceiptsCsv(receipts));
+
+      if (await Sharing.isAvailableAsync()) {
+        await Sharing.shareAsync(targetUri, {
+          mimeType: 'text/csv',
+          dialogTitle: t.exportReady,
+          UTI: 'public.comma-separated-values-text',
+        });
+      } else {
+        Alert.alert(t.exportReady, fileName);
+      }
+    } catch (error) {
+      console.warn('CSV export failed.', error);
+      Alert.alert(t.exportError, t.exportErrorText);
+    }
+  }
+
   function resetReceiptForm() {
     setStoreName('');
     setAmountText('');
     setReceiptCurrency(selectedCurrency);
+    setSubtotalText('');
+    setTaxText('');
     setReceiptDateText('');
     setSelectedCategory('grocery');
     setCustomCategoryText('');
     setReceiptImage(null);
+    setReceiptFile(null);
     setReceiptItems([]);
     setAnalysisConfidence(null);
     setAnalysisStatus('idle');
@@ -2843,11 +3161,29 @@ export default function App() {
       });
 
       if (!result.canceled && result.assets?.[0]?.uri) {
-        savedImageUri = await saveReceiptImageToDevice(result.assets[0].uri);
+        const selectedAsset = result.assets[0];
+        if (shouldWarnImageQuality(selectedAsset)) {
+          const shouldContinue = await confirmAlert(
+            t.imageQualityTitle,
+            t.imageQualityText,
+            t.usePhotoAnyway,
+            t.cancel
+          );
+
+          if (!shouldContinue) {
+            setPhotoOptionsOpen(false);
+            return;
+          }
+        }
+
+        savedImageUri = await saveReceiptImageToDevice(selectedAsset.uri);
         setReceiptImage(savedImageUri);
+        setReceiptFile(null);
         setStoreName('');
         setAmountText('');
         setReceiptCurrency(selectedCurrency);
+        setSubtotalText('');
+        setTaxText('');
         setReceiptDateText(formatReceiptDate(Date.now()));
         setAnalysisConfidence(null);
         setReceiptItems([]);
@@ -2885,11 +3221,29 @@ export default function App() {
       });
 
       if (!result.canceled && result.assets?.[0]?.uri) {
-        savedImageUri = await saveReceiptImageToDevice(result.assets[0].uri);
+        const selectedAsset = result.assets[0];
+        if (shouldWarnImageQuality(selectedAsset)) {
+          const shouldContinue = await confirmAlert(
+            t.imageQualityTitle,
+            t.imageQualityText,
+            t.usePhotoAnyway,
+            t.cancel
+          );
+
+          if (!shouldContinue) {
+            setPhotoOptionsOpen(false);
+            return;
+          }
+        }
+
+        savedImageUri = await saveReceiptImageToDevice(selectedAsset.uri);
         setReceiptImage(savedImageUri);
+        setReceiptFile(null);
         setStoreName('');
         setAmountText('');
         setReceiptCurrency(selectedCurrency);
+        setSubtotalText('');
+        setTaxText('');
         setReceiptDateText(formatReceiptDate(Date.now()));
         setAnalysisConfidence(null);
         setReceiptItems([]);
@@ -2906,6 +3260,65 @@ export default function App() {
 
     if (savedImageUri) {
       await analyzeReceiptImage(savedImageUri);
+    }
+  }
+
+  async function pickReceiptFile() {
+    try {
+      const result = await DocumentPicker.getDocumentAsync({
+        type: ['image/*', 'application/pdf'],
+        copyToCacheDirectory: true,
+        multiple: false,
+      });
+
+      if (result.canceled || !result.assets?.[0]?.uri) {
+        setPhotoOptionsOpen(false);
+        return;
+      }
+
+      const asset = result.assets[0];
+      const mimeType = String(asset.mimeType || '').toLowerCase();
+      const fileName = asset.name || '';
+
+      if (mimeType.startsWith('image/')) {
+        const savedImageUri = await saveReceiptImageToDevice(asset.uri);
+        setReceiptImage(savedImageUri);
+        setReceiptFile(null);
+        setStoreName('');
+        setAmountText('');
+        setReceiptCurrency(selectedCurrency);
+        setSubtotalText('');
+        setTaxText('');
+        setReceiptDateText(formatReceiptDate(Date.now()));
+        setAnalysisConfidence(null);
+        setReceiptItems([]);
+        setPhotoOptionsOpen(false);
+        await analyzeReceiptImage(savedImageUri);
+        return;
+      }
+
+      const savedFileUri = await saveReceiptFileToDevice(asset.uri, fileName);
+      setReceiptImage(null);
+      setReceiptFile({
+        uri: savedFileUri,
+        name: fileName || 'receipt.pdf',
+        mimeType: mimeType || 'application/pdf',
+      });
+      setStoreName('');
+      setAmountText('');
+      setReceiptCurrency(selectedCurrency);
+      setSubtotalText('');
+      setTaxText('');
+      setReceiptDateText(formatReceiptDate(Date.now()));
+      setAnalysisConfidence(null);
+      setReceiptItems([]);
+      setPhotoOptionsOpen(false);
+      setAnalysisStatus('ready');
+      Alert.alert(t.fileSaved, t.fileSavedText);
+    } catch (error) {
+      console.warn('Receipt file selection failed.', error);
+      setPhotoOptionsOpen(false);
+      Alert.alert(t.photoSaveErrorTitle, t.photoSaveErrorText);
     }
   }
 
@@ -2929,12 +3342,19 @@ export default function App() {
       setStoreName(analysisResult.storeName || '');
       setAmountText(analysisResult.totalText || '');
       setReceiptCurrency(normalizeCurrencyCode(analysisResult.currencyCode, selectedCurrency));
+      setSubtotalText(analysisResult.subtotalText || '');
+      setTaxText(analysisResult.taxText || '');
       setReceiptDateText(analysisResult.dateText || formatReceiptDate(Date.now()));
       const analyzedCategory = normalizeCategoryKey(analysisResult.categoryKey);
       setSelectedCategory(analyzedCategory);
       setCustomCategoryText('');
       setAnalysisConfidence(analysisResult.confidence ?? null);
-      setReceiptItems(createEditableItemsFromList(analysisResult.items || [], analyzedCategory));
+      setReceiptItems(
+        createEditableItemsFromList(
+          applyCategoryMemory(analysisResult.items || [], categoryMemory),
+          analyzedCategory
+        )
+      );
       incrementAnalysisUsage();
       setAnalysisStatus('done');
     } catch (error) {
@@ -2999,7 +3419,8 @@ export default function App() {
         originalReceiptAmount,
         receiptCurrency,
         selectedCurrency,
-        receiptItemsForSave
+        receiptItemsForSave,
+        cleanDateText
       );
     } catch (error) {
       console.warn('Exchange rate conversion failed.', error);
@@ -3016,11 +3437,37 @@ export default function App() {
       originalAmount: moneyFields.originalAmount,
       originalCurrency: moneyFields.originalCurrency,
       exchangeRate: moneyFields.exchangeRate,
+      subtotalAmount: Number((parseAmount(subtotalText) * moneyFields.exchangeRate).toFixed(2)) || 0,
+      taxAmount: Number((parseAmount(taxText) * moneyFields.exchangeRate).toFixed(2)) || 0,
+      originalSubtotalAmount: parseAmount(subtotalText) || 0,
+      originalTaxAmount: parseAmount(taxText) || 0,
       category: categoryForSave,
       date: cleanDateText,
       image: receiptImage,
+      file: receiptFile,
       items: moneyFields.items,
     };
+
+    if (isReceiptDuplicate(newReceipt, receipts)) {
+      const shouldContinue = await confirmAlert(
+        t.duplicateReceiptTitle,
+        t.duplicateReceiptText,
+        t.saveAnyway,
+        t.cancel
+      );
+
+      if (!shouldContinue) {
+        return;
+      }
+    }
+
+    const learnedCategories = buildCategoryMemoryFromItems(receiptItems);
+    if (Object.keys(learnedCategories).length > 0) {
+      setCategoryMemory((currentMemory) => ({
+        ...currentMemory,
+        ...learnedCategories,
+      }));
+    }
 
     commitNewReceipt(newReceipt);
   }
@@ -3090,6 +3537,10 @@ export default function App() {
                   setAmountText={setAmountText}
                   receiptCurrency={receiptCurrency}
                   setReceiptCurrency={setReceiptCurrency}
+                  subtotalText={subtotalText}
+                  setSubtotalText={setSubtotalText}
+                  taxText={taxText}
+                  setTaxText={setTaxText}
                   receiptDateText={receiptDateText}
                   setReceiptDateText={setReceiptDateText}
                   selectedCategory={selectedCategory}
@@ -3097,6 +3548,7 @@ export default function App() {
                   customCategoryText={customCategoryText}
                   setCustomCategoryText={setCustomCategoryText}
                   receiptImage={receiptImage}
+                  receiptFile={receiptFile}
                   receiptItems={receiptItems}
                   onUpdateReceiptItemCategory={updateReceiptItemCategory}
                   onUpdateReceiptItem={updateReceiptItem}
@@ -3117,6 +3569,10 @@ export default function App() {
                     }
 
                     setPendingPhotoAction('gallery');
+                    setPhotoOptionsOpen(false);
+                  }}
+                  onPickFile={() => {
+                    setPendingPhotoAction('file');
                     setPhotoOptionsOpen(false);
                   }}
                   onTakePhoto={() => {
@@ -3221,6 +3677,7 @@ export default function App() {
               onReport={() => setScreen('report')}
               onCreateBackup={createDataBackup}
               onRestoreBackup={restoreLatestBackup}
+              onExportCsv={exportReceiptsCsv}
               authChoice={authChoice}
               onSignOut={signOutAccount}
               t={t}
@@ -3333,6 +3790,10 @@ function ReceiptScreen({
   setAmountText,
   receiptCurrency,
   setReceiptCurrency,
+  subtotalText,
+  setSubtotalText,
+  taxText,
+  setTaxText,
   receiptDateText,
   setReceiptDateText,
   selectedCategory,
@@ -3340,6 +3801,7 @@ function ReceiptScreen({
   customCategoryText,
   setCustomCategoryText,
   receiptImage,
+  receiptFile,
   receiptItems,
   onUpdateReceiptItemCategory,
   onUpdateReceiptItem,
@@ -3353,6 +3815,7 @@ function ReceiptScreen({
   onOpenPhotoOptions,
   onClosePhotoOptions,
   onPickImage,
+  onPickFile,
   onTakePhoto,
   onReanalyze,
   onSave,
@@ -3365,7 +3828,7 @@ function ReceiptScreen({
     typeof analysisConfidence === 'number' ? Math.round(analysisConfidence * 100) : null;
   const needsReview = confidencePercent === null || confidencePercent < 85 || !requiredFieldsComplete;
   const showSimpleAddButton =
-    !receiptImage && !storeName && !amountText && receiptItems.length === 0 && analysisStatus !== 'done';
+    !receiptImage && !receiptFile && !storeName && !amountText && receiptItems.length === 0 && analysisStatus !== 'done';
 
   if (showSimpleAddButton) {
     return (
@@ -3380,6 +3843,7 @@ function ReceiptScreen({
           onClose={onClosePhotoOptions}
           onTakePhoto={onTakePhoto}
           onPickImage={onPickImage}
+          onPickFile={onPickFile}
           t={t}
         />
       </View>
@@ -3393,6 +3857,14 @@ function ReceiptScreen({
           <Pressable onPress={() => onPreviewImage(receiptImage)}>
             <Image source={{ uri: receiptImage }} style={styles.receiptImage} />
           </Pressable>
+        </View>
+      ) : receiptFile ? (
+        <View style={styles.receiptPhotoBox}>
+          <View style={styles.filePreviewBox}>
+            <Text style={styles.filePreviewIcon}>PDF</Text>
+            <Text style={styles.filePreviewTitle}>{receiptFile.name || t.fileSaved}</Text>
+            <Text style={styles.filePreviewText}>{t.fileSavedText}</Text>
+          </View>
         </View>
       ) : (
         <View style={styles.receiptStartCard}>
@@ -3432,6 +3904,7 @@ function ReceiptScreen({
         onClose={onClosePhotoOptions}
         onTakePhoto={onTakePhoto}
         onPickImage={onPickImage}
+        onPickFile={onPickFile}
         t={t}
       />
 
@@ -3464,7 +3937,7 @@ function ReceiptScreen({
         </View>
       )}
 
-      {(receiptImage || storeName || amountText) && (
+      {(receiptImage || receiptFile || storeName || amountText) && (
         <View style={styles.formCard}>
           <Text style={[styles.inputLabel, styles.firstInputLabel]}>{t.storeName}</Text>
           <TextInput
@@ -3513,6 +3986,24 @@ function ReceiptScreen({
             value={receiptDateText}
             onChangeText={setReceiptDateText}
             placeholder={formatReceiptDate(Date.now())}
+          />
+
+          <Text style={styles.inputLabel}>{t.subtotalAmount}</Text>
+          <TextInput
+            style={styles.input}
+            value={subtotalText}
+            onChangeText={setSubtotalText}
+            keyboardType="decimal-pad"
+            placeholder=""
+          />
+
+          <Text style={styles.inputLabel}>{t.taxAmount}</Text>
+          <TextInput
+            style={styles.input}
+            value={taxText}
+            onChangeText={setTaxText}
+            keyboardType="decimal-pad"
+            placeholder=""
           />
 
           {analysisStatus !== 'done' && (
@@ -3892,6 +4383,7 @@ function SettingsScreen({
   onReport,
   onCreateBackup,
   onRestoreBackup,
+  onExportCsv,
   authChoice,
   onSignOut,
   t,
@@ -4011,6 +4503,7 @@ function SettingsScreen({
 
         <PrimaryButton label={t.createBackup} onPress={onCreateBackup} />
         <SecondaryButton label={t.restoreBackup} onPress={onRestoreBackup} />
+        <SecondaryButton label={t.exportCsv} onPress={onExportCsv} />
         <SecondaryButton label={t.back} onPress={() => setSettingsSection('main')} />
       </View>
     );
@@ -4210,6 +4703,11 @@ function ReceiptDetailScreen({
             <Image source={{ uri: receipt.image }} style={styles.detailImage} />
           </Pressable>
         </View>
+      ) : receipt.file ? (
+        <View style={styles.analysisCard}>
+          <Text style={styles.analysisTitle}>{receipt.file.name || t.fileSaved}</Text>
+          <Text style={styles.analysisText}>{t.fileSavedText}</Text>
+        </View>
       ) : (
         <View style={styles.analysisCard}>
           <Text style={styles.analysisTitle}>{t.noPhoto}</Text>
@@ -4375,6 +4873,26 @@ function ReceiptDetailScreen({
               <Text style={styles.rowText}>{t.originalAmount}</Text>
               <Text style={styles.rowAmount}>
                 {formatCurrencyAmount(receipt.originalAmount, receipt.originalCurrency)}
+              </Text>
+            </View>
+          )}
+          {Number(receipt.subtotalAmount) > 0 && (
+            <View style={styles.row}>
+              <Text style={styles.rowText}>{t.subtotalAmount}</Text>
+              <Text style={styles.rowAmount}>{formatTL(receipt.subtotalAmount)}</Text>
+            </View>
+          )}
+          {Number(receipt.taxAmount) > 0 && (
+            <View style={styles.row}>
+              <Text style={styles.rowText}>{t.taxAmount}</Text>
+              <Text style={styles.rowAmount}>{formatTL(receipt.taxAmount)}</Text>
+            </View>
+          )}
+          {Number(receipt.exchangeRate) > 0 && receipt.originalCurrency !== receipt.currency && (
+            <View style={styles.row}>
+              <Text style={styles.rowText}>{t.exchangeRate}</Text>
+              <Text style={styles.rowAmount}>
+                1 {getCurrencySymbol(receipt.originalCurrency)} = {formatCurrencyAmount(receipt.exchangeRate, receipt.currency)}
               </Text>
             </View>
           )}
@@ -4614,13 +5132,17 @@ function DangerButton({ label, onPress }) {
   );
 }
 
-function PhotoOptionsSheet({ visible, onClose, onTakePhoto, onPickImage, t }) {
+function PhotoOptionsSheet({ visible, onClose, onTakePhoto, onPickImage, onPickFile, t }) {
   function handleTakePhoto() {
     onTakePhoto();
   }
 
   function handlePickImage() {
     onPickImage();
+  }
+
+  function handlePickFile() {
+    onPickFile();
   }
 
   return (
@@ -4646,9 +5168,25 @@ function PhotoOptionsSheet({ visible, onClose, onTakePhoto, onPickImage, t }) {
               <Text style={styles.photoOptionText}>{t.chooseFromGalleryHelp}</Text>
             </View>
           </Pressable>
+
+          <Pressable style={styles.photoSheetOption} onPress={handlePickFile}>
+            <FileGlyph />
+            <View style={styles.receiptTextBlock}>
+              <Text style={styles.photoOptionTitle}>{t.pickFile}</Text>
+              <Text style={styles.photoOptionText}>{t.pickFileHelp}</Text>
+            </View>
+          </Pressable>
         </View>
       </View>
     </Modal>
+  );
+}
+
+function FileGlyph() {
+  return (
+    <View style={styles.glyphBoxSecondary}>
+      <Text style={styles.fileGlyphText}>PDF</Text>
+    </View>
   );
 }
 
@@ -5035,6 +5573,37 @@ const styles = StyleSheet.create({
     height: 230,
     resizeMode: 'cover',
   },
+  filePreviewBox: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    minHeight: 210,
+    padding: 18,
+  },
+  filePreviewIcon: {
+    backgroundColor: '#e6f5ea',
+    borderRadius: 8,
+    color: '#0d5f2b',
+    fontSize: 18,
+    fontWeight: '900',
+    overflow: 'hidden',
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+  },
+  filePreviewTitle: {
+    color: '#172018',
+    fontSize: 17,
+    fontWeight: '900',
+    marginTop: 12,
+    textAlign: 'center',
+  },
+  filePreviewText: {
+    color: '#68766b',
+    fontSize: 13,
+    fontWeight: '700',
+    lineHeight: 19,
+    marginTop: 6,
+    textAlign: 'center',
+  },
   receiptStartCard: {
     backgroundColor: '#ffffff',
     borderColor: '#dfe8e0',
@@ -5282,6 +5851,11 @@ const styles = StyleSheet.create({
     position: 'absolute',
     transform: [{ rotate: '45deg' }],
     width: 16,
+  },
+  fileGlyphText: {
+    color: '#0d5f2b',
+    fontSize: 12,
+    fontWeight: '900',
   },
   receiptActionButton: {
     alignItems: 'center',
