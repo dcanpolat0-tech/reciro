@@ -4508,6 +4508,7 @@ function ReceiptScreen({
   onPreviewImage,
   t,
 }) {
+  const [expandedReceiptItemId, setExpandedReceiptItemId] = useState(null);
   const requiredFieldsComplete =
     Boolean(storeName.trim()) && Boolean(amountText.trim());
   const confidencePercent =
@@ -4798,70 +4799,95 @@ function ReceiptScreen({
                     }
                   : item;
               const itemCategory = normalizeCategoryKey(normalizedItem.category || selectedCategory);
+              const itemId = normalizedItem.id || `${normalizedItem.name}-${index}`;
+              const isExpanded = expandedReceiptItemId === itemId;
+              const itemAmount = parseAmount(normalizedItem.amountText);
+              const itemQuantity = String(normalizedItem.quantityText || normalizedItem.quantity || '').trim();
+              const itemMeta = [
+                itemQuantity ? `${itemQuantity}${normalizedItem.unit ? ` ${normalizedItem.unit}` : ''}` : '',
+                itemAmount > 0 ? formatTL(itemAmount) : '',
+                getCategoryLabel(itemCategory, t),
+              ].filter(Boolean).join(' - ');
 
               return (
-                <View style={styles.receiptItemEditCard} key={normalizedItem.id || `${normalizedItem.name}-${index}`}>
-                  <View style={styles.editItemHeader}>
-                    <Text style={styles.editItemTitle}>
-                      {t.items} {index + 1}
-                    </Text>
-                    <Pressable onPress={() => onRemoveReceiptItem(normalizedItem.id)}>
-                      <Text style={styles.removeItemText}>{t.removeItem}</Text>
-                    </Pressable>
-                  </View>
+                <View style={styles.receiptItemEditCard} key={itemId}>
+                  <Pressable
+                    style={styles.compactItemHeader}
+                    onPress={() => setExpandedReceiptItemId(isExpanded ? null : itemId)}
+                    hitSlop={8}
+                  >
+                    <View style={styles.receiptTextBlock}>
+                      <Text style={styles.editItemTitle}>
+                        {String(normalizedItem.name || '').trim() || `${t.items} ${index + 1}`}
+                      </Text>
+                      <Text style={styles.rowMeta}>{itemMeta}</Text>
+                    </View>
+                    <Text style={styles.compactItemChevron}>{isExpanded ? '⌃' : '⌄'}</Text>
+                  </Pressable>
 
-                  <TextInput
-                    style={styles.itemInput}
-                    value={String(normalizedItem.name || '')}
-                    onChangeText={(value) => onUpdateReceiptItem(normalizedItem.id, 'name', value)}
-                    placeholder={t.itemName}
-                  />
+                  {isExpanded && (
+                    <View style={styles.compactItemDetails}>
+                      <View style={styles.editItemHeader}>
+                        <Text style={styles.rowHint}>{t.reviewBeforeSave}</Text>
+                        <Pressable onPress={() => onRemoveReceiptItem(itemId)}>
+                          <Text style={styles.removeItemText}>{t.removeItem}</Text>
+                        </Pressable>
+                      </View>
 
-                  <TextInput
-                    style={styles.itemInput}
-                    value={String(normalizedItem.amountText || '')}
-                    onChangeText={(value) => onUpdateReceiptItem(normalizedItem.id, 'amountText', value)}
-                    keyboardType="decimal-pad"
-                    placeholder={t.itemAmount}
-                  />
+                      <TextInput
+                        style={styles.itemInput}
+                        value={String(normalizedItem.name || '')}
+                        onChangeText={(value) => onUpdateReceiptItem(itemId, 'name', value)}
+                        placeholder={t.itemName}
+                      />
 
-                  <View style={styles.itemInlineInputs}>
-                    <TextInput
-                      style={[styles.itemInput, styles.itemInlineInput]}
-                      value={String(normalizedItem.quantityText || '')}
-                      onChangeText={(value) => onUpdateReceiptItem(normalizedItem.id, 'quantityText', value)}
-                      keyboardType="decimal-pad"
-                      placeholder={t.quantity}
-                    />
-                    <TextInput
-                      style={[styles.itemInput, styles.itemInlineInput]}
-                      value={String(normalizedItem.unit || '')}
-                      onChangeText={(value) => onUpdateReceiptItem(normalizedItem.id, 'unit', value)}
-                      placeholder={t.unit}
-                    />
-                  </View>
+                      <TextInput
+                        style={styles.itemInput}
+                        value={String(normalizedItem.amountText || '')}
+                        onChangeText={(value) => onUpdateReceiptItem(itemId, 'amountText', value)}
+                        keyboardType="decimal-pad"
+                        placeholder={t.itemAmount}
+                      />
 
-                  <View style={styles.receiptItemCategoryGrid}>
-                    {categoryOptions.map((category) => (
-                      <Pressable
-                        key={category.key}
-                        style={[
-                          styles.receiptItemCategoryButton,
-                          itemCategory === category.key && styles.receiptItemCategoryButtonActive,
-                        ]}
-                        onPress={() => onUpdateReceiptItem(normalizedItem.id, 'category', category.key)}
-                      >
-                        <Text
-                          style={[
-                            styles.receiptItemCategoryText,
-                            itemCategory === category.key && styles.receiptItemCategoryTextActive,
-                          ]}
-                        >
-                          {category.icon} {getCategoryLabel(category.key, t)}
-                        </Text>
-                      </Pressable>
-                    ))}
-                  </View>
+                      <View style={styles.itemInlineInputs}>
+                        <TextInput
+                          style={[styles.itemInput, styles.itemInlineInput]}
+                          value={String(normalizedItem.quantityText || '')}
+                          onChangeText={(value) => onUpdateReceiptItem(itemId, 'quantityText', value)}
+                          keyboardType="decimal-pad"
+                          placeholder={t.quantity}
+                        />
+                        <TextInput
+                          style={[styles.itemInput, styles.itemInlineInput]}
+                          value={String(normalizedItem.unit || '')}
+                          onChangeText={(value) => onUpdateReceiptItem(itemId, 'unit', value)}
+                          placeholder={t.unit}
+                        />
+                      </View>
+
+                      <View style={styles.receiptItemCategoryGrid}>
+                        {categoryOptions.map((category) => (
+                          <Pressable
+                            key={category.key}
+                            style={[
+                              styles.receiptItemCategoryButton,
+                              itemCategory === category.key && styles.receiptItemCategoryButtonActive,
+                            ]}
+                            onPress={() => onUpdateReceiptItem(itemId, 'category', category.key)}
+                          >
+                            <Text
+                              style={[
+                                styles.receiptItemCategoryText,
+                                itemCategory === category.key && styles.receiptItemCategoryTextActive,
+                              ]}
+                            >
+                              {category.icon} {getCategoryLabel(category.key, t)}
+                            </Text>
+                          </Pressable>
+                        ))}
+                      </View>
+                    </View>
+                  )}
                 </View>
               );
             })}
@@ -4869,20 +4895,19 @@ function ReceiptScreen({
             <Pressable style={styles.addItemButton} onPress={onAddReceiptItem}>
               <Text style={styles.addItemText}>+ {t.addItem}</Text>
             </Pressable>
-
-            <Pressable style={styles.calculateItemsButton} onPress={onSetTotalFromReceiptItems}>
-              <Text style={styles.calculateItemsText}>{t.autoTotalFromItems}</Text>
-            </Pressable>
+            {receiptItems.length > 0 && (
+              <SecondaryButton label={t.autoTotalFromItems} onPress={onSetTotalFromReceiptItems} />
+            )}
           </View>
         </View>
       )}
 
-      {requiredFieldsComplete ? (
+      {analysisStatus === 'done' && (
         <PrimaryButton
           label={t.confirmAndSave}
           onPress={onSave}
         />
-      ) : null}
+      )}
     </View>
   );
 }
@@ -7608,6 +7633,26 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     paddingBottom: 14,
     marginBottom: 14,
+  },
+  compactItemHeader: {
+    alignItems: 'center',
+    backgroundColor: '#fbfdfb',
+    borderColor: '#edf2ee',
+    borderRadius: 8,
+    borderWidth: 1,
+    flexDirection: 'row',
+    gap: 12,
+    justifyContent: 'space-between',
+    paddingHorizontal: 12,
+    paddingVertical: 12,
+  },
+  compactItemDetails: {
+    paddingTop: 10,
+  },
+  compactItemChevron: {
+    color: '#0d5f2b',
+    fontSize: 20,
+    fontWeight: '900',
   },
   editItemHeader: {
     flexDirection: 'row',
