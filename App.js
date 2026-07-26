@@ -216,9 +216,7 @@ const translations = {
     merchantReceiptsTitle: (store) => `${store} fişleri`,
     clearMerchantFilter: 'Seçimi temizle',
     productBreakdown: 'Ürün özeti',
-    productsTitle: 'Bu ay en çok alınanlar',
     productsInfo: 'Ürünler aylık toplam adet ve miktara göre sıralanır.',
-    topProduct: 'Adete göre en çok alınan',
     noProductData: 'Bu ay ürün verisi yok',
     noProductDataText: 'Fiş analiz ettiğinde ürün adetleri burada görünecek.',
     receiptsShort: 'fiş',
@@ -456,9 +454,7 @@ const translations = {
     merchantReceiptsTitle: (store) => `${store} receipts`,
     clearMerchantFilter: 'Clear selection',
     productBreakdown: 'Product summary',
-    productsTitle: 'Most bought this month',
     productsInfo: 'Products are ranked monthly by total quantity.',
-    topProduct: 'Most bought by quantity',
     noProductData: 'No product data this month',
     noProductDataText: 'After receipt analysis, product quantities will appear here.',
     receiptsShort: 'receipts',
@@ -696,9 +692,7 @@ const translations = {
     merchantReceiptsTitle: (store) => `Tickets de ${store}`,
     clearMerchantFilter: 'Effacer la selection',
     productBreakdown: 'Resume des articles',
-    productsTitle: 'Les plus achetes ce mois',
     productsInfo: 'Les articles sont classes chaque mois par quantite totale.',
-    topProduct: 'Le plus achete en quantite',
     noProductData: 'Aucun article ce mois',
     noProductDataText: 'Apres analyse des tickets, les quantites apparaitront ici.',
     receiptsShort: 'tickets',
@@ -936,9 +930,7 @@ const translations = {
     merchantReceiptsTitle: (store) => `${store} Belege`,
     clearMerchantFilter: 'Auswahl loeschen',
     productBreakdown: 'Artikeluebersicht',
-    productsTitle: 'Diesen Monat am meisten gekauft',
     productsInfo: 'Artikel werden monatlich nach Gesamtmenge sortiert.',
-    topProduct: 'Meist gekauft nach Menge',
     noProductData: 'Keine Artikeldaten diesen Monat',
     noProductDataText: 'Nach der Beleganalyse erscheinen Mengen hier.',
     receiptsShort: 'Belege',
@@ -1176,9 +1168,7 @@ const translations = {
     merchantReceiptsTitle: (store) => `Tickets de ${store}`,
     clearMerchantFilter: 'Borrar seleccion',
     productBreakdown: 'Resumen de productos',
-    productsTitle: 'Mas comprados este mes',
     productsInfo: 'Los productos se ordenan cada mes por cantidad total.',
-    topProduct: 'Mas comprado por cantidad',
     noProductData: 'Sin datos de productos este mes',
     noProductDataText: 'Despues de analizar tickets, las cantidades apareceran aqui.',
     receiptsShort: 'tickets',
@@ -1324,9 +1314,9 @@ const featureTranslations = {
     budgetOver: 'over',
     monthlyLimit: 'Monthly limit',
     saveBudgets: 'Save budgets',
-    recurring: 'Recurring expenses',
-    recurringInfo: 'Track rent, subscriptions, and fixed monthly costs.',
-    recurringName: 'Expense name',
+    recurring: 'Monthly payments',
+    recurringInfo: 'Track rent, subscriptions, bills, and fixed monthly costs.',
+    recurringName: 'Payment name',
     recurringAmount: 'Monthly amount',
     recurringYearlyAmount: 'Yearly amount',
     recurringMonthlyEquivalent: 'monthly',
@@ -1338,9 +1328,9 @@ const featureTranslations = {
     recurringActive: 'Active',
     recurringPaused: 'Paused',
     deleteRecurring: 'Delete',
-    recurringIncludedInfo: 'Active recurring expenses are included in monthly totals and reports.',
-    addRecurring: 'Add recurring expense',
-    noRecurring: 'No recurring expenses yet.',
+    recurringIncludedInfo: 'Active monthly payments are included in monthly totals and reports.',
+    addRecurring: 'Add monthly payment',
+    noRecurring: 'No monthly payments yet.',
     spaces: 'Spaces',
     spacesInfo: 'Separate personal, business, travel, and family spending.',
     activeSpace: 'Active space',
@@ -1373,9 +1363,9 @@ const featureTranslations = {
     budgetOver: 'aşıldı',
     monthlyLimit: 'Aylık limit',
     saveBudgets: 'Bütçeleri kaydet',
-    recurring: 'Tekrarlayan giderler',
-    recurringInfo: 'Kira, abonelik ve sabit aylık giderleri takip et.',
-    recurringName: 'Gider adı',
+    recurring: 'Aylık ödemeler',
+    recurringInfo: 'Kira, abonelik, fatura ve sabit aylık ödemeleri takip et.',
+    recurringName: 'Ödeme adı',
     recurringAmount: 'Aylık tutar',
     recurringYearlyAmount: 'Yıllık tutar',
     recurringMonthlyEquivalent: 'aylık',
@@ -1387,9 +1377,9 @@ const featureTranslations = {
     recurringActive: 'Aktif',
     recurringPaused: 'Pasif',
     deleteRecurring: 'Sil',
-    recurringIncludedInfo: 'Aktif tekrarlayan giderler aylık toplama ve raporlara dahil edilir.',
-    addRecurring: 'Tekrarlayan gider ekle',
-    noRecurring: 'Henüz tekrarlayan gider yok.',
+    recurringIncludedInfo: 'Aktif aylık ödemeler aylık toplama ve raporlara dahil edilir.',
+    addRecurring: 'Aylık ödeme ekle',
+    noRecurring: 'Henüz aylık ödeme yok.',
     spaces: 'Alanlar',
     spacesInfo: 'Kişisel, iş, seyahat ve aile harcamalarını ayır.',
     activeSpace: 'Aktif alan',
@@ -1422,9 +1412,9 @@ const featureTranslations = {
     budgetOver: 'depasse',
     monthlyLimit: 'Limite mensuelle',
     saveBudgets: 'Enregistrer les budgets',
-    recurring: 'Depenses recurrentes',
-    recurringInfo: 'Suivez loyer, abonnements et frais fixes mensuels.',
-    recurringName: 'Nom de la depense',
+    recurring: 'Paiements mensuels',
+    recurringInfo: 'Suivez loyer, abonnements, factures et frais fixes mensuels.',
+    recurringName: 'Nom du paiement',
     recurringAmount: 'Montant mensuel',
     recurringYearlyAmount: 'Montant annuel',
     recurringMonthlyEquivalent: 'par mois',
@@ -1436,9 +1426,9 @@ const featureTranslations = {
     recurringActive: 'Actif',
     recurringPaused: 'En pause',
     deleteRecurring: 'Supprimer',
-    recurringIncludedInfo: 'Les depenses recurrentes actives sont incluses dans les totaux mensuels et les rapports.',
-    addRecurring: 'Ajouter une depense recurrente',
-    noRecurring: 'Aucune depense recurrente pour le moment.',
+    recurringIncludedInfo: 'Les paiements mensuels actifs sont inclus dans les totaux mensuels et les rapports.',
+    addRecurring: 'Ajouter un paiement mensuel',
+    noRecurring: 'Aucun paiement mensuel pour le moment.',
     spaces: 'Espaces',
     spacesInfo: 'Separez depenses personnelles, pro, voyage et famille.',
     activeSpace: 'Espace actif',
@@ -1471,9 +1461,9 @@ const featureTranslations = {
     budgetOver: 'ueberschritten',
     monthlyLimit: 'Monatslimit',
     saveBudgets: 'Budgets speichern',
-    recurring: 'Wiederkehrende Ausgaben',
-    recurringInfo: 'Miete, Abos und feste monatliche Kosten verfolgen.',
-    recurringName: 'Name der Ausgabe',
+    recurring: 'Monatliche Zahlungen',
+    recurringInfo: 'Miete, Abos, Rechnungen und feste monatliche Kosten verfolgen.',
+    recurringName: 'Name der Zahlung',
     recurringAmount: 'Monatlicher Betrag',
     recurringYearlyAmount: 'Jaehrlicher Betrag',
     recurringMonthlyEquivalent: 'pro Monat',
@@ -1485,9 +1475,9 @@ const featureTranslations = {
     recurringActive: 'Aktiv',
     recurringPaused: 'Pausiert',
     deleteRecurring: 'Loeschen',
-    recurringIncludedInfo: 'Aktive wiederkehrende Ausgaben werden in Monatsgesamt und Berichten beruecksichtigt.',
-    addRecurring: 'Wiederkehrende Ausgabe hinzufuegen',
-    noRecurring: 'Noch keine wiederkehrenden Ausgaben.',
+    recurringIncludedInfo: 'Aktive monatliche Zahlungen werden in Monatsgesamt und Berichten beruecksichtigt.',
+    addRecurring: 'Monatliche Zahlung hinzufuegen',
+    noRecurring: 'Noch keine monatlichen Zahlungen.',
     spaces: 'Bereiche',
     spacesInfo: 'Persoenliche, berufliche, Reise- und Familienausgaben trennen.',
     activeSpace: 'Aktiver Bereich',
@@ -1520,9 +1510,9 @@ const featureTranslations = {
     budgetOver: 'superado',
     monthlyLimit: 'Limite mensual',
     saveBudgets: 'Guardar presupuestos',
-    recurring: 'Gastos recurrentes',
-    recurringInfo: 'Controla alquiler, suscripciones y costes fijos mensuales.',
-    recurringName: 'Nombre del gasto',
+    recurring: 'Pagos mensuales',
+    recurringInfo: 'Controla alquiler, suscripciones, facturas y costes fijos mensuales.',
+    recurringName: 'Nombre del pago',
     recurringAmount: 'Importe mensual',
     recurringYearlyAmount: 'Importe anual',
     recurringMonthlyEquivalent: 'al mes',
@@ -1534,9 +1524,9 @@ const featureTranslations = {
     recurringActive: 'Activo',
     recurringPaused: 'Pausado',
     deleteRecurring: 'Eliminar',
-    recurringIncludedInfo: 'Los gastos recurrentes activos se incluyen en los totales mensuales e informes.',
-    addRecurring: 'Anadir gasto recurrente',
-    noRecurring: 'Aun no hay gastos recurrentes.',
+    recurringIncludedInfo: 'Los pagos mensuales activos se incluyen en los totales mensuales e informes.',
+    addRecurring: 'Anadir pago mensual',
+    noRecurring: 'Aun no hay pagos mensuales.',
     spaces: 'Espacios',
     spacesInfo: 'Separa gastos personales, trabajo, viaje y familia.',
     activeSpace: 'Espacio activo',
@@ -3282,10 +3272,6 @@ export default function App() {
     [visibleReceipts, incomeMonthKey, recurringExpenses, activeSpace, selectedCurrency]
   );
   const remaining = totalIncomeUntilSelectedMonth - totalSpendUntilSelectedMonth;
-  const savingRate =
-    totalIncomeUntilSelectedMonth > 0
-      ? Math.max(0, Math.round((remaining / totalIncomeUntilSelectedMonth) * 100))
-      : 0;
   const categories = useMemo(
     () => buildCategorySummary(selectedMonthReceipts),
     [selectedMonthReceipts]
@@ -3411,6 +3397,14 @@ export default function App() {
       ...currentIncome,
       [incomeMonthKey]: value,
     }));
+  }
+
+  function navigateToScreen(nextScreen) {
+    if (screen === 'settings' && nextScreen !== 'settings') {
+      setSettingsSection('main');
+    }
+
+    setScreen(nextScreen);
   }
 
   function chooseAuthMethod(method) {
@@ -4254,13 +4248,11 @@ export default function App() {
             <HomeScreen
               totalSpend={selectedMonthSpend}
               remaining={remaining}
-              savingRate={savingRate}
               topCategory={topCategory}
               recentReceipts={recentReceipts}
               receiptCount={selectedMonthReceipts.length}
               budgetSummary={budgetSummary}
               recurringMonthlyTotal={recurringMonthlyTotal}
-              activeSpaceLabel={getSpaceLabel(activeSpace, t)}
               onSelectReceipt={openReceiptDetail}
               isReceiptComposerActive={isReceiptComposerActive}
               t={t}
@@ -4439,7 +4431,7 @@ export default function App() {
               setActiveSpace={setActiveSpace}
               settingsSection={settingsSection}
               setSettingsSection={setSettingsSection}
-              onReport={() => setScreen('report')}
+              onReport={() => navigateToScreen('report')}
               onCreateBackup={createDataBackup}
               onRestoreBackup={restoreLatestBackup}
               onExportCsv={exportReceiptsCsv}
@@ -4460,25 +4452,25 @@ export default function App() {
               icon="🏠"
               label={t.navHome}
               active={screen === 'home' || (screen === 'detail' && detailReturnScreen === 'home')}
-              onPress={() => setScreen('home')}
+              onPress={() => navigateToScreen('home')}
             />
             <NavButton
               icon="📊"
               label={t.navReport}
               active={screen === 'report' || (screen === 'detail' && detailReturnScreen === 'report')}
-              onPress={() => setScreen('report')}
+              onPress={() => navigateToScreen('report')}
             />
             <NavButton
               icon="🛍️"
               label={t.navProducts}
               active={screen === 'products' || (screen === 'detail' && detailReturnScreen === 'products')}
-              onPress={() => setScreen('products')}
+              onPress={() => navigateToScreen('products')}
             />
             <NavButton
               icon="⚙️"
               label={t.navSettings}
               active={screen === 'settings' || (screen === 'detail' && detailReturnScreen === 'settings')}
-              onPress={() => setScreen('settings')}
+              onPress={() => navigateToScreen('settings')}
             />
           </View>
         </View>
@@ -4496,19 +4488,18 @@ export default function App() {
 function HomeScreen({
   totalSpend,
   remaining,
-  savingRate,
   topCategory,
   recentReceipts,
   receiptCount,
   budgetSummary,
   recurringMonthlyTotal,
-  activeSpaceLabel,
   onSelectReceipt,
   isReceiptComposerActive,
   receiptComposer,
   t,
 }) {
   const topCategoryLabel = getCategoryLabel(topCategory.key, t);
+  const hasBudgetOrMonthlyPayments = recurringMonthlyTotal > 0 || budgetSummary.length > 0;
 
   if (isReceiptComposerActive) {
     return (
@@ -4534,10 +4525,6 @@ function HomeScreen({
             <Text style={styles.homeSummaryLabel}>{t.moneyLeft}</Text>
             <Text style={styles.homeSummaryValue}>{formatTL(remaining)}</Text>
           </View>
-          <View style={styles.homeSummaryItem}>
-            <Text style={styles.homeSummaryLabel}>{t.savings}</Text>
-            <Text style={styles.homeSummaryValue}>%{savingRate}</Text>
-          </View>
         </View>
       </View>
 
@@ -4546,11 +4533,8 @@ function HomeScreen({
         <Metric title={t.highest} value={topCategoryLabel} />
       </View>
 
+      {hasBudgetOrMonthlyPayments && (
       <View style={styles.card}>
-        <View style={styles.row}>
-          <Text style={styles.rowText}>{t.activeSpace}</Text>
-          <Text style={styles.rowAmount}>{activeSpaceLabel}</Text>
-        </View>
         {recurringMonthlyTotal > 0 && (
           <View style={styles.row}>
             <Text style={styles.rowText}>{t.recurring}</Text>
@@ -4571,6 +4555,7 @@ function HomeScreen({
           </View>
         ))}
       </View>
+      )}
 
       <HomeReceiptList
         title={t.recentSpending}
@@ -5257,45 +5242,10 @@ function ReportScreen({
 }
 
 function ProductsScreen({ productGroups, monthKey, t }) {
-  const topProduct = productGroups[0];
-
   return (
     <View>
-      <View style={[styles.reportHero, styles.productsHero]}>
-        <Text style={styles.label}>🛍️ {formatMonthKey(monthKey)}</Text>
-        <Text style={styles.productsHeroTitle}>{t.productsTitle}</Text>
-        <Text style={styles.productsHeroText}>{t.productsInfo}</Text>
-      </View>
-
-      {topProduct ? (
-        <View style={styles.productTopCard}>
-          <Text style={styles.label}>⭐ {t.topProduct}</Text>
-          <View style={styles.productHeroRow}>
-            <View style={styles.productHeroTextBlock}>
-              <Text style={styles.productHeroName}>{topProduct.name}</Text>
-              <Text style={styles.rowMeta}>
-                {t.quantity}: {formatQuantity(topProduct.quantity)}
-                {topProduct.unit ? ` ${topProduct.unit}` : ''} - {topProduct.count} {t.receiptsShort}
-              </Text>
-              {topProduct.lastPrice > 0 && (
-                <Text style={styles.rowMeta}>
-                  {t.lastPrice}: {formatTL(topProduct.lastPrice)} · {t.averagePrice}: {formatTL(topProduct.averagePrice)}
-                </Text>
-              )}
-            </View>
-            <Text style={styles.productHeroAmount}>{formatTL(topProduct.amount)}</Text>
-          </View>
-        </View>
-      ) : (
-        <View style={styles.card}>
-          <View style={styles.emptyState}>
-            <Text style={styles.emptyTitle}>{t.noProductData}</Text>
-            <Text style={styles.emptyText}>{t.noProductDataText}</Text>
-          </View>
-        </View>
-      )}
-
       <Text style={styles.sectionTitle}>📦 {t.productBreakdown}</Text>
+      <Text style={styles.sectionSubtitle}>{formatMonthKey(monthKey)}</Text>
       <View style={styles.card}>
         {productGroups.length === 0 && <Text style={styles.emptyText}>{t.noProductDataText}</Text>}
         {productGroups.map((product, index) => (
@@ -5844,13 +5794,6 @@ function SettingsScreen({
           subtitle={t.recurringInfo}
           value=">"
           onPress={() => setSettingsSection('recurring')}
-        />
-        <SettingsRow
-          icon="🧭"
-          title={t.spaces}
-          subtitle={getSpaceLabel(activeSpace, t)}
-          value=">"
-          onPress={() => setSettingsSection('spaces')}
         />
         <SettingsRow
           icon="🗂️"
