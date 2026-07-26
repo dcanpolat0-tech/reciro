@@ -1,5 +1,5 @@
 ﻿import { StatusBar } from 'expo-status-bar';
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import {
   Alert,
   AppState,
@@ -15,6 +15,7 @@ import {
   TextInput,
   View,
 } from 'react-native';
+import { CameraView, useCameraPermissions } from 'expo-camera';
 import * as ImagePicker from 'expo-image-picker';
 import * as DocumentPicker from 'expo-document-picker';
 import * as FileSystem from 'expo-file-system/legacy';
@@ -157,6 +158,10 @@ const translations = {
     receiptStartText: 'Fiş fotoğrafını ekle, gerisini otomatik dolduralım.',
     takePhoto: 'Kameradan Çek',
     takePhotoHelp: 'Yeni fiş fotoğrafı çek.',
+    cameraCapture: 'Çek',
+    cameraUsePhoto: 'Fotoğrafı Kullan',
+    cameraRetake: 'Tekrar Çek',
+    cameraHint: 'Fişi çerçeveye yerleştir',
     chooseFromGallery: 'Galeriden Seç',
     chooseFromGalleryHelp: 'Daha önce çekilmiş fişi seç.',
     demoAnalyze: 'Fişi Analiz Et',
@@ -393,6 +398,10 @@ const translations = {
     receiptStartText: 'Add a receipt photo and let the app fill the details.',
     takePhoto: 'Take photo',
     takePhotoHelp: 'Take a new receipt photo.',
+    cameraCapture: 'Capture',
+    cameraUsePhoto: 'Use Photo',
+    cameraRetake: 'Retake',
+    cameraHint: 'Place the receipt inside the frame',
     chooseFromGallery: 'Choose from gallery',
     chooseFromGalleryHelp: 'Select an existing receipt photo.',
     demoAnalyze: 'Analyze receipt',
@@ -629,6 +638,10 @@ const translations = {
     receiptStartText: 'Ajoutez une photo et laissez l app remplir les details.',
     takePhoto: 'Prendre une photo',
     takePhotoHelp: 'Prendre une nouvelle photo du ticket.',
+    cameraCapture: 'Prendre',
+    cameraUsePhoto: 'Utiliser la photo',
+    cameraRetake: 'Reprendre',
+    cameraHint: 'Placez le ticket dans le cadre',
     chooseFromGallery: 'Choisir dans la galerie',
     chooseFromGalleryHelp: 'Choisir une photo de ticket existante.',
     demoAnalyze: 'Analyser le ticket',
@@ -865,6 +878,10 @@ const translations = {
     receiptStartText: 'Belegfoto hinzufuegen, Details automatisch ausfuellen lassen.',
     takePhoto: 'Foto aufnehmen',
     takePhotoHelp: 'Neues Belegfoto aufnehmen.',
+    cameraCapture: 'Aufnehmen',
+    cameraUsePhoto: 'Foto verwenden',
+    cameraRetake: 'Neu aufnehmen',
+    cameraHint: 'Beleg im Rahmen platzieren',
     chooseFromGallery: 'Aus Galerie waehlen',
     chooseFromGalleryHelp: 'Vorhandenes Belegfoto auswaehlen.',
     demoAnalyze: 'Beleg analysieren',
@@ -1101,6 +1118,10 @@ const translations = {
     receiptStartText: 'Anade una foto y deja que la app complete los detalles.',
     takePhoto: 'Hacer foto',
     takePhotoHelp: 'Hacer una nueva foto del ticket.',
+    cameraCapture: 'Capturar',
+    cameraUsePhoto: 'Usar foto',
+    cameraRetake: 'Repetir',
+    cameraHint: 'Coloca el ticket dentro del marco',
     chooseFromGallery: 'Elegir de galeria',
     chooseFromGalleryHelp: 'Seleccionar una foto existente.',
     demoAnalyze: 'Analizar ticket',
@@ -2949,6 +2970,7 @@ function buildReceiptsCsv(receiptList) {
 }
 
 export default function App() {
+  const [cameraPermission, requestCameraPermission] = useCameraPermissions();
   const [screen, setScreen] = useState('home');
   const [receipts, setReceipts] = useState(initialReceipts);
   const [incomeByMonth, setIncomeByMonth] = useState({});
@@ -2975,6 +2997,7 @@ export default function App() {
   const [receiptItems, setReceiptItems] = useState([]);
   const [photoOptionsOpen, setPhotoOptionsOpen] = useState(false);
   const [pendingPhotoAction, setPendingPhotoAction] = useState(null);
+  const [customCameraOpen, setCustomCameraOpen] = useState(false);
   const [selectedReceipt, setSelectedReceipt] = useState(null);
   const [detailReturnScreen, setDetailReturnScreen] = useState('report');
   const [editingReceipt, setEditingReceipt] = useState(false);
@@ -3913,10 +3936,8 @@ export default function App() {
   }
 
   async function takeReceiptPhoto() {
-    let savedImageUri = '';
-
     try {
-      const permission = await ImagePicker.requestCameraPermissionsAsync();
+      const permission = cameraPermission?.granted ? cameraPermission : await requestCameraPermission();
 
       if (!permission.granted) {
         Alert.alert(t.permissionNeeded, t.cameraPermission);
@@ -3924,46 +3945,34 @@ export default function App() {
         return;
       }
 
-      const result = await ImagePicker.launchCameraAsync({
-        allowsEditing: false,
-        quality: 0.85,
-      });
-
-      if (!result.canceled && result.assets?.[0]?.uri) {
-        const selectedAsset = result.assets[0];
-        if (shouldWarnImageQuality(selectedAsset)) {
-          const shouldContinue = await confirmAlert(
-            t.imageQualityTitle,
-            t.imageQualityText,
-            t.usePhotoAnyway,
-            t.cancel
-          );
-
-          if (!shouldContinue) {
-            setPhotoOptionsOpen(false);
-            return;
-          }
-        }
-
-        savedImageUri = await saveReceiptImageToDevice(selectedAsset.uri);
-        setReceiptImage(savedImageUri);
-        setReceiptFile(null);
-        setStoreName('');
-        setAmountText('');
-        setReceiptCurrency(selectedCurrency);
-        setSubtotalText('');
-        setTaxText('');
-        setReceiptDateText(formatReceiptDate(Date.now()));
-        setAnalysisConfidence(null);
-        setReceiptItems([]);
-        setPhotoOptionsOpen(false);
-      } else {
-        setPhotoOptionsOpen(false);
-      }
+      setPhotoOptionsOpen(false);
+      setCustomCameraOpen(true);
     } catch (error) {
       console.warn('Camera launch failed.', error);
       setPhotoOptionsOpen(false);
       Alert.alert(t.cameraOpenErrorTitle, t.cameraOpenErrorText);
+    }
+  }
+
+  async function useCapturedReceiptPhoto(photoUri) {
+    let savedImageUri = '';
+
+    try {
+      savedImageUri = await saveReceiptImageToDevice(photoUri);
+      setReceiptImage(savedImageUri);
+      setReceiptFile(null);
+      setStoreName('');
+      setAmountText('');
+      setReceiptCurrency(selectedCurrency);
+      setSubtotalText('');
+      setTaxText('');
+      setReceiptDateText(formatReceiptDate(Date.now()));
+      setAnalysisConfidence(null);
+      setReceiptItems([]);
+      setCustomCameraOpen(false);
+    } catch (error) {
+      console.warn('Camera receipt photo could not be saved.', error);
+      Alert.alert(t.photoSaveErrorTitle, t.photoSaveErrorText);
       return;
     }
 
@@ -4208,6 +4217,16 @@ export default function App() {
           <AuthStartScreen onChoose={chooseAuthMethod} t={t} />
         </View>
       </SafeAreaView>
+    );
+  }
+
+  if (customCameraOpen) {
+    return (
+      <ReciroCameraScreen
+        t={t}
+        onCancel={() => setCustomCameraOpen(false)}
+        onUsePhoto={useCapturedReceiptPhoto}
+      />
     );
   }
 
@@ -6472,6 +6491,88 @@ function PhotoOptionsSheet({ visible, onClose, onTakePhoto, onPickImage, onPickF
   );
 }
 
+function ReciroCameraScreen({ t, onCancel, onUsePhoto }) {
+  const cameraRef = useRef(null);
+  const [capturedUri, setCapturedUri] = useState('');
+  const [cameraBusy, setCameraBusy] = useState(false);
+
+  async function capturePhoto() {
+    if (!cameraRef.current || cameraBusy) {
+      return;
+    }
+
+    try {
+      setCameraBusy(true);
+      const photo = await cameraRef.current.takePictureAsync({
+        quality: 0.85,
+        skipProcessing: false,
+      });
+
+      if (photo?.uri) {
+        setCapturedUri(photo.uri);
+      }
+    } catch (error) {
+      console.warn('Custom camera capture failed.', error);
+      Alert.alert(t.cameraOpenErrorTitle, t.cameraOpenErrorText);
+    } finally {
+      setCameraBusy(false);
+    }
+  }
+
+  return (
+    <SafeAreaView style={styles.cameraScreen}>
+      <StatusBar style="light" />
+      {capturedUri ? (
+        <Image source={{ uri: capturedUri }} style={styles.cameraPreviewImage} />
+      ) : (
+        <CameraView ref={cameraRef} style={styles.cameraPreview} facing="back">
+          <View style={styles.cameraFrame}>
+            <View style={styles.cameraCornerTopLeft} />
+            <View style={styles.cameraCornerTopRight} />
+            <View style={styles.cameraCornerBottomLeft} />
+            <View style={styles.cameraCornerBottomRight} />
+          </View>
+        </CameraView>
+      )}
+
+      <View style={styles.cameraOverlayTop}>
+        <Pressable style={styles.cameraCloseButton} onPress={onCancel}>
+          <Text style={styles.cameraCloseText}>‹</Text>
+        </Pressable>
+        <View style={styles.cameraTitleBlock}>
+          <Text style={styles.cameraTitle}>Reciro</Text>
+          <Text style={styles.cameraSubtitle}>{t.cameraHint}</Text>
+        </View>
+      </View>
+
+      <View style={styles.cameraControls}>
+        {capturedUri ? (
+          <>
+            <Pressable style={styles.cameraSecondaryButton} onPress={() => setCapturedUri('')}>
+              <Text style={styles.cameraSecondaryText}>{t.cameraRetake}</Text>
+            </Pressable>
+            <Pressable style={styles.cameraPrimaryButton} onPress={() => onUsePhoto(capturedUri)}>
+              <Text style={styles.cameraPrimaryText}>{t.cameraUsePhoto}</Text>
+            </Pressable>
+          </>
+        ) : (
+          <>
+            <Pressable style={styles.cameraSecondaryButton} onPress={onCancel}>
+              <Text style={styles.cameraSecondaryText}>{t.cancel}</Text>
+            </Pressable>
+            <Pressable style={styles.cameraShutterButton} onPress={capturePhoto} disabled={cameraBusy}>
+              <View style={styles.cameraShutterInner} />
+            </Pressable>
+            <View style={styles.cameraSidePlaceholder}>
+              <Text style={styles.cameraSideText}>{cameraBusy ? '' : t.cameraCapture}</Text>
+            </View>
+          </>
+        )}
+      </View>
+    </SafeAreaView>
+  );
+}
+
 function FileGlyph() {
   return (
     <View style={styles.glyphBoxSecondary}>
@@ -7091,6 +7192,182 @@ const styles = StyleSheet.create({
     height: 42,
     justifyContent: 'center',
     width: 42,
+  },
+  cameraScreen: {
+    backgroundColor: '#050805',
+    flex: 1,
+  },
+  cameraPreview: {
+    flex: 1,
+  },
+  cameraPreviewImage: {
+    flex: 1,
+    resizeMode: 'contain',
+  },
+  cameraOverlayTop: {
+    alignItems: 'center',
+    left: 18,
+    position: 'absolute',
+    right: 18,
+    top: 18,
+  },
+  cameraCloseButton: {
+    alignItems: 'center',
+    backgroundColor: 'rgba(255,255,255,0.18)',
+    borderRadius: 999,
+    height: 44,
+    justifyContent: 'center',
+    left: 0,
+    position: 'absolute',
+    top: 2,
+    width: 44,
+  },
+  cameraCloseText: {
+    color: '#ffffff',
+    fontSize: 34,
+    fontWeight: '800',
+    lineHeight: 36,
+  },
+  cameraTitleBlock: {
+    alignItems: 'center',
+    backgroundColor: 'rgba(0,0,0,0.26)',
+    borderRadius: 8,
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+  },
+  cameraTitle: {
+    color: '#ffffff',
+    fontSize: 24,
+    fontWeight: '900',
+  },
+  cameraSubtitle: {
+    color: '#d9eadf',
+    fontSize: 13,
+    fontWeight: '800',
+    marginTop: 2,
+  },
+  cameraFrame: {
+    borderColor: 'rgba(255,255,255,0.28)',
+    borderRadius: 8,
+    borderWidth: 1,
+    bottom: 150,
+    left: 28,
+    position: 'absolute',
+    right: 28,
+    top: 130,
+  },
+  cameraCornerTopLeft: {
+    borderLeftColor: '#ffffff',
+    borderLeftWidth: 4,
+    borderTopColor: '#ffffff',
+    borderTopWidth: 4,
+    borderTopLeftRadius: 8,
+    height: 42,
+    left: -2,
+    position: 'absolute',
+    top: -2,
+    width: 42,
+  },
+  cameraCornerTopRight: {
+    borderRightColor: '#ffffff',
+    borderRightWidth: 4,
+    borderTopColor: '#ffffff',
+    borderTopWidth: 4,
+    borderTopRightRadius: 8,
+    height: 42,
+    position: 'absolute',
+    right: -2,
+    top: -2,
+    width: 42,
+  },
+  cameraCornerBottomLeft: {
+    borderBottomColor: '#ffffff',
+    borderBottomWidth: 4,
+    borderBottomLeftRadius: 8,
+    borderLeftColor: '#ffffff',
+    borderLeftWidth: 4,
+    bottom: -2,
+    height: 42,
+    left: -2,
+    position: 'absolute',
+    width: 42,
+  },
+  cameraCornerBottomRight: {
+    borderBottomColor: '#ffffff',
+    borderBottomWidth: 4,
+    borderBottomRightRadius: 8,
+    borderRightColor: '#ffffff',
+    borderRightWidth: 4,
+    bottom: -2,
+    height: 42,
+    position: 'absolute',
+    right: -2,
+    width: 42,
+  },
+  cameraControls: {
+    alignItems: 'center',
+    backgroundColor: 'rgba(0,0,0,0.72)',
+    bottom: 0,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    left: 0,
+    paddingBottom: 28,
+    paddingHorizontal: 24,
+    paddingTop: 18,
+    position: 'absolute',
+    right: 0,
+  },
+  cameraSecondaryButton: {
+    alignItems: 'center',
+    backgroundColor: 'rgba(255,255,255,0.14)',
+    borderRadius: 8,
+    minWidth: 108,
+    paddingHorizontal: 14,
+    paddingVertical: 13,
+  },
+  cameraSecondaryText: {
+    color: '#ffffff',
+    fontSize: 14,
+    fontWeight: '900',
+  },
+  cameraPrimaryButton: {
+    alignItems: 'center',
+    backgroundColor: '#157f3b',
+    borderRadius: 8,
+    flex: 1,
+    marginLeft: 12,
+    paddingHorizontal: 16,
+    paddingVertical: 14,
+  },
+  cameraPrimaryText: {
+    color: '#ffffff',
+    fontSize: 15,
+    fontWeight: '900',
+  },
+  cameraShutterButton: {
+    alignItems: 'center',
+    backgroundColor: '#ffffff',
+    borderColor: 'rgba(255,255,255,0.5)',
+    borderRadius: 999,
+    borderWidth: 5,
+    height: 76,
+    justifyContent: 'center',
+    width: 76,
+  },
+  cameraShutterInner: {
+    backgroundColor: '#157f3b',
+    borderRadius: 999,
+    height: 54,
+    width: 54,
+  },
+  cameraSidePlaceholder: {
+    alignItems: 'center',
+    minWidth: 108,
+  },
+  cameraSideText: {
+    color: '#d9eadf',
+    fontSize: 13,
+    fontWeight: '900',
   },
   cameraTop: {
     backgroundColor: '#ffffff',

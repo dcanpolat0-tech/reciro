@@ -41,6 +41,12 @@
           "photosPermission": "Reciro needs photo library access so you can choose receipt photos.",
           "microphonePermission": false
         }
+      ],
+      [
+        "expo-camera",
+        {
+          "cameraPermission": "Reciro needs camera access so you can scan receipt photos."
+        }
       ]
     ]
   }
