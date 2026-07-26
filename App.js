@@ -118,6 +118,7 @@ const translations = {
     navHome: 'Ana',
     navReceipt: 'Fiş',
     navReport: 'Rapor',
+    navMonthlyReceipts: 'Aylıklar',
     navProducts: 'Ürünler',
     navSettings: 'Ayarlar',
     settings: 'Ayarlar',
@@ -135,6 +136,10 @@ const translations = {
     totalThisMonth: 'Bu ay toplam',
     receiptArchive: 'Fiş arşivi',
     archiveInfo: 'Yüklediğin tüm fişler burada kalır. Detayını görmek için fişe dokun.',
+    monthlyReceiptsTitle: 'Aylık fişler',
+    monthlyReceiptsInfo: 'Fişleri ve aylık ödemeleri ay ay gör.',
+    monthReceiptsTitle: (month) => `${month} fişleri`,
+    tapMonthReceipts: 'Bu ayın fişlerini görmek için dokun',
     topCategorySentence: (category, amount) => `En çok harcama ${category} kategorisinde: ${amount}.`,
     moneyLeft: 'Toplam kalan',
     savings: 'Tasarruf',
@@ -356,6 +361,7 @@ const translations = {
     navHome: 'Home',
     navReceipt: 'Receipt',
     navReport: 'Report',
+    navMonthlyReceipts: 'Months',
     navProducts: 'Products',
     navSettings: 'Settings',
     settings: 'Settings',
@@ -373,6 +379,10 @@ const translations = {
     totalThisMonth: 'This month',
     receiptArchive: 'Receipt archive',
     archiveInfo: 'All uploaded receipts stay here. Tap a receipt to see details.',
+    monthlyReceiptsTitle: 'Monthly receipts',
+    monthlyReceiptsInfo: 'View receipts and monthly payments month by month.',
+    monthReceiptsTitle: (month) => `${month} receipts`,
+    tapMonthReceipts: 'Tap to view this month',
     topCategorySentence: (category, amount) => `Most spending is in ${category}: ${amount}.`,
     moneyLeft: 'Total left',
     savings: 'Savings',
@@ -594,6 +604,7 @@ const translations = {
     navHome: 'Accueil',
     navReceipt: 'Ticket',
     navReport: 'Rapport',
+    navMonthlyReceipts: 'Mois',
     navProducts: 'Articles',
     navSettings: 'Reglages',
     settings: 'Reglages',
@@ -611,6 +622,10 @@ const translations = {
     totalThisMonth: 'Ce mois-ci',
     receiptArchive: 'Archive des tickets',
     archiveInfo: 'Tous les tickets ajoutes restent ici. Touchez un ticket pour voir les details.',
+    monthlyReceiptsTitle: 'Tickets mensuels',
+    monthlyReceiptsInfo: 'Consultez tickets et paiements mensuels mois par mois.',
+    monthReceiptsTitle: (month) => `Tickets de ${month}`,
+    tapMonthReceipts: 'Touchez pour voir ce mois',
     topCategorySentence: (category, amount) => `La depense principale est ${category}: ${amount}.`,
     moneyLeft: 'Solde total',
     savings: 'Epargne',
@@ -832,6 +847,7 @@ const translations = {
     navHome: 'Start',
     navReceipt: 'Beleg',
     navReport: 'Bericht',
+    navMonthlyReceipts: 'Monate',
     navProducts: 'Artikel',
     navSettings: 'Einstellungen',
     settings: 'Einstellungen',
@@ -849,6 +865,10 @@ const translations = {
     totalThisMonth: 'Dieser Monat',
     receiptArchive: 'Belegarchiv',
     archiveInfo: 'Alle hochgeladenen Belege bleiben hier. Tippe auf einen Beleg fuer Details.',
+    monthlyReceiptsTitle: 'Monatliche Belege',
+    monthlyReceiptsInfo: 'Belege und monatliche Zahlungen nach Monat ansehen.',
+    monthReceiptsTitle: (month) => `${month} Belege`,
+    tapMonthReceipts: 'Tippen, um diesen Monat zu sehen',
     topCategorySentence: (category, amount) => `Die meisten Ausgaben sind in ${category}: ${amount}.`,
     moneyLeft: 'Gesamt uebrig',
     savings: 'Sparen',
@@ -1070,6 +1090,7 @@ const translations = {
     navHome: 'Inicio',
     navReceipt: 'Ticket',
     navReport: 'Informe',
+    navMonthlyReceipts: 'Meses',
     navProducts: 'Productos',
     navSettings: 'Ajustes',
     settings: 'Ajustes',
@@ -1087,6 +1108,10 @@ const translations = {
     totalThisMonth: 'Este mes',
     receiptArchive: 'Archivo de tickets',
     archiveInfo: 'Todos los tickets subidos quedan aqui. Toca un ticket para ver detalles.',
+    monthlyReceiptsTitle: 'Tickets mensuales',
+    monthlyReceiptsInfo: 'Consulta tickets y pagos mensuales por mes.',
+    monthReceiptsTitle: (month) => `Tickets de ${month}`,
+    tapMonthReceipts: 'Toca para ver este mes',
     topCategorySentence: (category, amount) => `El mayor gasto esta en ${category}: ${amount}.`,
     moneyLeft: 'Total restante',
     savings: 'Ahorro',
@@ -2075,6 +2100,68 @@ function filterReceiptsByMonthKey(receipts, monthKey) {
   });
 }
 
+function getMonthKeysBetween(startMonthKey, endMonthKey) {
+  const monthKeys = [];
+  let cursor = startMonthKey;
+  let guard = 0;
+
+  while (cursor <= endMonthKey && guard < 36) {
+    monthKeys.push(cursor);
+    cursor = moveMonthKey(cursor, 1);
+    guard += 1;
+  }
+
+  return monthKeys;
+}
+
+function buildMonthlyReceiptGroups(receipts, recurringExpenses, spaceKey, currencyCode) {
+  const currentMonthKey = getMonthKey();
+  const monthKeys = new Set();
+
+  receipts.forEach((receipt) => {
+    const receiptDate = getDateFromReceipt(receipt);
+
+    if (receiptDate) {
+      monthKeys.add(getMonthKey(receiptDate));
+    }
+  });
+
+  recurringExpenses.forEach((expense) => {
+    if (expense.space && normalizeSpaceKey(expense.space) !== normalizeSpaceKey(spaceKey)) {
+      return;
+    }
+
+    const startMonthKey = String(expense.startMonth || currentMonthKey);
+
+    getMonthKeysBetween(startMonthKey, currentMonthKey).forEach((monthKey) => {
+      if (buildRecurringReceiptsForMonth([expense], monthKey, spaceKey, currencyCode).length > 0) {
+        monthKeys.add(monthKey);
+      }
+    });
+  });
+
+  if (monthKeys.size === 0) {
+    monthKeys.add(currentMonthKey);
+  }
+
+  return [...monthKeys]
+    .sort((first, second) => second.localeCompare(first))
+    .map((monthKey) => {
+      const monthReceipts = [
+        ...filterReceiptsByMonthKey(receipts, monthKey),
+        ...buildRecurringReceiptsForMonth(recurringExpenses, monthKey, spaceKey, currencyCode),
+      ].sort((first, second) => getReceiptTime(second) - getReceiptTime(first));
+
+      return {
+        key: monthKey,
+        label: formatMonthKey(monthKey),
+        receipts: monthReceipts,
+        count: monthReceipts.length,
+        amount: monthReceipts.reduce((sum, receipt) => sum + getReceiptSignedAmount(receipt), 0),
+      };
+    });
+}
+
 function getEndOfMonthFromKey(monthKey) {
   const [year, month] = monthKey.split('-').map(Number);
   return new Date(year, month, 0, 23, 59, 59, 999);
@@ -3016,6 +3103,7 @@ export default function App() {
   const [reportSearchText, setReportSearchText] = useState('');
   const [selectedMerchantKey, setSelectedMerchantKey] = useState(null);
   const [selectedReportCategoryKey, setSelectedReportCategoryKey] = useState(null);
+  const [selectedMonthlyReceiptKey, setSelectedMonthlyReceiptKey] = useState(null);
   const [storageReady, setStorageReady] = useState(false);
 
   useEffect(() => {
@@ -3314,6 +3402,14 @@ export default function App() {
   );
   const merchantGroups = useMemo(() => getMerchantGroups(selectedMonthReceipts), [selectedMonthReceipts]);
   const monthlyProductGroups = useMemo(() => getProductGroups(selectedMonthReceipts), [selectedMonthReceipts]);
+  const monthlyReceiptGroups = useMemo(
+    () => buildMonthlyReceiptGroups(visibleReceipts, recurringExpenses, activeSpace, selectedCurrency),
+    [visibleReceipts, recurringExpenses, activeSpace, selectedCurrency]
+  );
+  const selectedMonthlyReceiptGroup = useMemo(
+    () => monthlyReceiptGroups.find((group) => group.key === selectedMonthlyReceiptKey) || null,
+    [monthlyReceiptGroups, selectedMonthlyReceiptKey]
+  );
   const budgetSummary = useMemo(
     () => getBudgetSummary(categories, budgetsByCategory),
     [categories, budgetsByCategory]
@@ -3404,6 +3500,10 @@ export default function App() {
       setSettingsSection('main');
     }
 
+    if (screen === 'monthly' && nextScreen !== 'monthly') {
+      setSelectedMonthlyReceiptKey(null);
+    }
+
     setScreen(nextScreen);
   }
 
@@ -3459,6 +3559,11 @@ export default function App() {
       return;
     }
 
+    if (screen === 'monthly' && selectedMonthlyReceiptKey) {
+      setSelectedMonthlyReceiptKey(null);
+      return;
+    }
+
     if (screen === 'home' && photoOptionsOpen) {
       setPhotoOptionsOpen(false);
       return;
@@ -3489,7 +3594,7 @@ export default function App() {
           }
         },
       }),
-    [screen, settingsSection, previewImage, reportSearchText, reportView, selectedMerchantKey, photoOptionsOpen, detailReturnScreen]
+    [screen, settingsSection, previewImage, reportSearchText, reportView, selectedMerchantKey, selectedMonthlyReceiptKey, photoOptionsOpen, detailReturnScreen]
   );
   const canShowBackControl =
     !previewImage &&
@@ -3498,6 +3603,7 @@ export default function App() {
       (screen === 'report' && Boolean(selectedReportCategoryKey)) ||
       (screen === 'report' && reportView === 'merchants') ||
       (screen === 'report' && Boolean(reportSearchText.trim())) ||
+      (screen === 'monthly' && Boolean(selectedMonthlyReceiptKey)) ||
       (screen === 'home' && photoOptionsOpen) ||
       screen === 'detail');
 
@@ -4366,6 +4472,17 @@ export default function App() {
             />
           )}
 
+          {screen === 'monthly' && (
+            <MonthlyReceiptsScreen
+              monthlyGroups={monthlyReceiptGroups}
+              selectedGroup={selectedMonthlyReceiptGroup}
+              onSelectMonth={(group) => setSelectedMonthlyReceiptKey(group.key)}
+              onClearMonth={() => setSelectedMonthlyReceiptKey(null)}
+              onSelectReceipt={openReceiptDetail}
+              t={t}
+            />
+          )}
+
           {screen === 'products' && (
             <ProductsScreen
               productGroups={monthlyProductGroups}
@@ -4459,6 +4576,12 @@ export default function App() {
               label={t.navReport}
               active={screen === 'report' || (screen === 'detail' && detailReturnScreen === 'report')}
               onPress={() => navigateToScreen('report')}
+            />
+            <NavButton
+              icon="🧾"
+              label={t.navMonthlyReceipts}
+              active={screen === 'monthly' || (screen === 'detail' && detailReturnScreen === 'monthly')}
+              onPress={() => navigateToScreen('monthly')}
             />
             <NavButton
               icon="🛍️"
@@ -5237,6 +5360,85 @@ function ReportScreen({
           )}
         </>
       )}
+    </View>
+  );
+}
+
+function MonthlyReceiptsScreen({
+  monthlyGroups,
+  selectedGroup,
+  onSelectMonth,
+  onClearMonth,
+  onSelectReceipt,
+  t,
+}) {
+  if (selectedGroup) {
+    return (
+      <View>
+        <View style={styles.reportHero}>
+          <Text style={styles.label}>🧾 {t.monthlyReceiptsTitle}</Text>
+          <Text style={styles.reportAmount}>{formatTL(selectedGroup.amount)}</Text>
+          <View style={styles.reportInfoRow}>
+            <View style={styles.reportInfoItem}>
+              <Text style={styles.reportInfoLabel}>{t.selectedMonth}</Text>
+              <Text style={styles.reportInfoValue}>{selectedGroup.label}</Text>
+            </View>
+            <View style={styles.reportInfoItem}>
+              <Text style={styles.reportInfoLabel}>{t.receiptCount}</Text>
+              <Text style={styles.reportInfoValue}>{selectedGroup.count}</Text>
+            </View>
+          </View>
+        </View>
+
+        <SecondaryButton label={t.back} onPress={onClearMonth} />
+
+        <ReceiptList
+          title={t.monthReceiptsTitle(selectedGroup.label)}
+          subtitle={`${selectedGroup.count} ${t.receiptsShort}`}
+          receipts={selectedGroup.receipts}
+          onSelectReceipt={onSelectReceipt}
+          t={t}
+        />
+      </View>
+    );
+  }
+
+  return (
+    <View>
+      <View style={styles.reportHero}>
+        <Text style={styles.label}>🧾 {t.monthlyReceiptsTitle}</Text>
+        <Text style={styles.productsHeroText}>{t.monthlyReceiptsInfo}</Text>
+      </View>
+
+      <View style={styles.monthList}>
+        {monthlyGroups.length === 0 && (
+          <View style={styles.card}>
+            <Text style={styles.emptyTitle}>{t.noReceipts}</Text>
+            <Text style={styles.emptyText}>{t.noReceiptsText}</Text>
+          </View>
+        )}
+        {monthlyGroups.map((group) => (
+          <Pressable
+            key={group.key}
+            style={styles.monthRow}
+            onPress={() => onSelectMonth(group)}
+          >
+            <View style={styles.monthIconBox}>
+              <Text style={styles.monthIconText}>🧾</Text>
+            </View>
+            <View style={styles.receiptTextBlock}>
+              <Text style={styles.monthTitle}>{group.label}</Text>
+              <Text style={styles.rowMeta}>
+                {group.count} {t.receiptsShort} - {t.tapMonthReceipts}
+              </Text>
+            </View>
+            <View style={styles.merchantAmountBlock}>
+              <Text style={styles.merchantAmount}>{formatTL(group.amount)}</Text>
+              <Text style={styles.merchantChevron}>›</Text>
+            </View>
+          </Pressable>
+        ))}
+      </View>
     </View>
   );
 }
@@ -7731,6 +7933,41 @@ const styles = StyleSheet.create({
     fontSize: 24,
     fontWeight: '900',
   },
+  monthList: {
+    backgroundColor: '#fff',
+    borderColor: '#dfe8e0',
+    borderWidth: 1,
+    borderRadius: 8,
+    marginTop: 12,
+    overflow: 'hidden',
+  },
+  monthRow: {
+    minHeight: 74,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: 12,
+    paddingHorizontal: 14,
+    paddingVertical: 13,
+    borderBottomColor: '#edf2ee',
+    borderBottomWidth: 1,
+  },
+  monthIconBox: {
+    alignItems: 'center',
+    backgroundColor: '#eaf8ec',
+    borderRadius: 8,
+    height: 42,
+    justifyContent: 'center',
+    width: 42,
+  },
+  monthIconText: {
+    fontSize: 20,
+  },
+  monthTitle: {
+    color: '#172018',
+    fontSize: 17,
+    fontWeight: '900',
+  },
   selectedMerchantSection: {
     marginTop: 18,
   },
@@ -8419,12 +8656,13 @@ const styles = StyleSheet.create({
   },
   navText: {
     color: '#68766b',
-    fontSize: 11,
+    fontSize: 10,
     fontWeight: '900',
+    textAlign: 'center',
   },
   navIcon: {
     color: '#68766b',
-    fontSize: 15,
+    fontSize: 14,
     fontWeight: '900',
     marginBottom: 2,
   },
