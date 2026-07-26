@@ -5078,6 +5078,39 @@ function ReportScreen({
     { key: 'merchants', label: `🏬 ${t.merchantBreakdown}` },
   ];
 
+  if (selectedCategory) {
+    const selectedCategoryLabel = getCategoryLabel(selectedCategory.key, t);
+
+    return (
+      <View>
+        <View style={styles.reportHero}>
+          <Text style={styles.label}>{getCategoryIcon(selectedCategory.key)} {selectedCategoryLabel}</Text>
+          <Text style={styles.reportAmount}>{formatTL(selectedCategory.amount)}</Text>
+          <View style={styles.reportInfoRow}>
+            <View style={styles.reportInfoItem}>
+              <Text style={styles.reportInfoLabel}>{t.receiptCount}</Text>
+              <Text style={styles.reportInfoValue}>{selectedCategoryReceipts.length}</Text>
+            </View>
+            <View style={styles.reportInfoItem}>
+              <Text style={styles.reportInfoLabel}>{t.category}</Text>
+              <Text style={styles.reportInfoValue}>{selectedCategoryLabel}</Text>
+            </View>
+          </View>
+        </View>
+
+        <SecondaryButton label={t.clearMerchantFilter} onPress={onClearSelectedCategory} />
+
+        <ReceiptList
+          title={`${getCategoryIcon(selectedCategory.key)} ${selectedCategoryLabel}`}
+          subtitle={`${selectedCategoryReceipts.length} ${t.receiptsShort}`}
+          receipts={selectedCategoryReceipts}
+          onSelectReceipt={onSelectReceipt}
+          t={t}
+        />
+      </View>
+    );
+  }
+
   return (
     <View>
       <View style={styles.reportHero}>
@@ -5142,10 +5175,7 @@ function ReportScreen({
             )}
             {categories.filter((category) => category.amount > 0).map((category) => (
               <Pressable
-                style={[
-                  styles.barItem,
-                  selectedCategory?.key === category.key && styles.barItemActive,
-                ]}
+                style={styles.barItem}
                 key={category.key}
                 onPress={() => onSelectCategory(category)}
               >
@@ -5169,26 +5199,6 @@ function ReportScreen({
               </Pressable>
             ))}
           </View>
-
-          {selectedCategory && (
-            <View style={styles.selectedMerchantSection}>
-              <View style={styles.selectedMerchantHeader}>
-                <Text style={styles.selectedMerchantTitle}>
-                  {getCategoryIcon(selectedCategory.key)} {getCategoryLabel(selectedCategory.key, t)}
-                </Text>
-                <Pressable onPress={onClearSelectedCategory} hitSlop={8}>
-                  <Text style={styles.clearSelectionText}>{t.clearMerchantFilter}</Text>
-                </Pressable>
-              </View>
-              <ReceiptList
-                title=""
-                subtitle={`${selectedCategoryReceipts.length} ${t.receiptsShort}`}
-                receipts={selectedCategoryReceipts}
-                onSelectReceipt={onSelectReceipt}
-                t={t}
-              />
-            </View>
-          )}
 
           <ReceiptList
             title={t.receiptArchive}
