@@ -1303,6 +1303,14 @@ const featureTranslations = {
     recurringName: 'Expense name',
     recurringAmount: 'Monthly amount',
     recurringDay: 'Payment day',
+    recurringMonth: 'Payment month',
+    recurringFrequency: 'Frequency',
+    recurringMonthly: 'Monthly',
+    recurringYearly: 'Yearly',
+    recurringActive: 'Active',
+    recurringPaused: 'Paused',
+    deleteRecurring: 'Delete',
+    recurringIncludedInfo: 'Active recurring expenses are included in monthly totals and reports.',
     addRecurring: 'Add recurring expense',
     noRecurring: 'No recurring expenses yet.',
     spaces: 'Spaces',
@@ -1342,6 +1350,14 @@ const featureTranslations = {
     recurringName: 'Gider adı',
     recurringAmount: 'Aylık tutar',
     recurringDay: 'Ödeme günü',
+    recurringMonth: 'Ödeme ayı',
+    recurringFrequency: 'Sıklık',
+    recurringMonthly: 'Aylık',
+    recurringYearly: 'Yıllık',
+    recurringActive: 'Aktif',
+    recurringPaused: 'Pasif',
+    deleteRecurring: 'Sil',
+    recurringIncludedInfo: 'Aktif tekrarlayan giderler aylık toplama ve raporlara dahil edilir.',
     addRecurring: 'Tekrarlayan gider ekle',
     noRecurring: 'Henüz tekrarlayan gider yok.',
     spaces: 'Alanlar',
@@ -1381,6 +1397,14 @@ const featureTranslations = {
     recurringName: 'Nom de la depense',
     recurringAmount: 'Montant mensuel',
     recurringDay: 'Jour de paiement',
+    recurringMonth: 'Mois de paiement',
+    recurringFrequency: 'Frequence',
+    recurringMonthly: 'Mensuel',
+    recurringYearly: 'Annuel',
+    recurringActive: 'Actif',
+    recurringPaused: 'En pause',
+    deleteRecurring: 'Supprimer',
+    recurringIncludedInfo: 'Les depenses recurrentes actives sont incluses dans les totaux mensuels et les rapports.',
     addRecurring: 'Ajouter une depense recurrente',
     noRecurring: 'Aucune depense recurrente pour le moment.',
     spaces: 'Espaces',
@@ -1420,6 +1444,14 @@ const featureTranslations = {
     recurringName: 'Name der Ausgabe',
     recurringAmount: 'Monatlicher Betrag',
     recurringDay: 'Zahlungstag',
+    recurringMonth: 'Zahlungsmonat',
+    recurringFrequency: 'Haeufigkeit',
+    recurringMonthly: 'Monatlich',
+    recurringYearly: 'Jaehrlich',
+    recurringActive: 'Aktiv',
+    recurringPaused: 'Pausiert',
+    deleteRecurring: 'Loeschen',
+    recurringIncludedInfo: 'Aktive wiederkehrende Ausgaben werden in Monatsgesamt und Berichten beruecksichtigt.',
     addRecurring: 'Wiederkehrende Ausgabe hinzufuegen',
     noRecurring: 'Noch keine wiederkehrenden Ausgaben.',
     spaces: 'Bereiche',
@@ -1459,6 +1491,14 @@ const featureTranslations = {
     recurringName: 'Nombre del gasto',
     recurringAmount: 'Importe mensual',
     recurringDay: 'Dia de pago',
+    recurringMonth: 'Mes de pago',
+    recurringFrequency: 'Frecuencia',
+    recurringMonthly: 'Mensual',
+    recurringYearly: 'Anual',
+    recurringActive: 'Activo',
+    recurringPaused: 'Pausado',
+    deleteRecurring: 'Eliminar',
+    recurringIncludedInfo: 'Los gastos recurrentes activos se incluyen en los totales mensuales e informes.',
     addRecurring: 'Anadir gasto recurrente',
     noRecurring: 'Aun no hay gastos recurrentes.',
     spaces: 'Espacios',
@@ -2177,11 +2217,76 @@ function getBudgetSummary(categories, budgetsByCategory) {
     .sort((first, second) => second.ratio - first.ratio);
 }
 
-function getRecurringMonthlyTotal(recurringExpenses, spaceKey = DEFAULT_SPACE_KEY) {
-  return recurringExpenses
-    .filter((expense) => expense?.active !== false)
-    .filter((expense) => !expense.space || normalizeSpaceKey(expense.space) === normalizeSpaceKey(spaceKey))
-    .reduce((sum, expense) => sum + parseAmount(String(expense.amountText || expense.amount || '')), 0);
+function normalizeRecurringFrequency(frequency) {
+  return frequency === 'yearly' ? 'yearly' : 'monthly';
+}
+
+function isMonthKeyBefore(firstMonthKey, secondMonthKey) {
+  return String(firstMonthKey || '') < String(secondMonthKey || '');
+}
+
+function getRecurringStartMonth(expense) {
+  return String(expense?.startMonth || getMonthKey()).match(/^\d{4}-\d{2}$/)
+    ? expense.startMonth
+    : getMonthKey();
+}
+
+function shouldRecurringExpenseApply(expense, monthKey, spaceKey) {
+  if (!expense || expense.active === false) {
+    return false;
+  }
+
+  if (expense.space && normalizeSpaceKey(expense.space) !== normalizeSpaceKey(spaceKey)) {
+    return false;
+  }
+
+  const startMonth = getRecurringStartMonth(expense);
+  if (isMonthKeyBefore(monthKey, startMonth)) {
+    return false;
+  }
+
+  if (normalizeRecurringFrequency(expense.frequency) === 'yearly') {
+    const dueMonth = Math.max(1, Math.min(12, Math.round(Number(expense.dueMonth) || Number(startMonth.slice(5, 7)) || 1)));
+    return Number(String(monthKey).slice(5, 7)) === dueMonth;
+  }
+
+  return true;
+}
+
+function getRecurringMonthlyTotal(recurringExpenses, spaceKey = DEFAULT_SPACE_KEY, monthKey = getMonthKey()) {
+  return buildRecurringReceiptsForMonth(recurringExpenses, monthKey, spaceKey, activeCurrency)
+    .reduce((sum, receipt) => sum + getReceiptSignedAmount(receipt), 0);
+}
+
+function getRecurringTotalUntilMonth(recurringExpenses, spaceKey, monthKey, currencyCode) {
+  const endMonth = String(monthKey || getMonthKey());
+  const startMonth = recurringExpenses.reduce((earliestMonth, expense) => {
+    if (!expense || expense.active === false) {
+      return earliestMonth;
+    }
+
+    if (expense.space && normalizeSpaceKey(expense.space) !== normalizeSpaceKey(spaceKey)) {
+      return earliestMonth;
+    }
+
+    const expenseStartMonth = getRecurringStartMonth(expense);
+    return !earliestMonth || expenseStartMonth < earliestMonth ? expenseStartMonth : earliestMonth;
+  }, '');
+
+  if (!startMonth || isMonthKeyBefore(endMonth, startMonth)) {
+    return 0;
+  }
+
+  let cursor = startMonth;
+  let total = 0;
+
+  while (!isMonthKeyBefore(endMonth, cursor)) {
+    total += buildRecurringReceiptsForMonth(recurringExpenses, cursor, spaceKey, currencyCode)
+      .reduce((sum, receipt) => sum + getReceiptSignedAmount(receipt), 0);
+    cursor = moveMonthKey(cursor, 1);
+  }
+
+  return total;
 }
 
 function buildRecurringReceiptsForMonth(recurringExpenses, monthKey, spaceKey, currencyCode) {
@@ -2191,8 +2296,7 @@ function buildRecurringReceiptsForMonth(recurringExpenses, monthKey, spaceKey, c
   const maxDay = new Date(safeYear, safeMonth, 0).getDate();
 
   return recurringExpenses
-    .filter((expense) => expense?.active !== false)
-    .filter((expense) => !expense.space || normalizeSpaceKey(expense.space) === normalizeSpaceKey(spaceKey))
+    .filter((expense) => shouldRecurringExpenseApply(expense, monthKey, spaceKey))
     .map((expense, index) => {
       const amount = parseAmount(String(expense.amountText || expense.amount || ''));
       const day = Math.max(1, Math.min(maxDay, Math.round(Number(expense.day) || 1)));
@@ -3055,8 +3159,10 @@ export default function App() {
     [incomeByMonth, incomeMonthKey]
   );
   const totalSpendUntilSelectedMonth = useMemo(
-    () => getReceiptTotalUntilMonth(visibleReceipts, incomeMonthKey) + getRecurringMonthlyTotal(recurringExpenses, activeSpace),
-    [visibleReceipts, incomeMonthKey, recurringExpenses, activeSpace]
+    () =>
+      getReceiptTotalUntilMonth(visibleReceipts, incomeMonthKey) +
+      getRecurringTotalUntilMonth(recurringExpenses, activeSpace, incomeMonthKey, selectedCurrency),
+    [visibleReceipts, incomeMonthKey, recurringExpenses, activeSpace, selectedCurrency]
   );
   const remaining = totalIncomeUntilSelectedMonth - totalSpendUntilSelectedMonth;
   const savingRate =
@@ -3110,8 +3216,8 @@ export default function App() {
     [categories, budgetsByCategory]
   );
   const recurringMonthlyTotal = useMemo(
-    () => getRecurringMonthlyTotal(recurringExpenses, activeSpace),
-    [recurringExpenses, activeSpace]
+    () => getRecurringMonthlyTotal(recurringExpenses, activeSpace, incomeMonthKey),
+    [recurringExpenses, activeSpace, incomeMonthKey]
   );
   const reportReceipts = useMemo(
     () => searchReceipts(filterReceiptsByPeriod(sortedReceipts, reportPeriod), reportSearchText),
@@ -4996,6 +5102,8 @@ function SettingsScreen({
   const [recurringName, setRecurringName] = useState('');
   const [recurringAmount, setRecurringAmount] = useState('');
   const [recurringDay, setRecurringDay] = useState('');
+  const [recurringMonth, setRecurringMonth] = useState(String(new Date().getMonth() + 1));
+  const [recurringFrequency, setRecurringFrequency] = useState('monthly');
   const [recurringCategory, setRecurringCategory] = useState('home');
   const selectedCurrencyItem =
     currencies.find((currency) => currency.code === selectedCurrency) || currencies[0];
@@ -5172,6 +5280,9 @@ function SettingsScreen({
           name,
           amountText: recurringAmount,
           day: Math.max(1, Math.min(31, Math.round(parseAmount(recurringDay) || 1))),
+          dueMonth: Math.max(1, Math.min(12, Math.round(parseAmount(recurringMonth) || new Date().getMonth() + 1))),
+          frequency: normalizeRecurringFrequency(recurringFrequency),
+          startMonth: incomeMonthKey,
           category: recurringCategory,
           space: activeSpace,
           active: true,
@@ -5180,6 +5291,8 @@ function SettingsScreen({
       setRecurringName('');
       setRecurringAmount('');
       setRecurringDay('');
+      setRecurringMonth(String(new Date().getMonth() + 1));
+      setRecurringFrequency('monthly');
       setRecurringCategory('home');
     }
 
@@ -5188,6 +5301,25 @@ function SettingsScreen({
         <View style={styles.card}>
           <Text style={styles.analysisTitle}>{t.recurring}</Text>
           <Text style={styles.analysisText}>{t.recurringInfo}</Text>
+          <Text style={styles.analysisText}>{t.recurringIncludedInfo}</Text>
+        </View>
+
+        <Text style={styles.inputLabel}>{t.recurringFrequency}</Text>
+        <View style={styles.currencyChipRow}>
+          {[
+            { key: 'monthly', label: t.recurringMonthly },
+            { key: 'yearly', label: t.recurringYearly },
+          ].map((option) => (
+            <Pressable
+              key={option.key}
+              style={[styles.currencyChip, recurringFrequency === option.key && styles.currencyChipActive]}
+              onPress={() => setRecurringFrequency(option.key)}
+            >
+              <Text style={[styles.currencyChipText, recurringFrequency === option.key && styles.currencyChipTextActive]}>
+                {option.label}
+              </Text>
+            </Pressable>
+          ))}
         </View>
 
         <TextInput
@@ -5210,6 +5342,15 @@ function SettingsScreen({
           keyboardType="number-pad"
           placeholder={t.recurringDay}
         />
+        {recurringFrequency === 'yearly' && (
+          <TextInput
+            style={styles.input}
+            value={recurringMonth}
+            onChangeText={setRecurringMonth}
+            keyboardType="number-pad"
+            placeholder={t.recurringMonth}
+          />
+        )}
         <Text style={styles.inputLabel}>{t.category}</Text>
         <View style={styles.receiptCategoryGrid}>
           {categoryOptions.map((category) => (
@@ -5237,25 +5378,49 @@ function SettingsScreen({
         <View style={styles.card}>
           {recurringExpenses.length === 0 && <Text style={styles.emptyText}>{t.noRecurring}</Text>}
           {recurringExpenses.map((expense) => (
-            <Pressable
+            <View
               style={styles.row}
               key={expense.id}
-              onPress={() =>
-                setRecurringExpenses((currentExpenses) =>
-                  currentExpenses.map((item) =>
-                    item.id === expense.id ? { ...item, active: item.active === false } : item
-                  )
-                )
-              }
             >
               <View style={styles.receiptTextBlock}>
                 <Text style={styles.rowText}>{expense.active === false ? '○ ' : '● '}{expense.name}</Text>
                 <Text style={styles.rowMeta}>
-                  {getCategoryIcon(expense.category)} {getCategoryLabel(expense.category || 'other', t)} - {t.recurringDay}: {expense.day || 1}
+                  {getCategoryIcon(expense.category)} {getCategoryLabel(expense.category || 'other', t)}
+                  {' - '}
+                  {normalizeRecurringFrequency(expense.frequency) === 'yearly' ? t.recurringYearly : t.recurringMonthly}
+                  {' - '}
+                  {normalizeRecurringFrequency(expense.frequency) === 'yearly' ? `${t.recurringMonth}: ${expense.dueMonth || 1}, ` : ''}
+                  {t.recurringDay}: {expense.day || 1}
                 </Text>
+                <Pressable
+                  hitSlop={8}
+                  onPress={() =>
+                    setRecurringExpenses((currentExpenses) =>
+                      currentExpenses.map((item) =>
+                        item.id === expense.id ? { ...item, active: item.active === false } : item
+                      )
+                    )
+                  }
+                >
+                  <Text style={styles.rowHint}>
+                    {expense.active === false ? t.recurringPaused : t.recurringActive}
+                  </Text>
+                </Pressable>
               </View>
-              <Text style={styles.rowAmount}>{formatTL(parseAmount(expense.amountText))}</Text>
-            </Pressable>
+              <View style={styles.merchantAmountBlock}>
+                <Text style={styles.rowAmount}>{formatTL(parseAmount(expense.amountText))}</Text>
+                <Pressable
+                  hitSlop={8}
+                  onPress={() =>
+                    setRecurringExpenses((currentExpenses) =>
+                      currentExpenses.filter((item) => item.id !== expense.id)
+                    )
+                  }
+                >
+                  <Text style={styles.removeItemText}>{t.deleteRecurring}</Text>
+                </Pressable>
+              </View>
+            </View>
           ))}
         </View>
 
