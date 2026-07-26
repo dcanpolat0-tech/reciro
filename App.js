@@ -1302,6 +1302,8 @@ const featureTranslations = {
     recurringInfo: 'Track rent, subscriptions, and fixed monthly costs.',
     recurringName: 'Expense name',
     recurringAmount: 'Monthly amount',
+    recurringYearlyAmount: 'Yearly amount',
+    recurringMonthlyEquivalent: 'monthly',
     recurringDay: 'Payment day',
     recurringMonth: 'Payment month',
     recurringFrequency: 'Frequency',
@@ -1349,6 +1351,8 @@ const featureTranslations = {
     recurringInfo: 'Kira, abonelik ve sabit aylık giderleri takip et.',
     recurringName: 'Gider adı',
     recurringAmount: 'Aylık tutar',
+    recurringYearlyAmount: 'Yıllık tutar',
+    recurringMonthlyEquivalent: 'aylık',
     recurringDay: 'Ödeme günü',
     recurringMonth: 'Ödeme ayı',
     recurringFrequency: 'Sıklık',
@@ -1396,6 +1400,8 @@ const featureTranslations = {
     recurringInfo: 'Suivez loyer, abonnements et frais fixes mensuels.',
     recurringName: 'Nom de la depense',
     recurringAmount: 'Montant mensuel',
+    recurringYearlyAmount: 'Montant annuel',
+    recurringMonthlyEquivalent: 'par mois',
     recurringDay: 'Jour de paiement',
     recurringMonth: 'Mois de paiement',
     recurringFrequency: 'Frequence',
@@ -1443,6 +1449,8 @@ const featureTranslations = {
     recurringInfo: 'Miete, Abos und feste monatliche Kosten verfolgen.',
     recurringName: 'Name der Ausgabe',
     recurringAmount: 'Monatlicher Betrag',
+    recurringYearlyAmount: 'Jaehrlicher Betrag',
+    recurringMonthlyEquivalent: 'pro Monat',
     recurringDay: 'Zahlungstag',
     recurringMonth: 'Zahlungsmonat',
     recurringFrequency: 'Haeufigkeit',
@@ -1490,6 +1498,8 @@ const featureTranslations = {
     recurringInfo: 'Controla alquiler, suscripciones y costes fijos mensuales.',
     recurringName: 'Nombre del gasto',
     recurringAmount: 'Importe mensual',
+    recurringYearlyAmount: 'Importe anual',
+    recurringMonthlyEquivalent: 'al mes',
     recurringDay: 'Dia de pago',
     recurringMonth: 'Mes de pago',
     recurringFrequency: 'Frecuencia',
@@ -2245,12 +2255,17 @@ function shouldRecurringExpenseApply(expense, monthKey, spaceKey) {
     return false;
   }
 
-  if (normalizeRecurringFrequency(expense.frequency) === 'yearly') {
-    const dueMonth = Math.max(1, Math.min(12, Math.round(Number(expense.dueMonth) || Number(startMonth.slice(5, 7)) || 1)));
-    return Number(String(monthKey).slice(5, 7)) === dueMonth;
+  return true;
+}
+
+function getRecurringMonthlyAmount(expense) {
+  const amount = parseAmount(String(expense?.amountText || expense?.amount || ''));
+
+  if (amount <= 0) {
+    return 0;
   }
 
-  return true;
+  return normalizeRecurringFrequency(expense?.frequency) === 'yearly' ? amount / 12 : amount;
 }
 
 function getRecurringMonthlyTotal(recurringExpenses, spaceKey = DEFAULT_SPACE_KEY, monthKey = getMonthKey()) {
@@ -2298,7 +2313,7 @@ function buildRecurringReceiptsForMonth(recurringExpenses, monthKey, spaceKey, c
   return recurringExpenses
     .filter((expense) => shouldRecurringExpenseApply(expense, monthKey, spaceKey))
     .map((expense, index) => {
-      const amount = parseAmount(String(expense.amountText || expense.amount || ''));
+      const amount = getRecurringMonthlyAmount(expense);
       const day = Math.max(1, Math.min(maxDay, Math.round(Number(expense.day) || 1)));
       const timestamp = new Date(safeYear, safeMonth - 1, day, 8, index).getTime();
 
@@ -5333,7 +5348,7 @@ function SettingsScreen({
           value={recurringAmount}
           onChangeText={setRecurringAmount}
           keyboardType="decimal-pad"
-          placeholder={t.recurringAmount}
+          placeholder={recurringFrequency === 'yearly' ? t.recurringYearlyAmount : t.recurringAmount}
         />
         <TextInput
           style={styles.input}
@@ -5409,6 +5424,11 @@ function SettingsScreen({
               </View>
               <View style={styles.merchantAmountBlock}>
                 <Text style={styles.rowAmount}>{formatTL(parseAmount(expense.amountText))}</Text>
+                {normalizeRecurringFrequency(expense.frequency) === 'yearly' && (
+                  <Text style={styles.rowMeta}>
+                    {formatTL(getRecurringMonthlyAmount(expense))} {t.recurringMonthlyEquivalent}
+                  </Text>
+                )}
                 <Pressable
                   hitSlop={8}
                   onPress={() =>
