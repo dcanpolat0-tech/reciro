@@ -192,6 +192,7 @@ const translations = {
     readItems: 'Okunan ürünler',
     addToSpending: 'Harcamalara Ekle',
     manualSaveHelp: 'Analiz olmadan kaydetmek için mağaza adı ve toplam tutarı yazman yeterli.',
+    editReceiptDetails: 'Detayları düzenle',
     confirmAndSave: 'Onayla ve Kaydet',
     confirmReceiptTitle: 'Fişi kaydet',
     confirmReceiptMessage: 'Analiz sonucunu kontrol ettin mi? Onaylarsan fiş arşive, ana ekrana ve raporlara kaydedilecek.',
@@ -427,6 +428,7 @@ const translations = {
     readItems: 'Read items',
     addToSpending: 'Add to spending',
     manualSaveHelp: 'To save without analysis, enter the store name and total amount.',
+    editReceiptDetails: 'Edit details',
     confirmAndSave: 'Confirm and Save',
     confirmReceiptTitle: 'Save receipt',
     confirmReceiptMessage: 'Have you checked the analysis result? If you confirm, this receipt will be saved to archive, home, and reports.',
@@ -662,6 +664,7 @@ const translations = {
     readItems: 'Articles lus',
     addToSpending: 'Ajouter aux depenses',
     manualSaveHelp: 'Pour enregistrer sans analyse, indiquez le magasin et le montant total.',
+    editReceiptDetails: 'Modifier les details',
     confirmAndSave: 'Confirmer et enregistrer',
     confirmReceiptTitle: 'Enregistrer le ticket',
     confirmReceiptMessage: 'Avez-vous verifie le resultat? En confirmant, le ticket sera enregistre dans l archive, l accueil et les rapports.',
@@ -897,6 +900,7 @@ const translations = {
     readItems: 'Gelesene Artikel',
     addToSpending: 'Zu Ausgaben hinzufuegen',
     manualSaveHelp: 'Zum Speichern ohne Analyse reichen Geschaeftsname und Gesamtbetrag.',
+    editReceiptDetails: 'Details bearbeiten',
     confirmAndSave: 'Bestaetigen und speichern',
     confirmReceiptTitle: 'Beleg speichern',
     confirmReceiptMessage: 'Hast du das Ergebnis geprueft? Nach der Bestaetigung wird der Beleg im Archiv, Start und Bericht gespeichert.',
@@ -1132,6 +1136,7 @@ const translations = {
     readItems: 'Productos leidos',
     addToSpending: 'Anadir a gastos',
     manualSaveHelp: 'Para guardar sin analisis, introduce la tienda y el importe total.',
+    editReceiptDetails: 'Editar detalles',
     confirmAndSave: 'Confirmar y guardar',
     confirmReceiptTitle: 'Guardar ticket',
     confirmReceiptMessage: 'Has revisado el resultado? Al confirmar, el ticket se guardara en archivo, inicio e informes.',
@@ -2961,6 +2966,7 @@ export default function App() {
   const [receiptWarrantyText, setReceiptWarrantyText] = useState('');
   const [receiptNoteText, setReceiptNoteText] = useState('');
   const [receiptNoteOpen, setReceiptNoteOpen] = useState(false);
+  const [receiptDetailsOpen, setReceiptDetailsOpen] = useState(false);
   const [receiptNumberText, setReceiptNumberText] = useState('');
   const [receiptImage, setReceiptImage] = useState(null);
   const [receiptFile, setReceiptFile] = useState(null);
@@ -3738,6 +3744,7 @@ export default function App() {
     setReceiptWarrantyText('');
     setReceiptNoteText('');
     setReceiptNoteOpen(false);
+    setReceiptDetailsOpen(false);
     setReceiptNumberText('');
     setReceiptImage(null);
     setReceiptFile(null);
@@ -4244,6 +4251,8 @@ export default function App() {
                   setReceiptNoteText={setReceiptNoteText}
                   receiptNoteOpen={receiptNoteOpen}
                   setReceiptNoteOpen={setReceiptNoteOpen}
+                  receiptDetailsOpen={receiptDetailsOpen}
+                  setReceiptDetailsOpen={setReceiptDetailsOpen}
                   receiptImage={receiptImage}
                   receiptFile={receiptFile}
                   receiptItems={receiptItems}
@@ -4559,6 +4568,8 @@ function ReceiptScreen({
   setReceiptNoteText,
   receiptNoteOpen,
   setReceiptNoteOpen,
+  receiptDetailsOpen,
+  setReceiptDetailsOpen,
   receiptImage,
   receiptFile,
   receiptItems,
@@ -4699,25 +4710,7 @@ function ReceiptScreen({
 
       {(receiptImage || receiptFile || storeName || amountText) && (
         <View style={styles.formCard}>
-          <Text style={[styles.inputLabel, styles.firstInputLabel]}>{t.receiptType}</Text>
-          <View style={styles.currencyChipRow}>
-            {[
-              { key: 'expense', label: t.expenseType },
-              { key: 'refund', label: t.refundType },
-            ].map((option) => (
-              <Pressable
-                key={option.key}
-                style={[styles.currencyChip, receiptKind === option.key && styles.currencyChipActive]}
-                onPress={() => setReceiptKind(option.key)}
-              >
-                <Text style={[styles.currencyChipText, receiptKind === option.key && styles.currencyChipTextActive]}>
-                  {option.key === 'refund' ? '↩ ' : '+ '}{option.label}
-                </Text>
-              </Pressable>
-            ))}
-          </View>
-
-          <Text style={styles.inputLabel}>{t.storeName}</Text>
+          <Text style={[styles.inputLabel, styles.firstInputLabel]}>{t.storeName}</Text>
           <TextInput
             style={styles.input}
             value={storeName}
@@ -4735,131 +4728,161 @@ function ReceiptScreen({
             placeholder=""
           />
 
-          <Text style={styles.inputLabel}>{t.receiptCurrency}</Text>
-          <View style={styles.currencyChipRow}>
-            {currencies.map((currency) => (
-              <Pressable
-                key={currency.code}
-                style={[
-                  styles.currencyChip,
-                  receiptCurrency === currency.code && styles.currencyChipActive,
-                ]}
-                onPress={() => setReceiptCurrency(currency.code)}
-              >
-                <Text
-                  style={[
-                    styles.currencyChipText,
-                    receiptCurrency === currency.code && styles.currencyChipTextActive,
-                  ]}
-                >
-                  {currency.symbol} {currency.code}
-                </Text>
-              </Pressable>
-            ))}
-          </View>
-
-          <Text style={styles.inputLabel}>{t.date}</Text>
-          <TextInput
-            style={styles.input}
-            value={receiptDateText}
-            onChangeText={setReceiptDateText}
-            placeholder={formatReceiptDate(Date.now())}
-          />
-
-          <Text style={styles.inputLabel}>{t.subtotalAmount}</Text>
-          <TextInput
-            style={styles.input}
-            value={subtotalText}
-            onChangeText={setSubtotalText}
-            keyboardType="decimal-pad"
-            placeholder=""
-          />
-
-          <Text style={styles.inputLabel}>{t.taxAmount}</Text>
-          <TextInput
-            style={styles.input}
-            value={taxText}
-            onChangeText={setTaxText}
-            keyboardType="decimal-pad"
-            placeholder=""
-          />
-
           {analysisStatus !== 'done' && (
             <Text style={styles.manualSaveText}>{t.manualSaveHelp}</Text>
           )}
 
-          <Text style={styles.inputLabel}>{t.category}</Text>
-          <View style={styles.receiptCategoryGrid}>
-            {categoryOptions.map((category) => (
-              <Pressable
-                key={category.key}
-                style={[
-                  styles.receiptCategoryButton,
-                  selectedCategory === category.key && styles.receiptCategoryButtonActive,
-                ]}
-                onPress={() => {
-                  setSelectedCategory(category.key);
-                  if (category.key !== 'other') {
-                    setCustomCategoryText('');
-                  }
-                }}
-              >
-                <Text
-                  style={[
-                    styles.receiptCategoryText,
-                    selectedCategory === category.key && styles.receiptCategoryTextActive,
-                  ]}
-                >
-                  {category.icon} {getCategoryLabel(category.key, t)}
-                </Text>
-              </Pressable>
-            ))}
-          </View>
-          {selectedCategory === 'other' && (
-            <>
-              <Text style={styles.inputLabel}>{t.customCategory}</Text>
+          <Pressable
+            style={[styles.toggleRow, receiptDetailsOpen && styles.toggleRowActive]}
+            onPress={() => setReceiptDetailsOpen(!receiptDetailsOpen)}
+          >
+            <Text style={styles.rowText}>{t.editReceiptDetails}</Text>
+            <Text style={styles.settingsValue}>{receiptDetailsOpen ? '⌃' : '⌄'}</Text>
+          </Pressable>
+
+          {receiptDetailsOpen && (
+            <View style={styles.detailFieldsPanel}>
+              <Text style={styles.inputLabel}>{t.receiptType}</Text>
+              <View style={styles.currencyChipRow}>
+                {[
+                  { key: 'expense', label: t.expenseType },
+                  { key: 'refund', label: t.refundType },
+                ].map((option) => (
+                  <Pressable
+                    key={option.key}
+                    style={[styles.currencyChip, receiptKind === option.key && styles.currencyChipActive]}
+                    onPress={() => setReceiptKind(option.key)}
+                  >
+                    <Text style={[styles.currencyChipText, receiptKind === option.key && styles.currencyChipTextActive]}>
+                      {option.key === 'refund' ? '↩ ' : '+ '}{option.label}
+                    </Text>
+                  </Pressable>
+                ))}
+              </View>
+
+              <Text style={styles.inputLabel}>{t.receiptCurrency}</Text>
+              <View style={styles.currencyChipRow}>
+                {currencies.map((currency) => (
+                  <Pressable
+                    key={currency.code}
+                    style={[
+                      styles.currencyChip,
+                      receiptCurrency === currency.code && styles.currencyChipActive,
+                    ]}
+                    onPress={() => setReceiptCurrency(currency.code)}
+                  >
+                    <Text
+                      style={[
+                        styles.currencyChipText,
+                        receiptCurrency === currency.code && styles.currencyChipTextActive,
+                      ]}
+                    >
+                      {currency.symbol} {currency.code}
+                    </Text>
+                  </Pressable>
+                ))}
+              </View>
+
+              <Text style={styles.inputLabel}>{t.date}</Text>
               <TextInput
                 style={styles.input}
-                value={customCategoryText}
-                onChangeText={setCustomCategoryText}
-                placeholder={t.customCategoryPlaceholder}
+                value={receiptDateText}
+                onChangeText={setReceiptDateText}
+                placeholder={formatReceiptDate(Date.now())}
               />
-            </>
-          )}
 
-          <Text style={styles.inputLabel}>{t.warranty}</Text>
-          <TextInput
-            style={styles.input}
-            value={receiptWarrantyText}
-            onChangeText={setReceiptWarrantyText}
-            placeholder={formatReceiptDate(Date.now())}
-          />
+              <Text style={styles.inputLabel}>{t.subtotalAmount}</Text>
+              <TextInput
+                style={styles.input}
+                value={subtotalText}
+                onChangeText={setSubtotalText}
+                keyboardType="decimal-pad"
+                placeholder=""
+              />
 
-          <Pressable
-            style={[styles.toggleRow, receiptImportant && styles.toggleRowActive]}
-            onPress={() => setReceiptImportant(!receiptImportant)}
-          >
-            <Text style={styles.rowText}>{receiptImportant ? '⭐ ' : ''}{t.importantReceipt}</Text>
-            <Text style={styles.settingsValue}>{receiptImportant ? t.selected : ''}</Text>
-          </Pressable>
+              <Text style={styles.inputLabel}>{t.taxAmount}</Text>
+              <TextInput
+                style={styles.input}
+                value={taxText}
+                onChangeText={setTaxText}
+                keyboardType="decimal-pad"
+                placeholder=""
+              />
 
-          <Pressable
-            style={[styles.toggleRow, receiptNoteOpen && styles.toggleRowActive]}
-            onPress={() => setReceiptNoteOpen(!receiptNoteOpen)}
-          >
-            <Text style={styles.rowText}>{t.note}</Text>
-            <Text style={styles.settingsValue}>{receiptNoteOpen ? '⌃' : '⌄'}</Text>
-          </Pressable>
+              <Text style={styles.inputLabel}>{t.category}</Text>
+              <View style={styles.receiptCategoryGrid}>
+                {categoryOptions.map((category) => (
+                  <Pressable
+                    key={category.key}
+                    style={[
+                      styles.receiptCategoryButton,
+                      selectedCategory === category.key && styles.receiptCategoryButtonActive,
+                    ]}
+                    onPress={() => {
+                      setSelectedCategory(category.key);
+                      if (category.key !== 'other') {
+                        setCustomCategoryText('');
+                      }
+                    }}
+                  >
+                    <Text
+                      style={[
+                        styles.receiptCategoryText,
+                        selectedCategory === category.key && styles.receiptCategoryTextActive,
+                      ]}
+                    >
+                      {category.icon} {getCategoryLabel(category.key, t)}
+                    </Text>
+                  </Pressable>
+                ))}
+              </View>
+              {selectedCategory === 'other' && (
+                <>
+                  <Text style={styles.inputLabel}>{t.customCategory}</Text>
+                  <TextInput
+                    style={styles.input}
+                    value={customCategoryText}
+                    onChangeText={setCustomCategoryText}
+                    placeholder={t.customCategoryPlaceholder}
+                  />
+                </>
+              )}
 
-          {receiptNoteOpen && (
-            <TextInput
-              style={[styles.input, styles.feedbackInput]}
-              value={receiptNoteText}
-              onChangeText={setReceiptNoteText}
-              placeholder={t.notePlaceholder}
-              multiline
-              textAlignVertical="top"
-            />
+              <Text style={styles.inputLabel}>{t.warranty}</Text>
+              <TextInput
+                style={styles.input}
+                value={receiptWarrantyText}
+                onChangeText={setReceiptWarrantyText}
+                placeholder={formatReceiptDate(Date.now())}
+              />
+
+              <Pressable
+                style={[styles.toggleRow, receiptImportant && styles.toggleRowActive]}
+                onPress={() => setReceiptImportant(!receiptImportant)}
+              >
+                <Text style={styles.rowText}>{receiptImportant ? '⭐ ' : ''}{t.importantReceipt}</Text>
+                <Text style={styles.settingsValue}>{receiptImportant ? t.selected : ''}</Text>
+              </Pressable>
+
+              <Pressable
+                style={[styles.toggleRow, receiptNoteOpen && styles.toggleRowActive]}
+                onPress={() => setReceiptNoteOpen(!receiptNoteOpen)}
+              >
+                <Text style={styles.rowText}>{t.note}</Text>
+                <Text style={styles.settingsValue}>{receiptNoteOpen ? '⌃' : '⌄'}</Text>
+              </Pressable>
+
+              {receiptNoteOpen && (
+                <TextInput
+                  style={[styles.input, styles.feedbackInput]}
+                  value={receiptNoteText}
+                  onChangeText={setReceiptNoteText}
+                  placeholder={t.notePlaceholder}
+                  multiline
+                  textAlignVertical="top"
+                />
+              )}
+            </View>
           )}
         </View>
       )}
@@ -7281,6 +7304,12 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     padding: 14,
     marginTop: 12,
+  },
+  detailFieldsPanel: {
+    borderTopColor: '#edf2ee',
+    borderTopWidth: 1,
+    marginTop: 12,
+    paddingTop: 4,
   },
   reviewCard: {
     backgroundColor: '#f0faf2',
