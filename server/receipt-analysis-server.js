@@ -50,6 +50,7 @@ const receiptSchema = {
     totalText: { type: 'string' },
     subtotalText: { type: 'string' },
     taxText: { type: 'string' },
+    receiptNumber: { type: 'string' },
     currencyCode: {
       type: 'string',
       enum: ['TRY', 'EUR', 'GBP', 'USD', 'UNKNOWN'],
@@ -82,7 +83,7 @@ const receiptSchema = {
       },
     },
   },
-  required: ['storeName', 'totalText', 'subtotalText', 'taxText', 'currencyCode', 'dateText', 'categoryKey', 'confidence', 'items'],
+  required: ['storeName', 'totalText', 'subtotalText', 'taxText', 'receiptNumber', 'currencyCode', 'dateText', 'categoryKey', 'confidence', 'items'],
 };
 
 function sendJson(response, statusCode, payload) {
@@ -174,6 +175,7 @@ function normalizeAnalysis(result) {
     totalText: String(result.totalText || '').trim(),
     subtotalText: String(result.subtotalText || '').trim(),
     taxText: String(result.taxText || '').trim(),
+    receiptNumber: String(result.receiptNumber || '').trim(),
     currencyCode: ['TRY', 'EUR', 'GBP', 'USD'].includes(result.currencyCode) ? result.currencyCode : 'UNKNOWN',
     dateText: String(result.dateText || '').trim(),
     categoryKey: result.categoryKey || 'other',
@@ -216,6 +218,7 @@ async function analyzeReceipt(imageBase64) {
               text:
                 'Read this receipt/invoice image. Return only structured JSON. ' +
                 'Use dateText as DD.MM.YYYY when possible. totalText must be the final paid total. ' +
+                'Extract receiptNumber from ticket number, transaction number, invoice number, receipt number, order number, or document number when printed. If unclear, use an empty string. ' +
                 'Extract subtotalText and taxText/VAT/TVA/KDV when printed. If not printed, use empty strings. ' +
                 'Detect currencyCode from printed symbols/currency text. Use TRY for TL/₺/TRY, EUR for €/EUR, GBP for £/GBP, USD for $/USD. If unclear, use UNKNOWN. ' +
                 'Never round prices. Preserve cents exactly: 0.99 must be 0.99, 25.60 must be 25.60, and 55.84 must be 55.84. ' +

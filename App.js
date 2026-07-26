@@ -173,7 +173,7 @@ const translations = {
     subtotalAmount: 'Ara toplam',
     exchangeRate: 'Kur',
     duplicateReceiptTitle: 'Bu fiş eklenmiş olabilir',
-    duplicateReceiptText: 'Aynı mağaza, tarih ve tutara benzeyen bir fiş zaten var. Yine de kaydedilsin mi?',
+    duplicateReceiptText: 'Bu fiş daha önce kaydedilmiş görünüyor. Aynı fiş tekrar arşive eklenmedi.',
     saveAnyway: 'Yine de kaydet',
     imageQualityTitle: 'Fotoğraf net olmayabilir',
     imageQualityText: 'Bu fotoğraf düşük çözünürlüklü görünüyor. Analiz yanlış olabilir.',
@@ -408,7 +408,7 @@ const translations = {
     subtotalAmount: 'Subtotal',
     exchangeRate: 'Exchange rate',
     duplicateReceiptTitle: 'This receipt may already exist',
-    duplicateReceiptText: 'A similar receipt with the same store, date, and amount already exists. Save it anyway?',
+    duplicateReceiptText: 'This receipt appears to be saved already, so it was not added again.',
     saveAnyway: 'Save anyway',
     imageQualityTitle: 'Photo may not be clear',
     imageQualityText: 'This photo looks low resolution. The analysis may be wrong.',
@@ -643,7 +643,7 @@ const translations = {
     subtotalAmount: 'Sous-total',
     exchangeRate: 'Taux',
     duplicateReceiptTitle: 'Ce ticket existe peut-etre deja',
-    duplicateReceiptText: 'Un ticket similaire avec le meme magasin, la meme date et le meme montant existe deja. Enregistrer quand meme ?',
+    duplicateReceiptText: 'Ce ticket semble deja enregistre. Il n a pas ete ajoute une deuxieme fois.',
     saveAnyway: 'Enregistrer quand meme',
     imageQualityTitle: 'Photo peut-etre floue',
     imageQualityText: 'Cette photo semble en basse resolution. L analyse peut etre incorrecte.',
@@ -878,7 +878,7 @@ const translations = {
     subtotalAmount: 'Zwischensumme',
     exchangeRate: 'Wechselkurs',
     duplicateReceiptTitle: 'Dieser Beleg koennte schon existieren',
-    duplicateReceiptText: 'Ein aehnlicher Beleg mit gleichem Laden, Datum und Betrag existiert bereits. Trotzdem speichern?',
+    duplicateReceiptText: 'Dieser Beleg scheint bereits gespeichert zu sein und wurde nicht erneut hinzugefuegt.',
     saveAnyway: 'Trotzdem speichern',
     imageQualityTitle: 'Foto ist moeglicherweise unscharf',
     imageQualityText: 'Dieses Foto wirkt niedrig aufgeloest. Die Analyse kann falsch sein.',
@@ -1113,7 +1113,7 @@ const translations = {
     subtotalAmount: 'Subtotal',
     exchangeRate: 'Tipo de cambio',
     duplicateReceiptTitle: 'Este ticket puede existir ya',
-    duplicateReceiptText: 'Ya existe un ticket parecido con la misma tienda, fecha e importe. Guardarlo igualmente?',
+    duplicateReceiptText: 'Este ticket parece estar ya guardado, asi que no se anadio de nuevo.',
     saveAnyway: 'Guardar igualmente',
     imageQualityTitle: 'La foto puede no estar clara',
     imageQualityText: 'Esta foto parece de baja resolucion. El analisis puede fallar.',
@@ -1826,6 +1826,8 @@ function normalizeReceiptCategories(receipt, fallbackCurrency = activeCurrency) 
     note: String(receipt.note || ''),
     space: normalizeSpaceKey(receipt.space),
     items: normalizedItems,
+    receiptNumber: normalizeReceiptNumber(receipt.receiptNumber || receipt.ticketNumber || receipt.invoiceNumber || ''),
+    fingerprint: receipt.fingerprint || getReceiptFingerprint({ ...receipt, amount: normalizedAmount, items: normalizedItems }),
   };
 }
 
@@ -1836,9 +1838,57 @@ function getItemsTotal(items) {
           return sum;
         }
 
-        return sum + (Number(item.amount) || 0);
+        return sum + getEditableItemAmount(item);
       }, 0)
     : 0;
+}
+
+function getEditableItemAmount(item) {
+  if (!item || typeof item === 'string') {
+    return 0;
+  }
+
+  const amountTextValue = parseAmount(String(item.amountText || ''));
+
+  if (amountTextValue > 0) {
+    return amountTextValue;
+  }
+
+  return Number(item.amount) || 0;
+}
+
+function normalizeReceiptNumber(value) {
+  return normalizeLookupText(String(value || '').replace(/[^a-zA-Z0-9]/g, ''));
+}
+
+function getReceiptItemsFingerprint(items) {
+  if (!Array.isArray(items) || items.length === 0) {
+    return '';
+  }
+
+  return items
+    .map((item) => {
+      if (typeof item === 'string') {
+        return normalizeLookupText(item);
+      }
+
+      const name = normalizeLookupText(item.name);
+      const amount = getEditableItemAmount(item);
+      const quantity = Number(item.quantity) || parseAmount(String(item.quantityText || '')) || 1;
+      return `${name}:${amount.toFixed(2)}:${quantity}`;
+    })
+    .filter(Boolean)
+    .sort()
+    .join('|');
+}
+
+function getReceiptFingerprint(receipt) {
+  const store = normalizeLookupText(receipt?.store);
+  const date = normalizeDateDisplay(receipt?.date || '', receipt?.createdAt);
+  const amount = Number(receipt?.amount) || 0;
+  const items = getReceiptItemsFingerprint(receipt?.items);
+
+  return [store, date, amount.toFixed(2), items].filter(Boolean).join('|');
 }
 
 function normalizeReceiptAmount(amount, items) {
@@ -2534,6 +2584,7 @@ async function analyzeReceiptPhoto(imageUri) {
     totalText: String(result.totalText || result.total || ''),
     subtotalText: String(result.subtotalText || ''),
     taxText: String(result.taxText || ''),
+    receiptNumber: String(result.receiptNumber || result.ticketNumber || result.invoiceNumber || result.orderNumber || ''),
     currencyCode: normalizeCurrencyCode(result.currencyCode, activeCurrency),
     dateText: result.dateText || result.date || formatReceiptDate(Date.now()),
     categoryKey: normalizeCategoryKey(result.categoryKey || result.category),
@@ -2784,9 +2835,15 @@ function isReceiptDuplicate(candidateReceipt, receiptList) {
   const candidateStore = normalizeLookupText(candidateReceipt.store);
   const candidateDate = String(candidateReceipt.date || '').trim();
   const candidateAmount = Number(candidateReceipt.amount) || 0;
+  const candidateReceiptNumber = normalizeReceiptNumber(candidateReceipt.receiptNumber);
+  const candidateFingerprint = candidateReceipt.fingerprint || getReceiptFingerprint(candidateReceipt);
+  const candidateItemsFingerprint = getReceiptItemsFingerprint(candidateReceipt.items);
 
   return receiptList.some((receipt) => {
     const receiptStore = normalizeLookupText(receipt.store);
+    const receiptNumber = normalizeReceiptNumber(receipt.receiptNumber);
+    const receiptFingerprint = receipt.fingerprint || getReceiptFingerprint(receipt);
+    const receiptItemsFingerprint = getReceiptItemsFingerprint(receipt.items);
     const sameDate = candidateDate && candidateDate === String(receipt.date || '').trim();
     const sameAmount = Math.abs((Number(receipt.amount) || 0) - candidateAmount) < 0.02;
     const sameStore =
@@ -2794,7 +2851,20 @@ function isReceiptDuplicate(candidateReceipt, receiptList) {
       receiptStore &&
       (candidateStore === receiptStore || candidateStore.includes(receiptStore) || receiptStore.includes(candidateStore));
 
-    return sameDate && sameAmount && sameStore;
+    const sameReceiptNumber =
+      candidateReceiptNumber &&
+      receiptNumber &&
+      candidateReceiptNumber === receiptNumber;
+    const sameFingerprint =
+      candidateFingerprint &&
+      receiptFingerprint &&
+      candidateFingerprint === receiptFingerprint;
+    const sameItems =
+      candidateItemsFingerprint &&
+      receiptItemsFingerprint &&
+      candidateItemsFingerprint === receiptItemsFingerprint;
+
+    return sameReceiptNumber || sameFingerprint || (sameDate && sameAmount && sameStore && sameItems) || (sameDate && sameAmount && sameStore);
   });
 }
 
@@ -2890,6 +2960,8 @@ export default function App() {
   const [receiptImportant, setReceiptImportant] = useState(false);
   const [receiptWarrantyText, setReceiptWarrantyText] = useState('');
   const [receiptNoteText, setReceiptNoteText] = useState('');
+  const [receiptNoteOpen, setReceiptNoteOpen] = useState(false);
+  const [receiptNumberText, setReceiptNumberText] = useState('');
   const [receiptImage, setReceiptImage] = useState(null);
   const [receiptFile, setReceiptFile] = useState(null);
   const [analysisStatus, setAnalysisStatus] = useState('idle');
@@ -3453,10 +3525,10 @@ export default function App() {
   }
 
   function setTotalFromEditItems() {
-    const total = editItems.reduce((sum, item) => sum + parseAmount(item.amountText), 0);
+    const total = getItemsTotal(editItems);
 
     if (total > 0) {
-      setEditAmountText(String(total).replace('.', ','));
+      setEditAmountText(String(Number(total.toFixed(2))).replace('.', ','));
     }
   }
 
@@ -3665,6 +3737,8 @@ export default function App() {
     setReceiptImportant(false);
     setReceiptWarrantyText('');
     setReceiptNoteText('');
+    setReceiptNoteOpen(false);
+    setReceiptNumberText('');
     setReceiptImage(null);
     setReceiptFile(null);
     setReceiptItems([]);
@@ -3741,7 +3815,7 @@ export default function App() {
   }
 
   function setTotalFromReceiptItems() {
-    const total = receiptItems.reduce((sum, item) => sum + parseAmount(item.amountText), 0);
+    const total = getItemsTotal(receiptItems);
 
     if (total > 0) {
       setAmountText(String(Number(total.toFixed(2))).replace('.', ','));
@@ -3951,6 +4025,7 @@ export default function App() {
       setSubtotalText(analysisResult.subtotalText || '');
       setTaxText(analysisResult.taxText || '');
       setReceiptDateText(analysisResult.dateText || formatReceiptDate(Date.now()));
+      setReceiptNumberText(analysisResult.receiptNumber || '');
       const analyzedCategory = normalizeCategoryKey(analysisResult.categoryKey);
       setSelectedCategory(analyzedCategory);
       setCustomCategoryText('');
@@ -4060,19 +4135,13 @@ export default function App() {
       image: receiptImage,
       file: receiptFile,
       items: moneyFields.items,
+      receiptNumber: normalizeReceiptNumber(receiptNumberText),
     };
+    newReceipt.fingerprint = getReceiptFingerprint(newReceipt);
 
     if (isReceiptDuplicate(newReceipt, receipts)) {
-      const shouldContinue = await confirmAlert(
-        t.duplicateReceiptTitle,
-        t.duplicateReceiptText,
-        t.saveAnyway,
-        t.cancel
-      );
-
-      if (!shouldContinue) {
-        return;
-      }
+      Alert.alert(t.duplicateReceiptTitle, t.duplicateReceiptText);
+      return;
     }
 
     const learnedCategories = buildCategoryMemoryFromItems(receiptItems);
@@ -4173,6 +4242,8 @@ export default function App() {
                   setReceiptWarrantyText={setReceiptWarrantyText}
                   receiptNoteText={receiptNoteText}
                   setReceiptNoteText={setReceiptNoteText}
+                  receiptNoteOpen={receiptNoteOpen}
+                  setReceiptNoteOpen={setReceiptNoteOpen}
                   receiptImage={receiptImage}
                   receiptFile={receiptFile}
                   receiptItems={receiptItems}
@@ -4486,6 +4557,8 @@ function ReceiptScreen({
   setReceiptWarrantyText,
   receiptNoteText,
   setReceiptNoteText,
+  receiptNoteOpen,
+  setReceiptNoteOpen,
   receiptImage,
   receiptFile,
   receiptItems,
@@ -4770,15 +4843,24 @@ function ReceiptScreen({
             <Text style={styles.settingsValue}>{receiptImportant ? t.selected : ''}</Text>
           </Pressable>
 
-          <Text style={styles.inputLabel}>{t.note}</Text>
-          <TextInput
-            style={[styles.input, styles.feedbackInput]}
-            value={receiptNoteText}
-            onChangeText={setReceiptNoteText}
-            placeholder={t.notePlaceholder}
-            multiline
-            textAlignVertical="top"
-          />
+          <Pressable
+            style={[styles.toggleRow, receiptNoteOpen && styles.toggleRowActive]}
+            onPress={() => setReceiptNoteOpen(!receiptNoteOpen)}
+          >
+            <Text style={styles.rowText}>{t.note}</Text>
+            <Text style={styles.settingsValue}>{receiptNoteOpen ? '⌃' : '⌄'}</Text>
+          </Pressable>
+
+          {receiptNoteOpen && (
+            <TextInput
+              style={[styles.input, styles.feedbackInput]}
+              value={receiptNoteText}
+              onChangeText={setReceiptNoteText}
+              placeholder={t.notePlaceholder}
+              multiline
+              textAlignVertical="top"
+            />
+          )}
         </View>
       )}
 
