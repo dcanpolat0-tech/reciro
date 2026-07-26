@@ -3230,6 +3230,14 @@ export default function App() {
     () => getBudgetSummary(categories, budgetsByCategory),
     [categories, budgetsByCategory]
   );
+  const isReceiptComposerActive =
+    Boolean(receiptImage) ||
+    Boolean(receiptFile) ||
+    Boolean(storeName.trim()) ||
+    Boolean(amountText.trim()) ||
+    receiptItems.length > 0 ||
+    analysisStatus === 'analyzing' ||
+    analysisStatus === 'done';
   const recurringMonthlyTotal = useMemo(
     () => getRecurringMonthlyTotal(recurringExpenses, activeSpace, incomeMonthKey),
     [recurringExpenses, activeSpace, incomeMonthKey]
@@ -4137,6 +4145,7 @@ export default function App() {
               recurringMonthlyTotal={recurringMonthlyTotal}
               activeSpaceLabel={getSpaceLabel(activeSpace, t)}
               onSelectReceipt={openReceiptDetail}
+              isReceiptComposerActive={isReceiptComposerActive}
               t={t}
               receiptComposer={
                 <ReceiptScreen
@@ -4370,10 +4379,19 @@ function HomeScreen({
   recurringMonthlyTotal,
   activeSpaceLabel,
   onSelectReceipt,
+  isReceiptComposerActive,
   receiptComposer,
   t,
 }) {
   const topCategoryLabel = getCategoryLabel(topCategory.key, t);
+
+  if (isReceiptComposerActive) {
+    return (
+      <View style={styles.homeReceiptComposerFocused}>
+        {receiptComposer}
+      </View>
+    );
+  }
 
   return (
     <View>
@@ -7110,6 +7128,9 @@ const styles = StyleSheet.create({
   },
   homeReceiptComposer: {
     marginTop: 10,
+  },
+  homeReceiptComposerFocused: {
+    marginTop: 4,
   },
   card: {
     backgroundColor: '#fff',
