@@ -3002,6 +3002,7 @@ export default function App() {
   const [reportView, setReportView] = useState('overview');
   const [reportSearchText, setReportSearchText] = useState('');
   const [selectedMerchantKey, setSelectedMerchantKey] = useState(null);
+  const [selectedReportCategoryKey, setSelectedReportCategoryKey] = useState(null);
   const [storageReady, setStorageReady] = useState(false);
 
   useEffect(() => {
@@ -3345,26 +3346,41 @@ export default function App() {
     () => reportMerchantGroups.find((merchant) => merchant.key === selectedMerchantKey) || null,
     [reportMerchantGroups, selectedMerchantKey]
   );
+  const selectedReportCategory = useMemo(
+    () => reportCategories.find((category) => category.key === selectedReportCategoryKey) || null,
+    [reportCategories, selectedReportCategoryKey]
+  );
+  const selectedReportCategoryReceipts = useMemo(
+    () =>
+      selectedReportCategoryKey
+        ? reportReceipts.filter((receipt) => normalizeCategoryKey(receipt.category) === selectedReportCategoryKey)
+        : [],
+    [reportReceipts, selectedReportCategoryKey]
+  );
 
   function updateReportPeriod(period) {
     setReportPeriod(period);
     setSelectedMerchantKey(null);
+    setSelectedReportCategoryKey(null);
   }
 
   function updateReportView(view) {
     setReportView(view);
     setReportSearchText('');
     setSelectedMerchantKey(null);
+    setSelectedReportCategoryKey(null);
   }
 
   function updateReportSearchText(value) {
     setReportSearchText(value);
     setSelectedMerchantKey(null);
+    setSelectedReportCategoryKey(null);
   }
 
   function selectReportMerchant(merchant) {
     setSelectedMerchantKey(merchant.key);
     setReportSearchText('');
+    setSelectedReportCategoryKey(null);
   }
 
   function updateMonthlyIncome(value) {
@@ -3408,6 +3424,11 @@ export default function App() {
 
     if (screen === 'report' && selectedMerchantKey) {
       setSelectedMerchantKey(null);
+      return;
+    }
+
+    if (screen === 'report' && selectedReportCategoryKey) {
+      setSelectedReportCategoryKey(null);
       return;
     }
 
@@ -3457,6 +3478,7 @@ export default function App() {
     !previewImage &&
     ((screen === 'settings' && settingsSection !== 'main') ||
       (screen === 'report' && Boolean(selectedMerchantKey)) ||
+      (screen === 'report' && Boolean(selectedReportCategoryKey)) ||
       (screen === 'report' && reportView === 'merchants') ||
       (screen === 'report' && Boolean(reportSearchText.trim())) ||
       (screen === 'home' && photoOptionsOpen) ||
@@ -4316,12 +4338,16 @@ export default function App() {
               receipts={reportReceipts}
               merchantGroups={reportMerchantGroups}
               selectedMerchantGroup={selectedMerchantGroup}
+              selectedCategory={selectedReportCategory}
+              selectedCategoryReceipts={selectedReportCategoryReceipts}
               reportView={reportView}
               setReportView={updateReportView}
               reportPeriod={reportPeriod}
               setReportPeriod={updateReportPeriod}
               reportSearchText={reportSearchText}
               setReportSearchText={updateReportSearchText}
+              onSelectCategory={(category) => setSelectedReportCategoryKey(category.key)}
+              onClearSelectedCategory={() => setSelectedReportCategoryKey(null)}
               onSelectMerchant={selectReportMerchant}
               onClearSelectedMerchant={() => setSelectedMerchantKey(null)}
               onSelectReceipt={openReceiptDetail}
@@ -5025,12 +5051,16 @@ function ReportScreen({
   receipts,
   merchantGroups,
   selectedMerchantGroup,
+  selectedCategory,
+  selectedCategoryReceipts,
   reportView,
   setReportView,
   reportPeriod,
   setReportPeriod,
   reportSearchText,
   setReportSearchText,
+  onSelectCategory,
+  onClearSelectedCategory,
   onSelectMerchant,
   onClearSelectedMerchant,
   onSelectReceipt,
@@ -5111,12 +5141,19 @@ function ReportScreen({
               <Text style={styles.emptyText}>{t.noReportData}</Text>
             )}
             {categories.filter((category) => category.amount > 0).map((category) => (
-              <View style={styles.barItem} key={category.key}>
+              <Pressable
+                style={[
+                  styles.barItem,
+                  selectedCategory?.key === category.key && styles.barItemActive,
+                ]}
+                key={category.key}
+                onPress={() => onSelectCategory(category)}
+              >
                 <View style={styles.barTop}>
                   <Text style={styles.barName}>
                     {getCategoryIcon(category.key)} {getCategoryLabel(category.key, t)}
                   </Text>
-                  <Text style={styles.barName}>{formatTL(category.amount)}</Text>
+                  <Text style={styles.barName}>{formatTL(category.amount)} ›</Text>
                 </View>
                 <View style={styles.barTrack}>
                   <View
@@ -5129,9 +5166,29 @@ function ReportScreen({
                     ]}
                   />
                 </View>
-              </View>
+              </Pressable>
             ))}
           </View>
+
+          {selectedCategory && (
+            <View style={styles.selectedMerchantSection}>
+              <View style={styles.selectedMerchantHeader}>
+                <Text style={styles.selectedMerchantTitle}>
+                  {getCategoryIcon(selectedCategory.key)} {getCategoryLabel(selectedCategory.key, t)}
+                </Text>
+                <Pressable onPress={onClearSelectedCategory} hitSlop={8}>
+                  <Text style={styles.clearSelectionText}>{t.clearMerchantFilter}</Text>
+                </Pressable>
+              </View>
+              <ReceiptList
+                title=""
+                subtitle={`${selectedCategoryReceipts.length} ${t.receiptsShort}`}
+                receipts={selectedCategoryReceipts}
+                onSelectReceipt={onSelectReceipt}
+                t={t}
+              />
+            </View>
+          )}
 
           <ReceiptList
             title={t.receiptArchive}
@@ -7643,7 +7700,15 @@ const styles = StyleSheet.create({
     marginTop: 4,
   },
   barItem: {
+    borderColor: 'transparent',
+    borderRadius: 8,
+    borderWidth: 1,
     marginBottom: 16,
+    padding: 4,
+  },
+  barItemActive: {
+    backgroundColor: '#e6f5ea',
+    borderColor: '#157f3b',
   },
   barTop: {
     flexDirection: 'row',
