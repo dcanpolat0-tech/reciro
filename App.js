@@ -3976,16 +3976,19 @@ export default function App() {
 
   function commitNewReceipt(newReceipt) {
     setReceipts((currentReceipts) => [...currentReceipts, newReceipt]);
-    setSelectedReceipt(newReceipt);
-    setDetailReturnScreen('home');
+    setSelectedReceipt(null);
+    setDetailReturnScreen('report');
     setEditingReceipt(false);
-    setEditStoreName(newReceipt.store);
-    setEditAmountText(String(newReceipt.amount).replace('.', ','));
-    setEditDateText(newReceipt.date);
-    setEditCategory(newReceipt.category);
-    setEditItems(createEditableItems(newReceipt));
+    setEditStoreName('');
+    setEditAmountText('');
+    setEditDateText('');
+    setEditCategory('grocery');
+    setEditCustomCategoryText('');
+    setEditItems([]);
     resetReceiptForm();
-    setScreen('detail');
+    setPhotoOptionsOpen(false);
+    setPendingPhotoAction(null);
+    setScreen('home');
   }
 
   async function saveManualReceipt() {
