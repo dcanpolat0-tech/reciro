@@ -1326,10 +1326,6 @@ const featureTranslations = {
     averagePrice: 'Avg.',
     lowestPrice: 'Low',
     highestPrice: 'High',
-    privacyMode: 'Privacy-first',
-    privacyModeInfo: 'No bank connection is required. Your receipts stay on this phone unless you export or back them up.',
-    oneTapCamera: 'One-tap camera',
-    oneTapCameraInfo: 'The green add button opens receipt capture immediately.',
     markedImportant: 'Important',
     refundBadge: 'Refund',
   },
@@ -1369,10 +1365,6 @@ const featureTranslations = {
     averagePrice: 'Ort.',
     lowestPrice: 'En düşük',
     highestPrice: 'En yüksek',
-    privacyMode: 'Gizlilik odaklı',
-    privacyModeInfo: 'Banka bağlantısı gerekmez. Dışa aktarmadıkça veya yedeklemedikçe fişlerin bu telefonda kalır.',
-    oneTapCamera: 'Tek dokunuş kamera',
-    oneTapCameraInfo: 'Yeşil ekleme butonu fiş yakalamayı hızlı başlatır.',
     markedImportant: 'Önemli',
     refundBadge: 'İade',
   },
@@ -1412,10 +1404,6 @@ const featureTranslations = {
     averagePrice: 'Moy.',
     lowestPrice: 'Bas',
     highestPrice: 'Haut',
-    privacyMode: 'Confidentialite',
-    privacyModeInfo: 'Aucune connexion bancaire requise. Les tickets restent sur ce telephone sauf export ou sauvegarde.',
-    oneTapCamera: 'Camera rapide',
-    oneTapCameraInfo: 'Le bouton vert lance rapidement l ajout de ticket.',
     markedImportant: 'Important',
     refundBadge: 'Remboursement',
   },
@@ -1455,10 +1443,6 @@ const featureTranslations = {
     averagePrice: 'Durchschn.',
     lowestPrice: 'Niedrig',
     highestPrice: 'Hoch',
-    privacyMode: 'Datenschutz',
-    privacyModeInfo: 'Keine Bankverbindung erforderlich. Belege bleiben auf diesem Telefon, ausser Export oder Backup.',
-    oneTapCamera: 'Schnelle Kamera',
-    oneTapCameraInfo: 'Der gruene Button startet das Beleg-Erfassen schnell.',
     markedImportant: 'Wichtig',
     refundBadge: 'Rueckerstattung',
   },
@@ -1498,10 +1482,6 @@ const featureTranslations = {
     averagePrice: 'Media',
     lowestPrice: 'Bajo',
     highestPrice: 'Alto',
-    privacyMode: 'Privacidad',
-    privacyModeInfo: 'No requiere conexion bancaria. Tus tickets quedan en este telefono salvo exportacion o copia.',
-    oneTapCamera: 'Camara rapida',
-    oneTapCameraInfo: 'El boton verde inicia rapidamente la captura del ticket.',
     markedImportant: 'Importante',
     refundBadge: 'Reembolso',
   },
@@ -2197,10 +2177,56 @@ function getBudgetSummary(categories, budgetsByCategory) {
     .sort((first, second) => second.ratio - first.ratio);
 }
 
-function getRecurringMonthlyTotal(recurringExpenses) {
+function getRecurringMonthlyTotal(recurringExpenses, spaceKey = DEFAULT_SPACE_KEY) {
   return recurringExpenses
     .filter((expense) => expense?.active !== false)
+    .filter((expense) => !expense.space || normalizeSpaceKey(expense.space) === normalizeSpaceKey(spaceKey))
     .reduce((sum, expense) => sum + parseAmount(String(expense.amountText || expense.amount || '')), 0);
+}
+
+function buildRecurringReceiptsForMonth(recurringExpenses, monthKey, spaceKey, currencyCode) {
+  const [year, month] = String(monthKey || getMonthKey()).split('-').map(Number);
+  const safeYear = Number.isFinite(year) ? year : new Date().getFullYear();
+  const safeMonth = Number.isFinite(month) ? month : new Date().getMonth() + 1;
+  const maxDay = new Date(safeYear, safeMonth, 0).getDate();
+
+  return recurringExpenses
+    .filter((expense) => expense?.active !== false)
+    .filter((expense) => !expense.space || normalizeSpaceKey(expense.space) === normalizeSpaceKey(spaceKey))
+    .map((expense, index) => {
+      const amount = parseAmount(String(expense.amountText || expense.amount || ''));
+      const day = Math.max(1, Math.min(maxDay, Math.round(Number(expense.day) || 1)));
+      const timestamp = new Date(safeYear, safeMonth - 1, day, 8, index).getTime();
+
+      if (amount <= 0 || !String(expense.name || '').trim()) {
+        return null;
+      }
+
+      return {
+        id: `recurring-${expense.id || index}-${monthKey}`,
+        createdAt: timestamp,
+        store: String(expense.name || '').trim(),
+        amount,
+        currency: normalizeCurrencyCode(currencyCode),
+        originalAmount: amount,
+        originalCurrency: normalizeCurrencyCode(currencyCode),
+        exchangeRate: 1,
+        subtotalAmount: 0,
+        taxAmount: 0,
+        category: normalizeCategoryKey(expense.category || 'other'),
+        date: formatReceiptDate(timestamp),
+        kind: 'expense',
+        important: false,
+        warrantyUntil: '',
+        note: '',
+        space: normalizeSpaceKey(spaceKey),
+        image: null,
+        file: null,
+        items: [],
+        isRecurring: true,
+      };
+    })
+    .filter(Boolean);
 }
 
 function formatReceiptDate(timestamp, languageCode = 'tr') {
@@ -3009,9 +3035,16 @@ export default function App() {
     () => receipts.filter((receipt) => normalizeSpaceKey(receipt.space) === activeSpace),
     [receipts, activeSpace]
   );
+  const selectedMonthRecurringReceipts = useMemo(
+    () => buildRecurringReceiptsForMonth(recurringExpenses, incomeMonthKey, activeSpace, selectedCurrency),
+    [recurringExpenses, incomeMonthKey, activeSpace, selectedCurrency]
+  );
   const selectedMonthReceipts = useMemo(
-    () => filterReceiptsByMonthKey(visibleReceipts, incomeMonthKey),
-    [visibleReceipts, incomeMonthKey]
+    () => [
+      ...filterReceiptsByMonthKey(visibleReceipts, incomeMonthKey),
+      ...selectedMonthRecurringReceipts,
+    ],
+    [visibleReceipts, incomeMonthKey, selectedMonthRecurringReceipts]
   );
   const selectedMonthSpend = useMemo(
     () => selectedMonthReceipts.reduce((sum, receipt) => sum + getReceiptSignedAmount(receipt), 0),
@@ -3022,8 +3055,8 @@ export default function App() {
     [incomeByMonth, incomeMonthKey]
   );
   const totalSpendUntilSelectedMonth = useMemo(
-    () => getReceiptTotalUntilMonth(visibleReceipts, incomeMonthKey),
-    [visibleReceipts, incomeMonthKey]
+    () => getReceiptTotalUntilMonth(visibleReceipts, incomeMonthKey) + getRecurringMonthlyTotal(recurringExpenses, activeSpace),
+    [visibleReceipts, incomeMonthKey, recurringExpenses, activeSpace]
   );
   const remaining = totalIncomeUntilSelectedMonth - totalSpendUntilSelectedMonth;
   const savingRate =
@@ -3052,16 +3085,23 @@ export default function App() {
     Math.min(monthlyAnalysisUsage, FREE_MONTHLY_ANALYSIS_LIMIT),
     FREE_MONTHLY_ANALYSIS_LIMIT
   );
+  const reportVisibleReceipts = useMemo(
+    () => [
+      ...visibleReceipts,
+      ...buildRecurringReceiptsForMonth(recurringExpenses, getMonthKey(), activeSpace, selectedCurrency),
+    ],
+    [visibleReceipts, recurringExpenses, activeSpace, selectedCurrency]
+  );
   const sortedReceipts = useMemo(
-    () => [...visibleReceipts].sort((first, second) => getReceiptTime(second) - getReceiptTime(first)),
-    [visibleReceipts]
+    () => [...reportVisibleReceipts].sort((first, second) => getReceiptTime(second) - getReceiptTime(first)),
+    [reportVisibleReceipts]
   );
   const recentReceipts = useMemo(
     () =>
-      filterReceiptsByMonthKey(sortedReceipts, incomeMonthKey)
+      [...selectedMonthReceipts]
         .sort((first, second) => getReceiptTime(second) - getReceiptTime(first))
         .slice(0, 3),
-    [sortedReceipts, incomeMonthKey]
+    [selectedMonthReceipts]
   );
   const merchantGroups = useMemo(() => getMerchantGroups(selectedMonthReceipts), [selectedMonthReceipts]);
   const monthlyProductGroups = useMemo(() => getProductGroups(selectedMonthReceipts), [selectedMonthReceipts]);
@@ -3070,8 +3110,8 @@ export default function App() {
     [categories, budgetsByCategory]
   );
   const recurringMonthlyTotal = useMemo(
-    () => getRecurringMonthlyTotal(recurringExpenses),
-    [recurringExpenses]
+    () => getRecurringMonthlyTotal(recurringExpenses, activeSpace),
+    [recurringExpenses, activeSpace]
   );
   const reportReceipts = useMemo(
     () => searchReceipts(filterReceiptsByPeriod(sortedReceipts, reportPeriod), reportSearchText),
@@ -4956,6 +4996,7 @@ function SettingsScreen({
   const [recurringName, setRecurringName] = useState('');
   const [recurringAmount, setRecurringAmount] = useState('');
   const [recurringDay, setRecurringDay] = useState('');
+  const [recurringCategory, setRecurringCategory] = useState('home');
   const selectedCurrencyItem =
     currencies.find((currency) => currency.code === selectedCurrency) || currencies[0];
 
@@ -5131,13 +5172,15 @@ function SettingsScreen({
           name,
           amountText: recurringAmount,
           day: Math.max(1, Math.min(31, Math.round(parseAmount(recurringDay) || 1))),
-          category: 'other',
+          category: recurringCategory,
+          space: activeSpace,
           active: true,
         },
       ]);
       setRecurringName('');
       setRecurringAmount('');
       setRecurringDay('');
+      setRecurringCategory('home');
     }
 
     return (
@@ -5167,6 +5210,28 @@ function SettingsScreen({
           keyboardType="number-pad"
           placeholder={t.recurringDay}
         />
+        <Text style={styles.inputLabel}>{t.category}</Text>
+        <View style={styles.receiptCategoryGrid}>
+          {categoryOptions.map((category) => (
+            <Pressable
+              key={category.key}
+              style={[
+                styles.receiptCategoryButton,
+                recurringCategory === category.key && styles.receiptCategoryButtonActive,
+              ]}
+              onPress={() => setRecurringCategory(category.key)}
+            >
+              <Text
+                style={[
+                  styles.receiptCategoryText,
+                  recurringCategory === category.key && styles.receiptCategoryTextActive,
+                ]}
+              >
+                {category.icon} {getCategoryLabel(category.key, t)}
+              </Text>
+            </Pressable>
+          ))}
+        </View>
         <PrimaryButton label={t.addRecurring} onPress={addRecurringExpense} />
 
         <View style={styles.card}>
@@ -5185,7 +5250,9 @@ function SettingsScreen({
             >
               <View style={styles.receiptTextBlock}>
                 <Text style={styles.rowText}>{expense.active === false ? '○ ' : '● '}{expense.name}</Text>
-                <Text style={styles.rowMeta}>{t.recurringDay}: {expense.day || 1}</Text>
+                <Text style={styles.rowMeta}>
+                  {getCategoryIcon(expense.category)} {getCategoryLabel(expense.category || 'other', t)} - {t.recurringDay}: {expense.day || 1}
+                </Text>
               </View>
               <Text style={styles.rowAmount}>{formatTL(parseAmount(expense.amountText))}</Text>
             </Pressable>
@@ -5362,18 +5429,6 @@ function SettingsScreen({
           subtitle={getSpaceLabel(activeSpace, t)}
           value=">"
           onPress={() => setSettingsSection('spaces')}
-        />
-        <SettingsRow
-          icon="🔒"
-          title={t.privacyMode}
-          subtitle={t.privacyModeInfo}
-          value=""
-        />
-        <SettingsRow
-          icon="📷"
-          title={t.oneTapCamera}
-          subtitle={t.oneTapCameraInfo}
-          value=""
         />
         <SettingsRow
           icon="🗂️"
@@ -5794,15 +5849,16 @@ function ReceiptList({ title, subtitle, receipts, onSelectReceipt, t }) {
           <Pressable
             style={styles.row}
             key={receipt.id}
-            onPress={() => onSelectReceipt?.(receipt)}
+            onPress={() => !receipt.isRecurring && onSelectReceipt?.(receipt)}
+            disabled={Boolean(receipt.isRecurring)}
           >
             <View style={styles.receiptTextBlock}>
               <Text style={styles.rowText}>{receipt.store}</Text>
               <Text style={styles.rowMeta}>
                 {getCategoryLabel(receipt.category, t)} - {normalizeDateDisplay(receipt.date, receipt.createdAt)}
-                {receipt.image ? ` - ${t?.photoAvailable || 'photo'}` : ''}
+                {receipt.isRecurring ? ` - ${t.recurring}` : receipt.image ? ` - ${t?.photoAvailable || 'photo'}` : ''}
               </Text>
-              {onSelectReceipt && <Text style={styles.rowHint}>{t?.tapForDetails}</Text>}
+              {onSelectReceipt && !receipt.isRecurring && <Text style={styles.rowHint}>{t?.tapForDetails}</Text>}
             </View>
             <Text style={styles.rowAmount}>{formatReceiptAmount(receipt)}</Text>
           </Pressable>
@@ -5867,12 +5923,14 @@ function HomeReceiptList({ title, receipts, onSelectReceipt, t }) {
           <Pressable
             style={styles.homeReceiptRow}
             key={receipt.id}
-            onPress={() => onSelectReceipt?.(receipt)}
+            onPress={() => !receipt.isRecurring && onSelectReceipt?.(receipt)}
+            disabled={Boolean(receipt.isRecurring)}
           >
             <View style={styles.receiptTextBlock}>
               <Text style={styles.homeReceiptStore}>{receipt.store}</Text>
               <Text style={styles.rowMeta}>
                 {getCategoryLabel(receipt.category, t)} - {normalizeDateDisplay(receipt.date, receipt.createdAt)}
+                {receipt.isRecurring ? ` - ${t.recurring}` : ''}
               </Text>
             </View>
             <Text style={styles.homeReceiptAmount}>{formatReceiptAmount(receipt)}</Text>
