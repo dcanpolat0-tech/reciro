@@ -159,7 +159,7 @@ const translations = {
     dailyAverage: 'Günlük ort.',
     spendingInsightTitle: 'En çok harcama nerede?',
     spendingInsightText: (category, amount) => `Bu ay en yüksek harcama ${category} kategorisinde. Toplam: ${amount}.`,
-    recentSpending: 'Son harcamalar',
+    recentSpending: 'Son yüklenen fişler',
     newReceipt: 'Yeni fiş',
     addReceipt: 'Fiş ekle',
     freeUsageText: (used, limit) => `Bu ay ${used}/${limit} ücretsiz fiş analizi kullandın.`,
@@ -403,7 +403,7 @@ const translations = {
     dailyAverage: 'Daily avg.',
     spendingInsightTitle: 'Where does it go most?',
     spendingInsightText: (category, amount) => `Your highest spending this month is ${category}. Total: ${amount}.`,
-    recentSpending: 'Recent spending',
+    recentSpending: 'Recently added receipts',
     newReceipt: 'New receipt',
     addReceipt: 'Add receipt',
     freeUsageText: (used, limit) => `You used ${used}/${limit} free receipt scans this month.`,
@@ -647,7 +647,7 @@ const translations = {
     dailyAverage: 'Moyenne jour',
     spendingInsightTitle: 'Ou va le plus d argent?',
     spendingInsightText: (category, amount) => `Ce mois-ci, la depense la plus elevee est ${category}. Total: ${amount}.`,
-    recentSpending: 'Depenses recentes',
+    recentSpending: 'Tickets ajoutes recemment',
     newReceipt: 'Nouveau ticket',
     addReceipt: 'Ajouter un ticket',
     freeUsageText: (used, limit) => `${used}/${limit} analyses gratuites utilisees ce mois-ci.`,
@@ -891,7 +891,7 @@ const translations = {
     dailyAverage: 'Tagesdurchs.',
     spendingInsightTitle: 'Wohin geht am meisten?',
     spendingInsightText: (category, amount) => `Diesen Monat ist ${category} am hoechsten. Gesamt: ${amount}.`,
-    recentSpending: 'Letzte Ausgaben',
+    recentSpending: 'Zuletzt hinzugefuegte Belege',
     newReceipt: 'Neuer Beleg',
     addReceipt: 'Beleg hinzufuegen',
     freeUsageText: (used, limit) => `${used}/${limit} kostenlose Beleganalysen diesen Monat genutzt.`,
@@ -1135,7 +1135,7 @@ const translations = {
     dailyAverage: 'Media diaria',
     spendingInsightTitle: 'Donde gastas mas?',
     spendingInsightText: (category, amount) => `Este mes el gasto mas alto esta en ${category}. Total: ${amount}.`,
-    recentSpending: 'Gastos recientes',
+    recentSpending: 'Tickets anadidos recientemente',
     newReceipt: 'Nuevo ticket',
     addReceipt: 'Anadir ticket',
     freeUsageText: (used, limit) => `Has usado ${used}/${limit} analisis gratis este mes.`,
@@ -1694,7 +1694,7 @@ translations.it = {
   totalThisMonth: 'Totale del mese',
   receiptArchive: 'Archivio scontrini',
   monthlyReceiptsTitle: 'Scontrini mensili',
-  recentSpending: 'Spese recenti',
+  recentSpending: 'Scontrini aggiunti di recente',
   addReceipt: 'Aggiungi scontrino',
   receiptPhotoMissing: 'Nessuna foto dello scontrino',
   takeReceiptPhoto: 'Scatta foto',
@@ -1766,7 +1766,7 @@ translations.pt = {
   totalThisMonth: 'Total do mes',
   receiptArchive: 'Arquivo de recibos',
   monthlyReceiptsTitle: 'Recibos mensais',
-  recentSpending: 'Despesas recentes',
+  recentSpending: 'Recibos adicionados recentemente',
   addReceipt: 'Adicionar recibo',
   receiptPhotoMissing: 'Sem foto do recibo',
   takeReceiptPhoto: 'Tirar foto',
@@ -1838,7 +1838,7 @@ translations.nl = {
   totalThisMonth: 'Totaal deze maand',
   receiptArchive: 'Bonnenarchief',
   monthlyReceiptsTitle: 'Maandelijkse bonnen',
-  recentSpending: 'Recente uitgaven',
+  recentSpending: 'Recent toegevoegde bonnen',
   addReceipt: 'Bon toevoegen',
   receiptPhotoMissing: 'Geen bonfoto',
   takeReceiptPhoto: 'Foto maken',
@@ -4674,10 +4674,15 @@ export default function App() {
   );
   const recentReceipts = useMemo(
     () =>
-      [...selectedMonthReceipts]
-        .sort((first, second) => getReceiptTime(second) - getReceiptTime(first))
+      visibleReceipts
+        .filter((receipt) => !receipt.isRecurring)
+        .sort(
+          (first, second) =>
+            (second.createdAt || second.id || getReceiptTime(second)) -
+            (first.createdAt || first.id || getReceiptTime(first))
+        )
         .slice(0, 3),
-    [selectedMonthReceipts]
+    [visibleReceipts]
   );
   const merchantGroups = useMemo(() => getMerchantGroups(selectedMonthReceipts), [selectedMonthReceipts]);
   const productMonthOptions = useMemo(() => getReceiptProductMonthOptions(visibleReceipts), [visibleReceipts]);
@@ -5539,7 +5544,6 @@ export default function App() {
       setReceiptItems([]);
       setPhotoOptionsOpen(false);
       setAnalysisStatus('ready');
-      Alert.alert(t.fileSaved, t.fileSavedText);
     } catch (error) {
       console.warn('Receipt file selection failed.', error);
       setPhotoOptionsOpen(false);
