@@ -4473,7 +4473,6 @@ export default function App() {
           {screen === 'home' && (
             <HomeScreen
               totalSpend={selectedMonthSpend}
-              remaining={remaining}
               topCategory={topCategory}
               recentReceipts={recentReceipts}
               receiptCount={selectedMonthReceipts.length}
@@ -4736,7 +4735,6 @@ export default function App() {
 
 function HomeScreen({
   totalSpend,
-  remaining,
   topCategory,
   recentReceipts,
   receiptCount,
@@ -4768,13 +4766,6 @@ function HomeScreen({
             ? t.topCategorySentence(topCategoryLabel, formatTL(topCategory.amount))
             : t.noReceiptsText}
         </Text>
-
-        <View style={styles.homeSummaryRow}>
-          <View style={styles.homeSummaryItem}>
-            <Text style={styles.homeSummaryLabel}>{t.moneyLeft}</Text>
-            <Text style={styles.homeSummaryValue}>{formatTL(remaining)}</Text>
-          </View>
-        </View>
       </View>
 
       <View style={styles.metricGrid}>
@@ -7085,32 +7076,6 @@ const styles = StyleSheet.create({
     fontSize: 14,
     lineHeight: 20,
     marginTop: 8,
-    textAlign: 'center',
-  },
-  homeSummaryRow: {
-    flexDirection: 'row',
-    gap: 10,
-    marginTop: 18,
-    width: '100%',
-  },
-  homeSummaryItem: {
-    alignItems: 'center',
-    flex: 1,
-    backgroundColor: '#eaf8ec',
-    borderRadius: 8,
-    padding: 12,
-  },
-  homeSummaryLabel: {
-    color: '#68766b',
-    fontSize: 12,
-    fontWeight: '800',
-    textAlign: 'center',
-  },
-  homeSummaryValue: {
-    color: '#172018',
-    fontSize: 18,
-    fontWeight: '900',
-    marginTop: 5,
     textAlign: 'center',
   },
   reportHero: {
