@@ -60,6 +60,12 @@
           "iosAppId": "ca-app-pub-8547815405822008~5448733377"
         }
       ]
-    ]
+    ],
+    "extra": {
+      "eas": {
+        "projectId": "3bd780d9-eec7-443e-990e-a60a3a3e20ee"
+      }
+    },
+    "owner": "denizcanpolat2307"
   }
 }
