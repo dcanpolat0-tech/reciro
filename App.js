@@ -223,6 +223,8 @@ const translations = {
     clearMerchantFilter: 'Seçimi temizle',
     productBreakdown: 'Ürün özeti',
     productsInfo: 'Ürünler aylık toplam adet ve miktara göre sıralanır.',
+    productThisYear: 'Bu yıl',
+    productMonthSelect: 'Ay seç',
     noProductData: 'Bu ay ürün verisi yok',
     noProductDataText: 'Fiş analiz ettiğinde ürün adetleri burada görünecek.',
     receiptsShort: 'fiş',
@@ -465,6 +467,8 @@ const translations = {
     clearMerchantFilter: 'Clear selection',
     productBreakdown: 'Product summary',
     productsInfo: 'Products are ranked monthly by total quantity.',
+    productThisYear: 'This year',
+    productMonthSelect: 'Choose month',
     noProductData: 'No product data this month',
     noProductDataText: 'After receipt analysis, product quantities will appear here.',
     receiptsShort: 'receipts',
@@ -707,6 +711,8 @@ const translations = {
     clearMerchantFilter: 'Effacer la selection',
     productBreakdown: 'Resume des articles',
     productsInfo: 'Les articles sont classes chaque mois par quantite totale.',
+    productThisYear: 'Cette annee',
+    productMonthSelect: 'Choisir le mois',
     noProductData: 'Aucun article ce mois',
     noProductDataText: 'Apres analyse des tickets, les quantites apparaitront ici.',
     receiptsShort: 'tickets',
@@ -949,6 +955,8 @@ const translations = {
     clearMerchantFilter: 'Auswahl loeschen',
     productBreakdown: 'Artikeluebersicht',
     productsInfo: 'Artikel werden monatlich nach Gesamtmenge sortiert.',
+    productThisYear: 'Dieses Jahr',
+    productMonthSelect: 'Monat waehlen',
     noProductData: 'Keine Artikeldaten diesen Monat',
     noProductDataText: 'Nach der Beleganalyse erscheinen Mengen hier.',
     receiptsShort: 'Belege',
@@ -1191,6 +1199,8 @@ const translations = {
     clearMerchantFilter: 'Borrar seleccion',
     productBreakdown: 'Resumen de productos',
     productsInfo: 'Los productos se ordenan cada mes por cantidad total.',
+    productThisYear: 'Este ano',
+    productMonthSelect: 'Elegir mes',
     noProductData: 'Sin datos de productos este mes',
     noProductDataText: 'Despues de analizar tickets, las cantidades apareceran aqui.',
     receiptsShort: 'tickets',
@@ -2168,6 +2178,33 @@ function buildMonthlyReceiptGroups(receipts, recurringExpenses, spaceKey, curren
     });
 }
 
+function getReceiptProductMonthOptions(receipts) {
+  const monthKeys = new Set([getMonthKey()]);
+
+  receipts.forEach((receipt) => {
+    const receiptDate = getDateFromReceipt(receipt);
+
+    if (receiptDate) {
+      monthKeys.add(getMonthKey(receiptDate));
+    }
+  });
+
+  return [...monthKeys]
+    .sort((first, second) => second.localeCompare(first))
+    .map((monthKey) => ({
+      key: monthKey,
+      label: formatMonthKey(monthKey),
+    }));
+}
+
+function filterReceiptsByYear(receipts, year = new Date().getFullYear()) {
+  return receipts.filter((receipt) => {
+    const receiptDate = getDateFromReceipt(receipt);
+
+    return receiptDate && receiptDate.getFullYear() === year;
+  });
+}
+
 function getEndOfMonthFromKey(monthKey) {
   const [year, month] = monthKey.split('-').map(Number);
   return new Date(year, month, 0, 23, 59, 59, 999);
@@ -3109,6 +3146,8 @@ export default function App() {
   const [reportPeriod, setReportPeriod] = useState('month');
   const [reportView, setReportView] = useState('overview');
   const [reportSearchText, setReportSearchText] = useState('');
+  const [productPeriod, setProductPeriod] = useState('month');
+  const [productMonthKey, setProductMonthKey] = useState(getMonthKey());
   const [selectedMerchantKey, setSelectedMerchantKey] = useState(null);
   const [selectedReportCategoryKey, setSelectedReportCategoryKey] = useState(null);
   const [selectedMonthlyReceiptKey, setSelectedMonthlyReceiptKey] = useState(null);
@@ -3448,7 +3487,19 @@ export default function App() {
     [selectedMonthReceipts]
   );
   const merchantGroups = useMemo(() => getMerchantGroups(selectedMonthReceipts), [selectedMonthReceipts]);
-  const monthlyProductGroups = useMemo(() => getProductGroups(selectedMonthReceipts), [selectedMonthReceipts]);
+  const productMonthOptions = useMemo(() => getReceiptProductMonthOptions(visibleReceipts), [visibleReceipts]);
+  const productReceipts = useMemo(() => {
+    if (productPeriod === 'year') {
+      return filterReceiptsByYear(visibleReceipts);
+    }
+
+    if (productPeriod === 'all') {
+      return visibleReceipts;
+    }
+
+    return filterReceiptsByMonthKey(visibleReceipts, productMonthKey);
+  }, [visibleReceipts, productPeriod, productMonthKey]);
+  const productGroups = useMemo(() => getProductGroups(productReceipts), [productReceipts]);
   const monthlyReceiptGroups = useMemo(
     () => buildMonthlyReceiptGroups(visibleReceipts, recurringExpenses, activeSpace, selectedCurrency),
     [visibleReceipts, recurringExpenses, activeSpace, selectedCurrency]
@@ -3659,6 +3710,8 @@ export default function App() {
     settingsSection,
     reportView,
     reportPeriod,
+    productPeriod,
+    productMonthKey,
     selectedMerchantKey || '',
     selectedReportCategoryKey || '',
     selectedMonthlyReceiptKey || '',
@@ -4542,8 +4595,12 @@ export default function App() {
 
           {screen === 'products' && (
             <ProductsScreen
-              productGroups={monthlyProductGroups}
-              monthKey={incomeMonthKey}
+              productGroups={productGroups}
+              productPeriod={productPeriod}
+              setProductPeriod={setProductPeriod}
+              productMonthKey={productMonthKey}
+              setProductMonthKey={setProductMonthKey}
+              productMonthOptions={productMonthOptions}
               t={t}
             />
           )}
@@ -5502,11 +5559,76 @@ function MonthlyReceiptsScreen({
   );
 }
 
-function ProductsScreen({ productGroups, monthKey, t }) {
+function ProductsScreen({
+  productGroups,
+  productPeriod,
+  setProductPeriod,
+  productMonthKey,
+  setProductMonthKey,
+  productMonthOptions,
+  t,
+}) {
+  const productPeriodOptions = [
+    { key: 'month', label: t.thisMonth },
+    { key: 'year', label: t.productThisYear },
+    { key: 'all', label: t.allTime },
+  ];
+  const selectedMonthLabel =
+    productMonthOptions.find((month) => month.key === productMonthKey)?.label || formatMonthKey(productMonthKey);
+  const summaryLabel =
+    productPeriod === 'month'
+      ? selectedMonthLabel
+      : productPeriod === 'year'
+        ? String(new Date().getFullYear())
+        : t.allTime;
+
   return (
     <View>
+      <View style={styles.reportHero}>
+        <Text style={styles.label}>📦 {t.productBreakdown}</Text>
+        <Text style={styles.productsHeroTitle}>{summaryLabel}</Text>
+        <Text style={styles.productsHeroText}>{t.productsInfo}</Text>
+      </View>
+
+      <View style={styles.periodTabs}>
+        {productPeriodOptions.map((option) => (
+          <Pressable
+            key={option.key}
+            style={[styles.periodTab, productPeriod === option.key && styles.periodTabActive]}
+            onPress={() => setProductPeriod(option.key)}
+          >
+            <Text style={[styles.periodTabText, productPeriod === option.key && styles.periodTabTextActive]}>
+              {option.label}
+            </Text>
+          </Pressable>
+        ))}
+      </View>
+
+      {productPeriod === 'month' && (
+        <View>
+          <Text style={styles.sectionSubtitle}>{t.productMonthSelect}</Text>
+          <View style={styles.productMonthGrid}>
+            {productMonthOptions.map((month) => (
+              <Pressable
+                key={month.key}
+                style={[styles.productMonthChip, productMonthKey === month.key && styles.productMonthChipActive]}
+                onPress={() => setProductMonthKey(month.key)}
+              >
+                <Text
+                  style={[
+                    styles.productMonthChipText,
+                    productMonthKey === month.key && styles.productMonthChipTextActive,
+                  ]}
+                >
+                  {month.label}
+                </Text>
+              </Pressable>
+            ))}
+          </View>
+        </View>
+      )}
+
       <Text style={styles.sectionTitle}>📦 {t.productBreakdown}</Text>
-      <Text style={styles.sectionSubtitle}>{formatMonthKey(monthKey)}</Text>
       <View style={styles.card}>
         {productGroups.length === 0 && <Text style={styles.emptyText}>{t.noProductDataText}</Text>}
         {productGroups.map((product, index) => (
@@ -8079,6 +8201,34 @@ const styles = StyleSheet.create({
     fontWeight: '900',
     minWidth: 76,
     textAlign: 'right',
+  },
+  productMonthGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+    marginBottom: 6,
+    marginTop: 8,
+  },
+  productMonthChip: {
+    alignItems: 'center',
+    backgroundColor: '#ffffff',
+    borderColor: '#dfe8e0',
+    borderRadius: 8,
+    borderWidth: 1,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+  },
+  productMonthChipActive: {
+    backgroundColor: '#e6f5ea',
+    borderColor: '#157f3b',
+  },
+  productMonthChipText: {
+    color: '#68766b',
+    fontSize: 12,
+    fontWeight: '900',
+  },
+  productMonthChipTextActive: {
+    color: '#0d5f2b',
   },
   productRow: {
     alignItems: 'center',
