@@ -61,7 +61,7 @@ const FREE_MONTHLY_ANALYSIS_LIMIT = 5;
 const ENABLE_START_ACCOUNT_GATE = false;
 const ENABLE_PREMIUM_PAYWALL = false;
 const IMAGE_PICKER_MEDIA_TYPES = ['images'];
-const FEEDBACK_EMAIL = 'denizcanpolat23-7@gmail.com';
+const FEEDBACK_EMAIL = 'denizcanpolat2307@gmail.com';
 const DEFAULT_SPACE_KEY = 'personal';
 const DEFAULT_RECEIPT_SETTINGS = {
   autoAnalyze: true,
