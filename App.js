@@ -1697,7 +1697,12 @@ function getAppTranslations(languageCode) {
 
 function getDeviceLanguage() {
   const locales = Localization.getLocales?.() || [];
-  const languageCode = locales[0]?.languageCode;
+  const primaryLocale = locales[0] || {};
+  const languageCode = String(
+    primaryLocale.languageCode ||
+      String(primaryLocale.languageTag || '').split('-')[0] ||
+      ''
+  ).toLowerCase();
   const supportedLanguage = languages.find((language) => language.code === languageCode);
   return supportedLanguage?.code || 'en';
 }
@@ -9243,35 +9248,6 @@ const styles = StyleSheet.create({
     fontWeight: '900',
   },
   categoryButtonTextActive: {
-    color: '#0d5f2b',
-  },
-  languageGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 10,
-    marginTop: 10,
-  },
-  languageButton: {
-    width: '48.5%',
-    minHeight: 48,
-    borderColor: '#dfe8e0',
-    borderWidth: 1,
-    borderRadius: 8,
-    backgroundColor: '#fff',
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingHorizontal: 10,
-  },
-  languageButtonActive: {
-    borderColor: '#157f3b',
-    backgroundColor: '#e6f5ea',
-  },
-  languageText: {
-    color: '#344337',
-    fontSize: 14,
-    fontWeight: '900',
-  },
-  languageTextActive: {
     color: '#0d5f2b',
   },
   settingsList: {
