@@ -36,6 +36,7 @@ const BUDGETS_STORAGE_KEY = 'reciro.budgets.v1';
 const RECURRING_EXPENSES_STORAGE_KEY = 'reciro.recurringExpenses.v1';
 const ACTIVE_SPACE_STORAGE_KEY = 'reciro.activeSpace.v1';
 const OTHER_CATEGORY_LABEL_STORAGE_KEY = 'reciro.otherCategoryLabel.v1';
+const RECEIPT_SETTINGS_STORAGE_KEY = 'reciro.receiptSettings.v1';
 const RECEIPT_IMAGE_DIR = `${FileSystem.documentDirectory}receipts/`;
 const RECEIPT_FILE_DIR = `${FileSystem.documentDirectory}receipt-files/`;
 const BACKUP_DIR = `${FileSystem.documentDirectory}backups/`;
@@ -60,6 +61,12 @@ const ENABLE_PREMIUM_PAYWALL = false;
 const IMAGE_PICKER_MEDIA_TYPES = ['images'];
 const FEEDBACK_EMAIL = 'dcanpolat0@gmail.com';
 const DEFAULT_SPACE_KEY = 'personal';
+const DEFAULT_RECEIPT_SETTINGS = {
+  autoAnalyze: true,
+  reviewBeforeSave: true,
+  keepPhotos: true,
+  defaultCategory: 'grocery',
+};
 
 let activeCurrency = 'TRY';
 
@@ -1387,6 +1394,40 @@ const featureTranslations = {
     highestPrice: 'High',
     markedImportant: 'Important',
     refundBadge: 'Refund',
+    moneyAndBudget: 'Money and budget',
+    receiptAndAnalysis: 'Receipt and analysis',
+    dataControls: 'My data',
+    privacyAndLegal: 'Privacy and legal',
+    autoAnalyzeReceipts: 'Automatic receipt analysis',
+    autoAnalyzeReceiptsInfo: 'Start AI analysis right after a photo is selected.',
+    reviewBeforeSave: 'Review before saving',
+    reviewBeforeSaveInfo: 'Keep extracted receipt details on screen before saving.',
+    keepReceiptPhotos: 'Keep receipt photos',
+    keepReceiptPhotosInfo: 'Store receipt photos on this phone after saving.',
+    defaultCategory: 'Default category',
+    defaultCategoryInfo: 'Used when AI cannot decide a category.',
+    allData: 'All app data',
+    clearAllData: 'Delete all data',
+    clearAllDataTitle: 'Delete all data?',
+    clearAllDataText: 'Receipts, income, budgets, monthly payments and local settings will be removed from this phone.',
+    clearAllDataConfirm: 'Delete all',
+    dataDeletedTitle: 'Data deleted',
+    dataDeletedText: 'All local app data was removed.',
+    deleteAccount: 'Delete account',
+    deleteAccountInfo: 'Ask us to delete account and sync data.',
+    deleteAccountTitle: 'Delete account request',
+    deleteAccountText: 'This opens an email request. Local receipts on this phone can be removed from My data.',
+    sendDeleteRequest: 'Send request',
+    privacySummary: 'Receipt photos are stored on this phone unless you turn photo storage off. AI analysis sends the selected receipt image to the analysis service to read store, date, total and items.',
+    privacyPolicy: 'Privacy policy',
+    termsOfUse: 'Terms of use',
+    restorePurchases: 'Restore purchases',
+    restorePurchasesInfo: 'For App Store subscriptions once Premium is active.',
+    restorePurchasesTitle: 'Purchases',
+    restorePurchasesText: 'Purchase restore will be connected with App Store subscriptions.',
+    appVersion: 'App version',
+    enabled: 'On',
+    disabled: 'Off',
   },
   tr: {
     budgets: 'Bütçeler',
@@ -1438,6 +1479,40 @@ const featureTranslations = {
     highestPrice: 'En yüksek',
     markedImportant: 'Önemli',
     refundBadge: 'İade',
+    moneyAndBudget: 'Para ve bütçe',
+    receiptAndAnalysis: 'Fiş ve analiz',
+    dataControls: 'Verilerim',
+    privacyAndLegal: 'Gizlilik ve yasal',
+    autoAnalyzeReceipts: 'Otomatik fiş analizi',
+    autoAnalyzeReceiptsInfo: 'Fotoğraf seçilince AI analizi otomatik başlasın.',
+    reviewBeforeSave: 'Kaydetmeden önce kontrol',
+    reviewBeforeSaveInfo: 'Okunan fiş bilgileri kaydetmeden önce ekranda kalsın.',
+    keepReceiptPhotos: 'Fiş fotoğraflarını sakla',
+    keepReceiptPhotosInfo: 'Kaydedilen fiş fotoğrafları telefonda kalsın.',
+    defaultCategory: 'Varsayılan kategori',
+    defaultCategoryInfo: 'AI kategori bulamazsa bu kategori kullanılır.',
+    allData: 'Tüm uygulama verileri',
+    clearAllData: 'Tüm verileri sil',
+    clearAllDataTitle: 'Tüm veriler silinsin mi?',
+    clearAllDataText: 'Fişler, gelirler, bütçeler, aylık ödemeler ve yerel ayarlar bu telefondan silinir.',
+    clearAllDataConfirm: 'Hepsini sil',
+    dataDeletedTitle: 'Veriler silindi',
+    dataDeletedText: 'Telefondaki tüm yerel uygulama verileri silindi.',
+    deleteAccount: 'Hesabı sil',
+    deleteAccountInfo: 'Hesap ve senkronizasyon verileri için silme talebi gönder.',
+    deleteAccountTitle: 'Hesap silme talebi',
+    deleteAccountText: 'E-posta ile talep gönderilir. Telefondaki yerel fişleri Verilerim bölümünden silebilirsin.',
+    sendDeleteRequest: 'Talep gönder',
+    privacySummary: 'Fiş fotoğrafları, fotoğraf saklama kapalı değilse bu telefonda tutulur. AI analizi, mağaza, tarih, toplam ve ürünleri okumak için seçilen fiş görselini analiz servisine gönderir.',
+    privacyPolicy: 'Gizlilik politikası',
+    termsOfUse: 'Kullanım şartları',
+    restorePurchases: 'Satın almaları geri yükle',
+    restorePurchasesInfo: 'Premium aktif olunca App Store abonelikleri için kullanılır.',
+    restorePurchasesTitle: 'Satın almalar',
+    restorePurchasesText: 'Satın alma geri yükleme App Store abonelikleri ile bağlanacak.',
+    appVersion: 'Uygulama sürümü',
+    enabled: 'Açık',
+    disabled: 'Kapalı',
   },
   fr: {
     budgets: 'Budgets',
@@ -2969,6 +3044,18 @@ async function ensureDirectory(directoryUri) {
   }
 }
 
+async function deleteDirectoryIfExists(directoryUri) {
+  try {
+    const directoryInfo = await FileSystem.getInfoAsync(directoryUri);
+
+    if (directoryInfo.exists) {
+      await FileSystem.deleteAsync(directoryUri, { idempotent: true });
+    }
+  } catch (error) {
+    console.warn('Directory delete failed:', error);
+  }
+}
+
 function getReceiptDateForRate(dateText) {
   const match = String(dateText || '').match(/^(\d{1,2})\.(\d{1,2})\.(\d{4})$/);
 
@@ -3152,6 +3239,7 @@ export default function App() {
   const [budgetsByCategory, setBudgetsByCategory] = useState({});
   const [recurringExpenses, setRecurringExpenses] = useState([]);
   const [otherCategoryLabel, setOtherCategoryLabel] = useState('');
+  const [receiptSettings, setReceiptSettings] = useState(DEFAULT_RECEIPT_SETTINGS);
   const [activeSpace, setActiveSpace] = useState(DEFAULT_SPACE_KEY);
   const [settingsSection, setSettingsSection] = useState('main');
   const [reportPeriod, setReportPeriod] = useState('month');
@@ -3180,6 +3268,7 @@ export default function App() {
           savedRecurringExpenses,
           savedActiveSpace,
           savedOtherCategoryLabel,
+          savedReceiptSettings,
         ] = await Promise.all([
           AsyncStorage.getItem(RECEIPTS_STORAGE_KEY),
           AsyncStorage.getItem(SALARY_STORAGE_KEY),
@@ -3192,6 +3281,7 @@ export default function App() {
           AsyncStorage.getItem(RECURRING_EXPENSES_STORAGE_KEY),
           AsyncStorage.getItem(ACTIVE_SPACE_STORAGE_KEY),
           AsyncStorage.getItem(OTHER_CATEGORY_LABEL_STORAGE_KEY),
+          AsyncStorage.getItem(RECEIPT_SETTINGS_STORAGE_KEY),
         ]);
 
         const startupCurrency =
@@ -3251,6 +3341,15 @@ export default function App() {
 
         if (savedOtherCategoryLabel) {
           setOtherCategoryLabel(savedOtherCategoryLabel);
+        }
+
+        const parsedReceiptSettings = safeParseStoredJson(savedReceiptSettings, null);
+        if (parsedReceiptSettings && typeof parsedReceiptSettings === 'object' && !Array.isArray(parsedReceiptSettings)) {
+          setReceiptSettings({
+            ...DEFAULT_RECEIPT_SETTINGS,
+            ...parsedReceiptSettings,
+            defaultCategory: normalizeCategoryKey(parsedReceiptSettings.defaultCategory || DEFAULT_RECEIPT_SETTINGS.defaultCategory),
+          });
         }
       } catch (error) {
         console.warn('Saved app data could not be loaded:', error);
@@ -3326,6 +3425,16 @@ export default function App() {
       Alert.alert(t.saveError, t.currencySaveError);
     });
   }, [selectedCurrency, storageReady]);
+
+  useEffect(() => {
+    if (!storageReady) {
+      return;
+    }
+
+    AsyncStorage.setItem(RECEIPT_SETTINGS_STORAGE_KEY, JSON.stringify(receiptSettings)).catch(() => {
+      console.warn('Receipt settings could not be saved.');
+    });
+  }, [receiptSettings, storageReady]);
 
   useEffect(() => {
     if (!storageReady) {
@@ -3932,6 +4041,7 @@ export default function App() {
         recurringExpenses,
         activeSpace,
         otherCategoryLabel,
+        receiptSettings,
       };
 
       await FileSystem.writeAsStringAsync(targetUri, JSON.stringify(backupData, null, 2));
@@ -3991,6 +4101,10 @@ export default function App() {
       setRecurringExpenses(Array.isArray(backupData.recurringExpenses) ? backupData.recurringExpenses : []);
       setActiveSpace(normalizeSpaceKey(backupData.activeSpace));
       setOtherCategoryLabel(String(backupData.otherCategoryLabel || '').trim());
+      setReceiptSettings({
+        ...DEFAULT_RECEIPT_SETTINGS,
+        ...(backupData.receiptSettings && typeof backupData.receiptSettings === 'object' ? backupData.receiptSettings : {}),
+      });
 
       setSelectedReceipt(null);
       setSettingsSection('main');
@@ -4026,6 +4140,75 @@ export default function App() {
     }
   }
 
+  function updateReceiptSettings(nextValues) {
+    setReceiptSettings((currentSettings) => ({
+      ...currentSettings,
+      ...nextValues,
+      defaultCategory: normalizeCategoryKey(nextValues.defaultCategory || currentSettings.defaultCategory),
+    }));
+  }
+
+  function clearAllData() {
+    Alert.alert(t.clearAllDataTitle, t.clearAllDataText, [
+      { text: t.cancel, style: 'cancel' },
+      {
+        text: t.clearAllDataConfirm,
+        style: 'destructive',
+        onPress: async () => {
+          await AsyncStorage.multiRemove([
+            RECEIPTS_STORAGE_KEY,
+            SALARY_STORAGE_KEY,
+            INCOME_BY_MONTH_STORAGE_KEY,
+            AUTH_CHOICE_STORAGE_KEY,
+            ANALYSIS_USAGE_STORAGE_KEY,
+            CATEGORY_MEMORY_STORAGE_KEY,
+            BUDGETS_STORAGE_KEY,
+            RECURRING_EXPENSES_STORAGE_KEY,
+            ACTIVE_SPACE_STORAGE_KEY,
+            OTHER_CATEGORY_LABEL_STORAGE_KEY,
+            RECEIPT_SETTINGS_STORAGE_KEY,
+          ]);
+          setReceipts([]);
+          setIncomeByMonth({});
+          setAnalysisUsageByMonth({});
+          setCategoryMemory({});
+          setBudgetsByCategory({});
+          setRecurringExpenses([]);
+          setOtherCategoryLabel('');
+          setAuthChoice(null);
+          setReceiptSettings(DEFAULT_RECEIPT_SETTINGS);
+          setActiveSpace(DEFAULT_SPACE_KEY);
+          setSelectedReceipt(null);
+          setSettingsSection('main');
+          setScreen('home');
+          await deleteDirectoryIfExists(RECEIPT_IMAGE_DIR);
+          await deleteDirectoryIfExists(RECEIPT_FILE_DIR);
+          Alert.alert(t.dataDeletedTitle, t.dataDeletedText);
+        },
+      },
+    ]);
+  }
+
+  function requestAccountDeletion() {
+    Alert.alert(t.deleteAccountTitle, t.deleteAccountText, [
+      { text: t.cancel, style: 'cancel' },
+      {
+        text: t.sendDeleteRequest,
+        onPress: async () => {
+          const subject = encodeURIComponent('Reciro account deletion request');
+          const providerLabel = getAuthProviderLabel(authChoice, t);
+          const body = encodeURIComponent(`Please delete my Reciro account and sync data.\n\nProvider: ${providerLabel}\nCurrency: ${selectedCurrency}`);
+
+          try {
+            await Linking.openURL(`mailto:${FEEDBACK_EMAIL}?subject=${subject}&body=${body}`);
+          } catch (error) {
+            Alert.alert(t.feedbackMailTitle, t.feedbackMailText);
+          }
+        },
+      },
+    ]);
+  }
+
   function resetReceiptForm() {
     setStoreName('');
     setAmountText('');
@@ -4033,7 +4216,7 @@ export default function App() {
     setSubtotalText('');
     setTaxText('');
     setReceiptDateText('');
-    setSelectedCategory('grocery');
+    setSelectedCategory(normalizeCategoryKey(receiptSettings.defaultCategory));
     setCustomCategoryText('');
     setReceiptKind('expense');
     setReceiptImportant(false);
@@ -4181,8 +4364,10 @@ export default function App() {
       return;
     }
 
-    if (savedImageUri) {
+    if (savedImageUri && receiptSettings.autoAnalyze) {
       await analyzeReceiptImage(savedImageUri);
+    } else if (savedImageUri) {
+      setAnalysisStatus('ready');
     }
   }
 
@@ -4227,8 +4412,10 @@ export default function App() {
       return;
     }
 
-    if (savedImageUri) {
+    if (savedImageUri && receiptSettings.autoAnalyze) {
       await analyzeReceiptImage(savedImageUri);
+    } else if (savedImageUri) {
+      setAnalysisStatus('ready');
     }
   }
 
@@ -4262,7 +4449,11 @@ export default function App() {
         setAnalysisConfidence(null);
         setReceiptItems([]);
         setPhotoOptionsOpen(false);
-        await analyzeReceiptImage(savedImageUri);
+        if (receiptSettings.autoAnalyze) {
+          await analyzeReceiptImage(savedImageUri);
+        } else {
+          setAnalysisStatus('ready');
+        }
         return;
       }
 
@@ -4316,17 +4507,20 @@ export default function App() {
       setReceiptDateText(analysisResult.dateText || formatReceiptDate(Date.now()));
       setReceiptNumberText(analysisResult.receiptNumber || '');
       const analyzedCategory = normalizeCategoryKey(analysisResult.categoryKey);
+      const editableItems = createEditableItemsFromList(
+        applyCategoryMemory(analysisResult.items || [], categoryMemory),
+        analyzedCategory
+      );
       setSelectedCategory(analyzedCategory);
       setCustomCategoryText('');
       setAnalysisConfidence(analysisResult.confidence ?? null);
-      setReceiptItems(
-        createEditableItemsFromList(
-          applyCategoryMemory(analysisResult.items || [], categoryMemory),
-          analyzedCategory
-        )
-      );
+      setReceiptItems(editableItems);
       incrementAnalysisUsage();
       setAnalysisStatus('done');
+
+      if (!receiptSettings.reviewBeforeSave) {
+        await saveAnalyzedReceiptResult(analysisResult, imageUri, analyzedCategory, editableItems);
+      }
     } catch (error) {
       console.warn('Receipt analysis failed.', error);
       setAnalysisStatus('ready');
@@ -4343,6 +4537,71 @@ export default function App() {
       } else {
         Alert.alert(t.analysisUnavailableTitle, t.analysisUnavailableText);
       }
+    }
+  }
+
+  async function saveAnalyzedReceiptResult(analysisResult, imageUri, analyzedCategory, editableItems) {
+    const amount = parseAmount(analysisResult.totalText || '');
+    const cleanStoreName = String(analysisResult.storeName || '').trim();
+    const now = Date.now();
+    const cleanDateText = normalizeDateDisplay(analysisResult.dateText || '') || formatReceiptDate(now);
+
+    if (!cleanStoreName || amount <= 0) {
+      return;
+    }
+
+    const receiptItemsForSave = cleanEditableItems(editableItems, analyzedCategory);
+    const originalReceiptAmount = normalizeReceiptAmount(amount, receiptItemsForSave);
+    const moneyFields = await buildReceiptMoneyFields(
+      originalReceiptAmount,
+      normalizeCurrencyCode(analysisResult.currencyCode, selectedCurrency),
+      selectedCurrency,
+      receiptItemsForSave,
+      cleanDateText
+    );
+    const newReceipt = {
+      id: now,
+      createdAt: now,
+      store: cleanStoreName,
+      amount: moneyFields.amount,
+      currency: moneyFields.currency,
+      originalAmount: moneyFields.originalAmount,
+      originalCurrency: moneyFields.originalCurrency,
+      exchangeRate: moneyFields.exchangeRate,
+      subtotalAmount: Number((parseAmount(analysisResult.subtotalText) * moneyFields.exchangeRate).toFixed(2)) || 0,
+      taxAmount: Number((parseAmount(analysisResult.taxText) * moneyFields.exchangeRate).toFixed(2)) || 0,
+      originalSubtotalAmount: parseAmount(analysisResult.subtotalText) || 0,
+      originalTaxAmount: parseAmount(analysisResult.taxText) || 0,
+      category: analyzedCategory,
+      date: cleanDateText,
+      kind: 'expense',
+      important: false,
+      warrantyUntil: '',
+      note: '',
+      space: activeSpace,
+      image: receiptSettings.keepPhotos ? imageUri : null,
+      file: null,
+      items: moneyFields.items,
+      receiptNumber: normalizeReceiptNumber(analysisResult.receiptNumber),
+    };
+    newReceipt.fingerprint = getReceiptFingerprint(newReceipt);
+
+    if (isReceiptDuplicate(newReceipt, receipts)) {
+      Alert.alert(t.duplicateReceiptTitle, t.duplicateReceiptText);
+      return;
+    }
+
+    const learnedCategories = buildCategoryMemoryFromItems(editableItems);
+    if (Object.keys(learnedCategories).length > 0) {
+      setCategoryMemory((currentMemory) => ({
+        ...currentMemory,
+        ...learnedCategories,
+      }));
+    }
+
+    commitNewReceipt(newReceipt);
+    if (!receiptSettings.keepPhotos && imageUri) {
+      await deleteReceiptImage(imageUri);
     }
   }
 
@@ -4421,7 +4680,7 @@ export default function App() {
       warrantyUntil: normalizeDateDisplay(receiptWarrantyText),
       note: receiptNoteText.trim(),
       space: activeSpace,
-      image: receiptImage,
+      image: receiptSettings.keepPhotos ? receiptImage : null,
       file: receiptFile,
       items: moneyFields.items,
       receiptNumber: normalizeReceiptNumber(receiptNumberText),
@@ -4442,6 +4701,9 @@ export default function App() {
     }
 
     commitNewReceipt(newReceipt);
+    if (!receiptSettings.keepPhotos && receiptImage) {
+      await deleteReceiptImage(receiptImage);
+    }
   }
 
   if (!storageReady) {
@@ -4692,6 +4954,8 @@ export default function App() {
               setBudgetsByCategory={setBudgetsByCategory}
               otherCategoryLabel={otherCategoryLabel}
               setOtherCategoryLabel={setOtherCategoryLabel}
+              receiptSettings={receiptSettings}
+              updateReceiptSettings={updateReceiptSettings}
               recurringExpenses={recurringExpenses}
               setRecurringExpenses={setRecurringExpenses}
               activeSpace={activeSpace}
@@ -4702,6 +4966,8 @@ export default function App() {
               onCreateBackup={createDataBackup}
               onRestoreBackup={restoreLatestBackup}
               onExportCsv={exportReceiptsCsv}
+              onClearAllData={clearAllData}
+              onDeleteAccount={requestAccountDeletion}
               authChoice={authChoice}
               onSignOut={signOutAccount}
               t={t}
@@ -5765,6 +6031,8 @@ function SettingsScreen({
   setBudgetsByCategory,
   otherCategoryLabel,
   setOtherCategoryLabel,
+  receiptSettings,
+  updateReceiptSettings,
   recurringExpenses,
   setRecurringExpenses,
   activeSpace,
@@ -5775,6 +6043,8 @@ function SettingsScreen({
   onCreateBackup,
   onRestoreBackup,
   onExportCsv,
+  onClearAllData,
+  onDeleteAccount,
   authChoice,
   onSignOut,
   t,
@@ -5894,13 +6164,73 @@ function SettingsScreen({
     return (
       <View>
         <View style={styles.card}>
-          <Text style={styles.analysisTitle}>{t.dataBackup}</Text>
+          <Text style={styles.analysisTitle}>{t.dataControls}</Text>
           <Text style={styles.analysisText}>{t.backupInfo}</Text>
         </View>
 
         <PrimaryButton label={t.createBackup} onPress={onCreateBackup} />
         <SecondaryButton label={t.restoreBackup} onPress={onRestoreBackup} />
         <SecondaryButton label={t.exportCsv} onPress={onExportCsv} />
+        <DangerButton label={t.clearAllData} onPress={onClearAllData} />
+        <SecondaryButton label={t.back} onPress={() => setSettingsSection('main')} />
+      </View>
+    );
+  }
+
+  if (settingsSection === 'receipt') {
+    return (
+      <View>
+        <View style={styles.card}>
+          <Text style={styles.analysisTitle}>{t.receiptAndAnalysis}</Text>
+          <Text style={styles.analysisText}>{t.autoAnalyzeReceiptsInfo}</Text>
+        </View>
+
+        <View style={styles.settingsList}>
+          <SettingsRow
+            icon="🤖"
+            title={t.autoAnalyzeReceipts}
+            subtitle={t.autoAnalyzeReceiptsInfo}
+            value={receiptSettings.autoAnalyze ? t.enabled : t.disabled}
+            onPress={() => updateReceiptSettings({ autoAnalyze: !receiptSettings.autoAnalyze })}
+          />
+          <SettingsRow
+            icon="✅"
+            title={t.reviewBeforeSave}
+            subtitle={t.reviewBeforeSaveInfo}
+            value={receiptSettings.reviewBeforeSave ? t.enabled : t.disabled}
+            onPress={() => updateReceiptSettings({ reviewBeforeSave: !receiptSettings.reviewBeforeSave })}
+          />
+          <SettingsRow
+            icon="🖼️"
+            title={t.keepReceiptPhotos}
+            subtitle={t.keepReceiptPhotosInfo}
+            value={receiptSettings.keepPhotos ? t.enabled : t.disabled}
+            onPress={() => updateReceiptSettings({ keepPhotos: !receiptSettings.keepPhotos })}
+          />
+        </View>
+
+        <Text style={styles.settingGroupTitle}>{t.defaultCategory}</Text>
+        <View style={styles.settingsList}>
+          {categoryOptions.map((category) => (
+            <Pressable
+              key={category.key}
+              style={styles.settingsRow}
+              onPress={() => updateReceiptSettings({ defaultCategory: category.key })}
+            >
+              <View style={styles.settingsIconBox}>
+                <Text style={styles.settingsIconText}>{category.icon}</Text>
+              </View>
+              <View style={styles.settingsTextBlock}>
+                <Text style={styles.settingsTitle}>{getCategoryLabel(category.key, t)}</Text>
+                <Text style={styles.settingsText}>{t.defaultCategoryInfo}</Text>
+              </View>
+              <Text style={styles.settingsValue}>
+                {normalizeCategoryKey(receiptSettings.defaultCategory) === category.key ? t.selected : ''}
+              </Text>
+            </Pressable>
+          ))}
+        </View>
+
         <SecondaryButton label={t.back} onPress={() => setSettingsSection('main')} />
       </View>
     );
@@ -6210,6 +6540,10 @@ function SettingsScreen({
           label={t.startPremium}
           onPress={() => Alert.alert(t.premiumSetupTitle, t.premiumSetupText)}
         />
+        <SecondaryButton
+          label={t.restorePurchases}
+          onPress={() => Alert.alert(t.restorePurchasesTitle, t.restorePurchasesText)}
+        />
         <SecondaryButton label={t.back} onPress={() => setSettingsSection('main')} />
       </View>
     );
@@ -6230,7 +6564,44 @@ function SettingsScreen({
           </View>
         </View>
 
-        <DangerButton label={t.signOut} onPress={onSignOut} />
+        {authChoice && <DangerButton label={t.signOut} onPress={onSignOut} />}
+        <DangerButton label={t.deleteAccount} onPress={onDeleteAccount} />
+        <SecondaryButton label={t.back} onPress={() => setSettingsSection('main')} />
+      </View>
+    );
+  }
+
+  if (settingsSection === 'privacy') {
+    return (
+      <View>
+        <View style={styles.card}>
+          <Text style={styles.analysisTitle}>{t.privacyAndLegal}</Text>
+          <Text style={styles.analysisText}>{t.privacySummary}</Text>
+        </View>
+
+        <View style={styles.settingsList}>
+          <SettingsRow
+            icon="🔒"
+            title={t.privacyPolicy}
+            subtitle={t.privacySummary}
+            value=">"
+            onPress={() => Alert.alert(t.privacyPolicy, t.privacySummary)}
+          />
+          <SettingsRow
+            icon="📄"
+            title={t.termsOfUse}
+            subtitle={t.premiumSetupText}
+            value=">"
+            onPress={() => Alert.alert(t.termsOfUse, t.premiumSetupText)}
+          />
+          <SettingsRow
+            icon="ℹ️"
+            title={t.appVersion}
+            subtitle="Reciro"
+            value={Constants.expoConfig?.version || '1.0.0'}
+          />
+        </View>
+
         <SecondaryButton label={t.back} onPress={() => setSettingsSection('main')} />
       </View>
     );
@@ -6238,25 +6609,8 @@ function SettingsScreen({
 
   return (
     <View>
+      <Text style={styles.settingGroupTitle}>{t.moneyAndBudget}</Text>
       <View style={styles.settingsList}>
-        {ENABLE_PREMIUM_PAYWALL && (
-          <SettingsRow
-            icon="✨"
-            title={t.premium}
-            subtitle={t.premiumInfo}
-            value=">"
-            onPress={() => setSettingsSection('premium')}
-          />
-        )}
-        {ENABLE_START_ACCOUNT_GATE && (
-          <SettingsRow
-            icon="☁️"
-            title={t.accountSync}
-            subtitle={t.accountSyncInfo}
-            value=">"
-            onPress={() => setSettingsSection('account')}
-          />
-        )}
         <SettingsRow
           icon="💶"
           title={t.income}
@@ -6285,19 +6639,65 @@ function SettingsScreen({
           value=">"
           onPress={() => setSettingsSection('recurring')}
         />
+      </View>
+
+      <Text style={styles.settingGroupTitle}>{t.receiptAndAnalysis}</Text>
+      <View style={styles.settingsList}>
+        <SettingsRow
+          icon="🧾"
+          title={t.receiptAndAnalysis}
+          subtitle={t.autoAnalyzeReceiptsInfo}
+          value=">"
+          onPress={() => setSettingsSection('receipt')}
+        />
+      </View>
+
+      <Text style={styles.settingGroupTitle}>{t.dataControls}</Text>
+      <View style={styles.settingsList}>
         <SettingsRow
           icon="🗂️"
-          title={t.dataBackup}
+          title={t.dataControls}
           subtitle={t.backupInfo}
           value=">"
           onPress={() => setSettingsSection('backup')}
         />
+      </View>
+
+      <Text style={styles.settingGroupTitle}>{t.accountSync}</Text>
+      <View style={styles.settingsList}>
+        <SettingsRow
+          icon="☁️"
+          title={t.accountSync}
+          subtitle={t.accountSyncInfo}
+          value=">"
+          onPress={() => setSettingsSection('account')}
+        />
+        {ENABLE_PREMIUM_PAYWALL && (
+          <SettingsRow
+            icon="✨"
+            title={t.premium}
+            subtitle={t.premiumInfo}
+            value=">"
+            onPress={() => setSettingsSection('premium')}
+          />
+        )}
+      </View>
+
+      <Text style={styles.settingGroupTitle}>{t.privacyAndLegal}</Text>
+      <View style={styles.settingsList}>
         <SettingsRow
           icon="✉️"
           title={t.feedback}
           subtitle={t.feedbackInfo}
           value=">"
           onPress={() => setSettingsSection('feedback')}
+        />
+        <SettingsRow
+          icon="🔒"
+          title={t.privacyAndLegal}
+          subtitle={t.privacySummary}
+          value=">"
+          onPress={() => setSettingsSection('privacy')}
         />
       </View>
     </View>
@@ -8785,6 +9185,15 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     marginTop: 16,
     overflow: 'hidden',
+  },
+  settingGroupTitle: {
+    color: '#0d5f2b',
+    fontSize: 12,
+    fontWeight: '900',
+    letterSpacing: 0,
+    marginBottom: -6,
+    marginTop: 18,
+    textTransform: 'uppercase',
   },
   settingsRow: {
     minHeight: 68,
