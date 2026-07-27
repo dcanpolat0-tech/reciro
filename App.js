@@ -301,7 +301,6 @@ const translations = {
     selected: 'Seçili',
     back: 'Geri Dön',
     spending: 'Harcama',
-    receiptDetail: 'Fiş detayı',
     receiptStoredText: 'Bu fiş telefonda kayıtlı. İstediğin zaman buradan fotoğrafına ve detaylarına tekrar bakabilirsin.',
     noPhoto: 'Fotoğraf yok',
     noPhotoText: 'Bu kayıtta fiş fotoğrafı bulunmuyor.',
@@ -544,7 +543,6 @@ const translations = {
     selected: 'Selected',
     back: 'Back',
     spending: 'Spending',
-    receiptDetail: 'Receipt detail',
     receiptStoredText: 'This receipt is saved on your phone. You can view its photo and details anytime.',
     noPhoto: 'No photo',
     noPhotoText: 'This record has no receipt photo.',
@@ -787,7 +785,6 @@ const translations = {
     selected: 'Selectionne',
     back: 'Retour',
     spending: 'Depense',
-    receiptDetail: 'Detail du ticket',
     receiptStoredText: 'Ce ticket est enregistre sur votre telephone. Vous pouvez revoir sa photo et ses details a tout moment.',
     noPhoto: 'Pas de photo',
     noPhotoText: 'Ce ticket n a pas de photo.',
@@ -1030,7 +1027,6 @@ const translations = {
     selected: 'Ausgewaehlt',
     back: 'Zurueck',
     spending: 'Ausgaben',
-    receiptDetail: 'Belegdetails',
     receiptStoredText: 'Dieser Beleg ist auf dem Telefon gespeichert. Foto und Details sind jederzeit sichtbar.',
     noPhoto: 'Kein Foto',
     noPhotoText: 'Dieser Eintrag hat kein Belegfoto.',
@@ -1273,7 +1269,6 @@ const translations = {
     selected: 'Seleccionado',
     back: 'Volver',
     spending: 'Gasto',
-    receiptDetail: 'Detalle del ticket',
     receiptStoredText: 'Este ticket esta guardado en el telefono. Puedes ver su foto y detalles cuando quieras.',
     noPhoto: 'Sin foto',
     noPhotoText: 'Este registro no tiene foto de ticket.',
@@ -3048,6 +3043,7 @@ function buildReceiptsCsv(receiptList) {
 
 export default function App() {
   const [cameraPermission, requestCameraPermission] = useCameraPermissions();
+  const mainScrollRef = useRef(null);
   const [screen, setScreen] = useState('home');
   const [receipts, setReceipts] = useState(initialReceipts);
   const [incomeByMonth, setIncomeByMonth] = useState({});
@@ -3606,6 +3602,16 @@ export default function App() {
       (screen === 'monthly' && Boolean(selectedMonthlyReceiptKey)) ||
       (screen === 'home' && photoOptionsOpen) ||
       screen === 'detail');
+
+  useEffect(() => {
+    if (screen !== 'detail') {
+      return;
+    }
+
+    requestAnimationFrame(() => {
+      mainScrollRef.current?.scrollTo({ y: 0, animated: false });
+    });
+  }, [screen, selectedReceipt?.id]);
 
   function openReceiptDetail(receipt) {
     const normalizedReceipt = normalizeReceiptCategories(receipt);
@@ -4336,6 +4342,7 @@ export default function App() {
         )}
 
         <ScrollView
+          ref={mainScrollRef}
           contentContainerStyle={styles.content}
           showsVerticalScrollIndicator={false}
         >
@@ -6061,14 +6068,6 @@ function ReceiptDetailScreen({
 
   return (
     <View>
-      <View style={styles.receiptDetailHero}>
-        <Text style={styles.receiptDetailLabel}>{t.receiptDetail}</Text>
-        <Text style={styles.receiptDateTitle}>{detailDate}</Text>
-        <Text style={styles.receiptStoreTitle}>{receipt.store}</Text>
-      </View>
-
-      {!editing && <PrimaryButton label={t.editReceipt} onPress={onStartEdit} />}
-
       {receipt.image ? (
         <View style={styles.detailImageBox}>
           <Pressable onPress={() => onPreviewImage(receipt.image)}>
@@ -6281,6 +6280,10 @@ function ReceiptDetailScreen({
       ) : (
         <View style={styles.card}>
           <View style={styles.row}>
+            <Text style={styles.rowText}>{t.storeName}</Text>
+            <Text style={styles.rowAmount}>{receipt.store}</Text>
+          </View>
+          <View style={styles.row}>
             <Text style={styles.rowText}>{t.convertedAmount}</Text>
             <Text style={styles.rowAmount}>{formatReceiptAmount(receipt)}</Text>
           </View>
@@ -6346,6 +6349,8 @@ function ReceiptDetailScreen({
           </View>
         </View>
       )}
+
+      {!editing && <PrimaryButton label={t.editReceipt} onPress={onStartEdit} />}
 
       {items.length > 0 && (
         <View>
@@ -6858,36 +6863,6 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderRadius: 8,
     padding: 20,
-  },
-  receiptDetailHero: {
-    backgroundColor: '#eaf8ec',
-    borderColor: '#dceade',
-    borderWidth: 1,
-    borderRadius: 8,
-    paddingHorizontal: 18,
-    paddingVertical: 22,
-    alignItems: 'center',
-  },
-  receiptDetailLabel: {
-    color: '#0d5f2b',
-    fontSize: 12,
-    fontWeight: '900',
-    textTransform: 'uppercase',
-  },
-  receiptDateTitle: {
-    color: '#172018',
-    fontSize: 25,
-    fontWeight: '900',
-    lineHeight: 31,
-    marginTop: 8,
-    textAlign: 'center',
-  },
-  receiptStoreTitle: {
-    color: '#4f5d52',
-    fontSize: 16,
-    fontWeight: '800',
-    marginTop: 8,
-    textAlign: 'center',
   },
   homeHero: {
     alignItems: 'center',
