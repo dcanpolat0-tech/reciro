@@ -194,7 +194,22 @@ function normalizeAnalysis(result) {
   };
 }
 
-async function analyzeReceipt(imageBase64) {
+function getReceiptPrompt() {
+  return (
+    'Read this receipt/invoice image or PDF. Return only structured JSON. ' +
+    'Use dateText as DD.MM.YYYY when possible. totalText must be the final paid total. ' +
+    'Extract receiptNumber from ticket number, transaction number, invoice number, receipt number, order number, or document number when printed. If unclear, use an empty string. ' +
+    'Extract subtotalText and taxText/VAT/TVA/KDV when printed. If not printed, use empty strings. ' +
+    'Detect currencyCode from printed symbols/currency text. Use TRY for TL/TRY, EUR for EUR, GBP for GBP, USD for $/USD. If unclear, use UNKNOWN. ' +
+    'Never round prices. Preserve cents exactly: 0.99 must be 0.99, 25.60 must be 25.60, and 55.84 must be 55.84. ' +
+    'For item amount, return the exact line price printed on the receipt, not an estimated or rounded value. ' +
+    'For each item, also return quantity and unit. If the receipt shows "2 x", quantity is 2 and unit is "pcs". If it shows weight like "2.395 kg", quantity is 2.395 and unit is "kg". If quantity is unclear, use quantity 1 and unit "". ' +
+    'Classify each item and the whole receipt into one of: grocery, food, transport, fuel, home, clothing, health, other. Use fuel for gasoline, diesel, LPG, charging, gas stations, and fuel purchases. ' +
+    'If a field is unclear, use an empty string or confidence below 0.75.'
+  );
+}
+
+async function requestReceiptAnalysis(content) {
   if (!OPENAI_API_KEY) {
     const error = new Error('OPENAI_API_KEY is missing.');
     error.code = 'OPENAI_API_KEY_MISSING';
@@ -212,26 +227,7 @@ async function analyzeReceipt(imageBase64) {
       input: [
         {
           role: 'user',
-          content: [
-            {
-              type: 'input_text',
-              text:
-                'Read this receipt/invoice image. Return only structured JSON. ' +
-                'Use dateText as DD.MM.YYYY when possible. totalText must be the final paid total. ' +
-                'Extract receiptNumber from ticket number, transaction number, invoice number, receipt number, order number, or document number when printed. If unclear, use an empty string. ' +
-                'Extract subtotalText and taxText/VAT/TVA/KDV when printed. If not printed, use empty strings. ' +
-                'Detect currencyCode from printed symbols/currency text. Use TRY for TL/₺/TRY, EUR for €/EUR, GBP for £/GBP, USD for $/USD. If unclear, use UNKNOWN. ' +
-                'Never round prices. Preserve cents exactly: 0.99 must be 0.99, 25.60 must be 25.60, and 55.84 must be 55.84. ' +
-                'For item amount, return the exact line price printed on the receipt, not an estimated or rounded value. ' +
-                'For each item, also return quantity and unit. If the receipt shows "2 x", quantity is 2 and unit is "pcs". If it shows weight like "2.395 kg", quantity is 2.395 and unit is "kg". If quantity is unclear, use quantity 1 and unit "". ' +
-                'Classify each item and the whole receipt into one of: grocery, food, transport, fuel, home, clothing, health, other. Use fuel for gasoline, diesel, LPG, charging, gas stations, and fuel purchases. ' +
-                'If a field is unclear, use an empty string or confidence below 0.75.',
-            },
-            {
-              type: 'input_image',
-              image_url: `data:image/jpeg;base64,${imageBase64}`,
-            },
-          ],
+          content,
         },
       ],
       text: {
@@ -272,6 +268,32 @@ async function analyzeReceipt(imageBase64) {
   }
 }
 
+async function analyzeReceipt(imageBase64) {
+  return requestReceiptAnalysis([
+    {
+      type: 'input_text',
+      text: getReceiptPrompt(),
+    },
+    {
+      type: 'input_image',
+      image_url: `data:image/jpeg;base64,${imageBase64}`,
+    },
+  ]);
+}
+
+async function analyzeReceiptPdf(fileBase64, fileName = 'receipt.pdf', mimeType = 'application/pdf') {
+  return requestReceiptAnalysis([
+    {
+      type: 'input_text',
+      text: getReceiptPrompt(),
+    },
+    {
+      type: 'input_file',
+      filename: fileName || 'receipt.pdf',
+      file_data: `data:${mimeType || 'application/pdf'};base64,${fileBase64}`,
+    },
+  ]);
+}
 const server = http.createServer(async (request, response) => {
   if (request.method === 'OPTIONS') {
     sendJson(response, 204, {});
@@ -306,13 +328,19 @@ const server = http.createServer(async (request, response) => {
   try {
     const body = await readJsonBody(request);
 
-    if (!body.imageBase64 || typeof body.imageBase64 !== 'string') {
-      sendJson(response, 400, { error: 'IMAGE_REQUIRED' });
+    if (body.imageBase64 && typeof body.imageBase64 === 'string') {
+      const analysis = await analyzeReceipt(body.imageBase64);
+      sendJson(response, 200, analysis);
       return;
     }
 
-    const analysis = await analyzeReceipt(body.imageBase64);
-    sendJson(response, 200, analysis);
+    if (body.fileBase64 && typeof body.fileBase64 === 'string') {
+      const analysis = await analyzeReceiptPdf(body.fileBase64, body.fileName, body.mimeType);
+      sendJson(response, 200, analysis);
+      return;
+    }
+
+    sendJson(response, 400, { error: 'RECEIPT_SOURCE_REQUIRED' });
   } catch (error) {
     const statusCode =
       error.message === 'REQUEST_TOO_LARGE' ? 413 : error.message === 'INVALID_JSON' ? 400 : 500;

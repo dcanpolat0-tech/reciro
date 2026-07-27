@@ -3898,6 +3898,85 @@ async function analyzeReceiptPhoto(imageUri) {
   };
 }
 
+async function analyzeReceiptPdf(fileUri, fileName = 'receipt.pdf', mimeType = 'application/pdf') {
+  if (!RECEIPT_ANALYSIS_ENDPOINT) {
+    const error = new Error('Receipt analysis endpoint is not configured.');
+    error.code = 'ANALYSIS_NOT_CONFIGURED';
+    throw error;
+  }
+
+  const fileBase64 = await FileSystem.readAsStringAsync(fileUri, {
+    encoding: FileSystem.EncodingType?.Base64 || 'base64',
+  });
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), ANALYSIS_REQUEST_TIMEOUT_MS);
+
+  let response;
+
+  try {
+    response = await fetch(RECEIPT_ANALYSIS_ENDPOINT, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        ...(RECEIPT_ANALYSIS_CLIENT_TOKEN ? { 'X-Client-Token': RECEIPT_ANALYSIS_CLIENT_TOKEN } : {}),
+      },
+      signal: controller.signal,
+      body: JSON.stringify({
+        fileBase64,
+        fileName,
+        mimeType,
+      }),
+    });
+  } catch (error) {
+    if (error.name === 'AbortError') {
+      const timeoutError = new Error('Receipt analysis timed out.');
+      timeoutError.code = 'ANALYSIS_TIMEOUT';
+      throw timeoutError;
+    }
+
+    throw error;
+  } finally {
+    clearTimeout(timeoutId);
+  }
+
+  if (!response.ok) {
+    let errorBody = {};
+
+    try {
+      errorBody = await response.json();
+    } catch (error) {
+      errorBody = {};
+    }
+
+    const error = new Error(errorBody.message || `Receipt analysis failed: ${response.status}`);
+    error.code = errorBody.error || 'ANALYSIS_SERVICE_ERROR';
+    throw error;
+  }
+
+  const result = await response.json();
+
+  return {
+    storeName: result.storeName || result.store || '',
+    totalText: String(result.totalText || result.total || ''),
+    subtotalText: String(result.subtotalText || ''),
+    taxText: String(result.taxText || ''),
+    receiptNumber: String(result.receiptNumber || result.ticketNumber || result.invoiceNumber || result.orderNumber || ''),
+    currencyCode: normalizeCurrencyCode(result.currencyCode, activeCurrency),
+    dateText: result.dateText || result.date || formatReceiptDate(Date.now()),
+    categoryKey: normalizeCategoryKey(result.categoryKey || result.category),
+    confidence: typeof result.confidence === 'number' ? result.confidence : null,
+    items: Array.isArray(result.items)
+      ? result.items.map((item) => ({
+          name: String(item.name || ''),
+          category: normalizeCategoryKey(item.category),
+          amount: typeof item.amount === 'number' ? item.amount : parseAmount(String(item.amount || '')),
+          quantity: Number(item.quantity) > 0 ? Number(item.quantity) : 1,
+          unit: String(item.unit || ''),
+        }))
+      : [],
+  };
+}
+
 function formatTL(value) {
   return formatCurrencyAmount(value, activeCurrency);
 }
@@ -5543,7 +5622,11 @@ export default function App() {
       setAnalysisConfidence(null);
       setReceiptItems([]);
       setPhotoOptionsOpen(false);
-      setAnalysisStatus('ready');
+      if (receiptSettings.autoAnalyze) {
+        await analyzeReceiptFile(savedFileUri, fileName || 'receipt.pdf', mimeType || 'application/pdf');
+      } else {
+        setAnalysisStatus('ready');
+      }
     } catch (error) {
       console.warn('Receipt file selection failed.', error);
       setPhotoOptionsOpen(false);
@@ -5563,10 +5646,41 @@ export default function App() {
       return;
     }
 
+    await analyzeReceiptSource({
+      analyze: () => analyzeReceiptPhoto(imageUri),
+      imageUri,
+      sourceFile: null,
+    });
+  }
+
+  async function analyzeReceiptFile(fileUri, fileName = 'receipt.pdf', mimeType = 'application/pdf') {
+    if (!fileUri) {
+      Alert.alert(t.photoNeeded, t.choosePhotoFirst);
+      return;
+    }
+
+    if (!canUseReceiptAnalysis) {
+      setAnalysisStatus('ready');
+      showAnalysisLimitAlert();
+      return;
+    }
+
+    await analyzeReceiptSource({
+      analyze: () => analyzeReceiptPdf(fileUri, fileName, mimeType),
+      imageUri: null,
+      sourceFile: {
+        uri: fileUri,
+        name: fileName || 'receipt.pdf',
+        mimeType: mimeType || 'application/pdf',
+      },
+    });
+  }
+
+  async function analyzeReceiptSource({ analyze, imageUri, sourceFile }) {
     setAnalysisStatus('analyzing');
 
     try {
-      const analysisResult = await analyzeReceiptPhoto(imageUri);
+      const analysisResult = await analyze();
 
       setStoreName(analysisResult.storeName || '');
       setAmountText(analysisResult.totalText || '');
@@ -5588,7 +5702,7 @@ export default function App() {
       setAnalysisStatus('done');
 
       if (!receiptSettings.reviewBeforeSave) {
-        await saveAnalyzedReceiptResult(analysisResult, imageUri, analyzedCategory, editableItems);
+        await saveAnalyzedReceiptResult(analysisResult, imageUri, analyzedCategory, editableItems, sourceFile);
       }
     } catch (error) {
       console.warn('Receipt analysis failed.', error);
@@ -5609,7 +5723,7 @@ export default function App() {
     }
   }
 
-  async function saveAnalyzedReceiptResult(analysisResult, imageUri, analyzedCategory, editableItems) {
+  async function saveAnalyzedReceiptResult(analysisResult, imageUri, analyzedCategory, editableItems, sourceFile = null) {
     const amount = parseAmount(analysisResult.totalText || '');
     const cleanStoreName = String(analysisResult.storeName || '').trim();
     const now = Date.now();
@@ -5649,7 +5763,7 @@ export default function App() {
       note: '',
       space: activeSpace,
       image: receiptSettings.keepPhotos ? imageUri : null,
-      file: null,
+      file: sourceFile,
       items: moneyFields.items,
       receiptNumber: normalizeReceiptNumber(analysisResult.receiptNumber),
     };
