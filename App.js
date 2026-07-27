@@ -1397,6 +1397,8 @@ const featureTranslations = {
     moneyAndBudget: 'Money and budget',
     receiptAndAnalysis: 'Receipt and analysis',
     dataControls: 'My data',
+    accountAndPremium: 'Account and premium',
+    supportAndFeedback: 'Support and feedback',
     privacyAndLegal: 'Privacy and legal',
     autoAnalyzeReceipts: 'Automatic receipt analysis',
     autoAnalyzeReceiptsInfo: 'Start AI analysis right after a photo is selected.',
@@ -1419,8 +1421,10 @@ const featureTranslations = {
     deleteAccountText: 'This opens an email request. Local receipts on this phone can be removed from My data.',
     sendDeleteRequest: 'Send request',
     privacySummary: 'Receipt photos are stored on this phone unless you turn photo storage off. AI analysis sends the selected receipt image to the analysis service to read store, date, total and items.',
+    privacyPolicyText: 'Reciro stores receipts, income, budgets, monthly payments and preferences locally on this phone. If receipt photo storage is enabled, receipt images are also kept locally. When AI analysis is used, the selected receipt image is sent to the receipt analysis service only to extract store, date, totals, categories and line items. Reciro does not sell personal data and does not use receipt content for advertising. You can export, back up or delete local data from My data. Account deletion requests can be started from Account and premium.',
     privacyPolicy: 'Privacy policy',
     termsOfUse: 'Terms of use',
+    termsOfUseText: 'Reciro helps track receipts, spending, products and monthly payments. AI receipt analysis may be imperfect, so users should review important amounts, dates and categories before relying on reports. The app is provided for personal expense tracking and is not financial, tax or legal advice. Users are responsible for keeping backups of important data and for complying with local rules about receipts, invoices and accounting.',
     restorePurchases: 'Restore purchases',
     restorePurchasesInfo: 'For App Store subscriptions once Premium is active.',
     restorePurchasesTitle: 'Purchases',
@@ -1482,6 +1486,8 @@ const featureTranslations = {
     moneyAndBudget: 'Para ve bütçe',
     receiptAndAnalysis: 'Fiş ve analiz',
     dataControls: 'Verilerim',
+    accountAndPremium: 'Hesap ve premium',
+    supportAndFeedback: 'Yardım ve geri bildirim',
     privacyAndLegal: 'Gizlilik ve yasal',
     autoAnalyzeReceipts: 'Otomatik fiş analizi',
     autoAnalyzeReceiptsInfo: 'Fotoğraf seçilince AI analizi otomatik başlasın.',
@@ -1504,8 +1510,10 @@ const featureTranslations = {
     deleteAccountText: 'E-posta ile talep gönderilir. Telefondaki yerel fişleri Verilerim bölümünden silebilirsin.',
     sendDeleteRequest: 'Talep gönder',
     privacySummary: 'Fiş fotoğrafları, fotoğraf saklama kapalı değilse bu telefonda tutulur. AI analizi, mağaza, tarih, toplam ve ürünleri okumak için seçilen fiş görselini analiz servisine gönderir.',
+    privacyPolicyText: 'Reciro; fişleri, gelirleri, bütçeleri, aylık ödemeleri ve tercihleri bu telefonda yerel olarak saklar. Fiş fotoğrafı saklama açıksa fiş görselleri de yerel olarak tutulur. AI analizi kullanıldığında seçilen fiş görseli yalnızca mağaza, tarih, toplam, kategori ve ürün satırlarını okumak için analiz servisine gönderilir. Reciro kişisel verileri satmaz ve fiş içeriklerini reklam amacıyla kullanmaz. Yerel verilerini Verilerim bölümünden dışa aktarabilir, yedekleyebilir veya silebilirsin. Hesap silme talebi Hesap ve premium bölümünden başlatılabilir.',
     privacyPolicy: 'Gizlilik politikası',
     termsOfUse: 'Kullanım şartları',
+    termsOfUseText: 'Reciro fiş, harcama, ürün ve aylık ödeme takibi için yardımcı olur. AI fiş analizi her zaman kusursuz olmayabilir; bu yüzden önemli tutar, tarih ve kategorileri raporlara güvenmeden önce kontrol etmek kullanıcının sorumluluğundadır. Uygulama kişisel harcama takibi içindir; finansal, vergi veya hukuki danışmanlık değildir. Önemli verilerin yedeğini almak ve fiş/fatura/muhasebe kurallarına uymak kullanıcının sorumluluğundadır.',
     restorePurchases: 'Satın almaları geri yükle',
     restorePurchasesInfo: 'Premium aktif olunca App Store abonelikleri için kullanılır.',
     restorePurchasesTitle: 'Satın almalar',
@@ -6078,6 +6086,45 @@ function SettingsScreen({
     }
   }
 
+  if (settingsSection === 'money') {
+    return (
+      <View>
+        <View style={styles.settingsList}>
+          <SettingsRow
+            icon="💶"
+            title={t.income}
+            subtitle={`${formatTL(salary)} / ${t.remainingMoney}: ${formatTL(remaining)}`}
+            value=">"
+            onPress={() => setSettingsSection('income')}
+          />
+          <SettingsRow
+            icon="💱"
+            title={t.currency}
+            subtitle={`${selectedCurrencyItem.symbol} ${selectedCurrencyItem.code}`}
+            value=">"
+            onPress={() => setSettingsSection('currency')}
+          />
+          <SettingsRow
+            icon="🎯"
+            title={t.budgets}
+            subtitle={t.budgetsInfo}
+            value=">"
+            onPress={() => setSettingsSection('budgets')}
+          />
+          <SettingsRow
+            icon="🔁"
+            title={t.recurring}
+            subtitle={t.recurringInfo}
+            value=">"
+            onPress={() => setSettingsSection('recurring')}
+          />
+        </View>
+
+        <SecondaryButton label={t.back} onPress={() => setSettingsSection('main')} />
+      </View>
+    );
+  }
+
   if (settingsSection === 'income') {
     return (
       <View>
@@ -6172,6 +6219,50 @@ function SettingsScreen({
         <SecondaryButton label={t.restoreBackup} onPress={onRestoreBackup} />
         <SecondaryButton label={t.exportCsv} onPress={onExportCsv} />
         <DangerButton label={t.clearAllData} onPress={onClearAllData} />
+        <SecondaryButton label={t.back} onPress={() => setSettingsSection('main')} />
+      </View>
+    );
+  }
+
+  if (settingsSection === 'data') {
+    return (
+      <View>
+        <View style={styles.card}>
+          <Text style={styles.analysisTitle}>{t.dataControls}</Text>
+          <Text style={styles.analysisText}>{t.backupInfo}</Text>
+        </View>
+
+        <View style={styles.settingsList}>
+          <SettingsRow
+            icon="📦"
+            title={t.createBackup}
+            subtitle={t.backupInfo}
+            value=">"
+            onPress={onCreateBackup}
+          />
+          <SettingsRow
+            icon="↩️"
+            title={t.restoreBackup}
+            subtitle={t.noBackupText}
+            value=">"
+            onPress={onRestoreBackup}
+          />
+          <SettingsRow
+            icon="📄"
+            title={t.exportCsv}
+            subtitle={t.archiveInfo}
+            value=">"
+            onPress={onExportCsv}
+          />
+          <SettingsRow
+            icon="🗑️"
+            title={t.clearAllData}
+            subtitle={t.clearAllDataText}
+            value=">"
+            onPress={onClearAllData}
+          />
+        </View>
+
         <SecondaryButton label={t.back} onPress={() => setSettingsSection('main')} />
       </View>
     );
@@ -6564,8 +6655,60 @@ function SettingsScreen({
           </View>
         </View>
 
-        {authChoice && <DangerButton label={t.signOut} onPress={onSignOut} />}
-        <DangerButton label={t.deleteAccount} onPress={onDeleteAccount} />
+        <View style={styles.settingsList}>
+          <SettingsRow
+            icon="☁️"
+            title={t.accountSync}
+            subtitle={authChoice ? t.signedInWith(providerLabel) : t.notSignedIn}
+            value=">"
+          />
+          <SettingsRow
+            icon="↻"
+            title={t.restorePurchases}
+            subtitle={t.restorePurchasesInfo}
+            value=">"
+            onPress={() => Alert.alert(t.restorePurchasesTitle, t.restorePurchasesText)}
+          />
+          {authChoice && (
+            <SettingsRow
+              icon="🚪"
+              title={t.signOut}
+              subtitle={t.signOutMessage}
+              value=">"
+              onPress={onSignOut}
+            />
+          )}
+          <SettingsRow
+            icon="🗑️"
+            title={t.deleteAccount}
+            subtitle={t.deleteAccountInfo}
+            value=">"
+            onPress={onDeleteAccount}
+          />
+        </View>
+        <SecondaryButton label={t.back} onPress={() => setSettingsSection('main')} />
+      </View>
+    );
+  }
+
+  if (settingsSection === 'support') {
+    return (
+      <View>
+        <View style={styles.card}>
+          <Text style={styles.analysisTitle}>{t.feedbackTitle}</Text>
+          <Text style={styles.analysisText}>{t.feedbackText}</Text>
+        </View>
+
+        <TextInput
+          style={[styles.input, styles.feedbackInput]}
+          value={feedbackText}
+          onChangeText={setFeedbackText}
+          placeholder={t.feedbackPlaceholder}
+          multiline
+          textAlignVertical="top"
+        />
+
+        <PrimaryButton label={t.sendFeedback} onPress={sendFeedback} />
         <SecondaryButton label={t.back} onPress={() => setSettingsSection('main')} />
       </View>
     );
@@ -6583,16 +6726,16 @@ function SettingsScreen({
           <SettingsRow
             icon="🔒"
             title={t.privacyPolicy}
-            subtitle={t.privacySummary}
+            subtitle={t.privacyPolicyText}
             value=">"
-            onPress={() => Alert.alert(t.privacyPolicy, t.privacySummary)}
+            onPress={() => Alert.alert(t.privacyPolicy, t.privacyPolicyText)}
           />
           <SettingsRow
             icon="📄"
             title={t.termsOfUse}
-            subtitle={t.premiumSetupText}
+            subtitle={t.termsOfUseText}
             value=">"
-            onPress={() => Alert.alert(t.termsOfUse, t.premiumSetupText)}
+            onPress={() => Alert.alert(t.termsOfUse, t.termsOfUseText)}
           />
           <SettingsRow
             icon="ℹ️"
@@ -6609,40 +6752,14 @@ function SettingsScreen({
 
   return (
     <View>
-      <Text style={styles.settingGroupTitle}>{t.moneyAndBudget}</Text>
       <View style={styles.settingsList}>
         <SettingsRow
           icon="💶"
-          title={t.income}
-          subtitle={`${formatTL(salary)} / ${t.remainingMoney}: ${formatTL(remaining)}`}
+          title={t.moneyAndBudget}
+          subtitle={`${t.income}, ${t.currency}, ${t.budgets}, ${t.recurring}`}
           value=">"
-          onPress={() => setSettingsSection('income')}
+          onPress={() => setSettingsSection('money')}
         />
-        <SettingsRow
-          icon="💱"
-          title={t.currency}
-          subtitle={`${selectedCurrencyItem.symbol} ${selectedCurrencyItem.code}`}
-          value=">"
-          onPress={() => setSettingsSection('currency')}
-        />
-        <SettingsRow
-          icon="🎯"
-          title={t.budgets}
-          subtitle={t.budgetsInfo}
-          value=">"
-          onPress={() => setSettingsSection('budgets')}
-        />
-        <SettingsRow
-          icon="🔁"
-          title={t.recurring}
-          subtitle={t.recurringInfo}
-          value=">"
-          onPress={() => setSettingsSection('recurring')}
-        />
-      </View>
-
-      <Text style={styles.settingGroupTitle}>{t.receiptAndAnalysis}</Text>
-      <View style={styles.settingsList}>
         <SettingsRow
           icon="🧾"
           title={t.receiptAndAnalysis}
@@ -6650,47 +6767,26 @@ function SettingsScreen({
           value=">"
           onPress={() => setSettingsSection('receipt')}
         />
-      </View>
-
-      <Text style={styles.settingGroupTitle}>{t.dataControls}</Text>
-      <View style={styles.settingsList}>
         <SettingsRow
           icon="🗂️"
           title={t.dataControls}
           subtitle={t.backupInfo}
           value=">"
-          onPress={() => setSettingsSection('backup')}
+          onPress={() => setSettingsSection('data')}
         />
-      </View>
-
-      <Text style={styles.settingGroupTitle}>{t.accountSync}</Text>
-      <View style={styles.settingsList}>
         <SettingsRow
           icon="☁️"
-          title={t.accountSync}
+          title={t.accountAndPremium}
           subtitle={t.accountSyncInfo}
           value=">"
           onPress={() => setSettingsSection('account')}
         />
-        {ENABLE_PREMIUM_PAYWALL && (
-          <SettingsRow
-            icon="✨"
-            title={t.premium}
-            subtitle={t.premiumInfo}
-            value=">"
-            onPress={() => setSettingsSection('premium')}
-          />
-        )}
-      </View>
-
-      <Text style={styles.settingGroupTitle}>{t.privacyAndLegal}</Text>
-      <View style={styles.settingsList}>
         <SettingsRow
           icon="✉️"
-          title={t.feedback}
+          title={t.supportAndFeedback}
           subtitle={t.feedbackInfo}
           value=">"
-          onPress={() => setSettingsSection('feedback')}
+          onPress={() => setSettingsSection('support')}
         />
         <SettingsRow
           icon="🔒"
