@@ -289,6 +289,7 @@ Onerilen ekranlar:
 - Ucretsiz 5 analiz hakki calisiyor
 - Reklamla ekstra hak calisiyor
 - Premium satin alma baglanmadan once test modu acik tutuluyor
+- Android build rehberi hazir: docs/BUILD_ANDROID_WITH_EAS.md
 
 ## 16. Onemli Not
 

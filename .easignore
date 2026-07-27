@@ -3,6 +3,7 @@
 node_modules/
 dist/
 dist-check/
+dist-check-*/
 web-build/
 logs/
 expo-*.log

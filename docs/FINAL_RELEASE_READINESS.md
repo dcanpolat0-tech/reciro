@@ -64,3 +64,5 @@ Reciro is technically prepared for iOS and Android release preparation. The rema
 5. Create internal testing release with an Android build.
 6. Test rewarded ads, camera, gallery, PDF, AI analysis, feedback, and saved receipts.
 7. Submit for Google Play review.
+
+Build guide: `docs/BUILD_ANDROID_WITH_EAS.md`.
