@@ -223,6 +223,7 @@ const translations = {
     clearMerchantFilter: 'Seçimi temizle',
     productBreakdown: 'Ürün özeti',
     productsInfo: 'Ürünler aylık toplam adet ve miktara göre sıralanır.',
+    productMonthPeriod: 'Ay',
     productThisYear: 'Bu yıl',
     productMonthSelect: 'Ay seç',
     noProductData: 'Bu ay ürün verisi yok',
@@ -467,6 +468,7 @@ const translations = {
     clearMerchantFilter: 'Clear selection',
     productBreakdown: 'Product summary',
     productsInfo: 'Products are ranked monthly by total quantity.',
+    productMonthPeriod: 'Month',
     productThisYear: 'This year',
     productMonthSelect: 'Choose month',
     noProductData: 'No product data this month',
@@ -711,6 +713,7 @@ const translations = {
     clearMerchantFilter: 'Effacer la selection',
     productBreakdown: 'Resume des articles',
     productsInfo: 'Les articles sont classes chaque mois par quantite totale.',
+    productMonthPeriod: 'Mois',
     productThisYear: 'Cette annee',
     productMonthSelect: 'Choisir le mois',
     noProductData: 'Aucun article ce mois',
@@ -955,6 +958,7 @@ const translations = {
     clearMerchantFilter: 'Auswahl loeschen',
     productBreakdown: 'Artikeluebersicht',
     productsInfo: 'Artikel werden monatlich nach Gesamtmenge sortiert.',
+    productMonthPeriod: 'Monat',
     productThisYear: 'Dieses Jahr',
     productMonthSelect: 'Monat waehlen',
     noProductData: 'Keine Artikeldaten diesen Monat',
@@ -1199,6 +1203,7 @@ const translations = {
     clearMerchantFilter: 'Borrar seleccion',
     productBreakdown: 'Resumen de productos',
     productsInfo: 'Los productos se ordenan cada mes por cantidad total.',
+    productMonthPeriod: 'Mes',
     productThisYear: 'Este ano',
     productMonthSelect: 'Elegir mes',
     noProductData: 'Sin datos de productos este mes',
@@ -5569,27 +5574,13 @@ function ProductsScreen({
   t,
 }) {
   const productPeriodOptions = [
-    { key: 'month', label: t.thisMonth },
+    { key: 'month', label: t.productMonthPeriod },
     { key: 'year', label: t.productThisYear },
     { key: 'all', label: t.allTime },
   ];
-  const selectedMonthLabel =
-    productMonthOptions.find((month) => month.key === productMonthKey)?.label || formatMonthKey(productMonthKey);
-  const summaryLabel =
-    productPeriod === 'month'
-      ? selectedMonthLabel
-      : productPeriod === 'year'
-        ? String(new Date().getFullYear())
-        : t.allTime;
 
   return (
     <View>
-      <View style={styles.reportHero}>
-        <Text style={styles.label}>📦 {t.productBreakdown}</Text>
-        <Text style={styles.productsHeroTitle}>{summaryLabel}</Text>
-        <Text style={styles.productsHeroText}>{t.productsInfo}</Text>
-      </View>
-
       <View style={styles.periodTabs}>
         {productPeriodOptions.map((option) => (
           <Pressable
