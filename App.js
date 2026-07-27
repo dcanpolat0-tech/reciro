@@ -3158,6 +3158,7 @@ export default function App() {
   const [reportSearchText, setReportSearchText] = useState('');
   const [productPeriod, setProductPeriod] = useState('month');
   const [productMonthKey, setProductMonthKey] = useState(getMonthKey());
+  const [homeRecurringOpen, setHomeRecurringOpen] = useState(false);
   const [selectedMerchantKey, setSelectedMerchantKey] = useState(null);
   const [selectedReportCategoryKey, setSelectedReportCategoryKey] = useState(null);
   const [selectedMonthlyReceiptKey, setSelectedMonthlyReceiptKey] = useState(null);
@@ -3608,6 +3609,11 @@ export default function App() {
       setSettingsSection('main');
     }
 
+    if (screen === 'home' && nextScreen !== 'home') {
+      setHomeRecurringOpen(false);
+      setPhotoOptionsOpen(false);
+    }
+
     if (screen === 'monthly' && nextScreen !== 'monthly') {
       setSelectedMonthlyReceiptKey(null);
     }
@@ -3672,6 +3678,11 @@ export default function App() {
       return;
     }
 
+    if (screen === 'home' && homeRecurringOpen) {
+      setHomeRecurringOpen(false);
+      return;
+    }
+
     if (screen === 'home' && photoOptionsOpen) {
       setPhotoOptionsOpen(false);
       return;
@@ -3702,7 +3713,7 @@ export default function App() {
           }
         },
       }),
-    [screen, settingsSection, previewImage, reportSearchText, reportView, selectedMerchantKey, selectedMonthlyReceiptKey, photoOptionsOpen, detailReturnScreen]
+    [screen, settingsSection, previewImage, reportSearchText, reportView, selectedMerchantKey, selectedMonthlyReceiptKey, homeRecurringOpen, photoOptionsOpen, detailReturnScreen]
   );
   const canShowBackControl =
     !previewImage &&
@@ -3712,6 +3723,7 @@ export default function App() {
       (screen === 'report' && reportView === 'merchants') ||
       (screen === 'report' && Boolean(reportSearchText.trim())) ||
       (screen === 'monthly' && Boolean(selectedMonthlyReceiptKey)) ||
+      (screen === 'home' && homeRecurringOpen) ||
       (screen === 'home' && photoOptionsOpen) ||
       screen === 'detail');
 
@@ -3725,6 +3737,7 @@ export default function App() {
     selectedMerchantKey || '',
     selectedReportCategoryKey || '',
     selectedMonthlyReceiptKey || '',
+    homeRecurringOpen ? 'home-recurring' : '',
     selectedReceipt?.id || '',
     isReceiptComposerActive ? 'receipt-composer' : 'main-content',
   ].join('|');
@@ -4478,6 +4491,10 @@ export default function App() {
               receiptCount={selectedMonthReceipts.length}
               budgetSummary={budgetSummary}
               recurringMonthlyTotal={recurringMonthlyTotal}
+              recurringReceipts={selectedMonthRecurringReceipts}
+              homeRecurringOpen={homeRecurringOpen}
+              onOpenRecurringPayments={() => setHomeRecurringOpen(true)}
+              onCloseRecurringPayments={() => setHomeRecurringOpen(false)}
               onSelectReceipt={openReceiptDetail}
               isReceiptComposerActive={isReceiptComposerActive}
               t={t}
@@ -4740,6 +4757,10 @@ function HomeScreen({
   receiptCount,
   budgetSummary,
   recurringMonthlyTotal,
+  recurringReceipts,
+  homeRecurringOpen,
+  onOpenRecurringPayments,
+  onCloseRecurringPayments,
   onSelectReceipt,
   isReceiptComposerActive,
   receiptComposer,
@@ -4747,6 +4768,17 @@ function HomeScreen({
 }) {
   const topCategoryLabel = getCategoryLabel(topCategory.key, t);
   const hasBudgetOrMonthlyPayments = recurringMonthlyTotal > 0 || budgetSummary.length > 0;
+
+  if (homeRecurringOpen) {
+    return (
+      <HomeRecurringPaymentsScreen
+        receipts={recurringReceipts}
+        total={recurringMonthlyTotal}
+        onBack={onCloseRecurringPayments}
+        t={t}
+      />
+    );
+  }
 
   if (isReceiptComposerActive) {
     return (
@@ -4776,10 +4808,13 @@ function HomeScreen({
       {hasBudgetOrMonthlyPayments && (
       <View style={styles.card}>
         {recurringMonthlyTotal > 0 && (
-          <View style={styles.row}>
+          <Pressable style={styles.row} onPress={onOpenRecurringPayments}>
             <Text style={styles.rowText}>{t.recurring}</Text>
-            <Text style={styles.rowAmount}>{formatTL(recurringMonthlyTotal)}</Text>
-          </View>
+            <View style={styles.merchantAmountBlock}>
+              <Text style={styles.rowAmount}>{formatTL(recurringMonthlyTotal)}</Text>
+              <Text style={styles.merchantChevron}>›</Text>
+            </View>
+          </Pressable>
         )}
         {budgetSummary.slice(0, 2).map((budget) => (
           <View style={styles.row} key={budget.key}>
@@ -4806,6 +4841,42 @@ function HomeScreen({
 
       <View style={styles.homeReceiptComposer}>
         {receiptComposer}
+      </View>
+    </View>
+  );
+}
+
+function HomeRecurringPaymentsScreen({ receipts, total, onBack, t }) {
+  return (
+    <View>
+      <View style={styles.reportHero}>
+        <Text style={styles.label}>{t.recurring}</Text>
+        <Text style={styles.reportAmount}>{formatTL(total)}</Text>
+        <Text style={styles.productsHeroText}>{t.recurringInfo}</Text>
+      </View>
+
+      <SecondaryButton label={t.back} onPress={onBack} />
+
+      <View style={styles.card}>
+        {receipts.length === 0 && (
+          <View style={styles.emptyState}>
+            <Text style={styles.emptyTitle}>{t.noRecurring}</Text>
+            <Text style={styles.emptyText}>{t.recurringInfo}</Text>
+          </View>
+        )}
+
+        {receipts.map((receipt) => (
+          <View style={styles.row} key={receipt.id}>
+            <View style={styles.receiptTextBlock}>
+              <Text style={styles.rowText}>{receipt.store}</Text>
+              <Text style={styles.rowMeta}>
+                {getCategoryIcon(receipt.category)} {getCategoryLabel(receipt.category, t)} - {normalizeDateDisplay(receipt.date, receipt.createdAt)}
+              </Text>
+              <Text style={styles.rowHint}>{t.recurringMonthlyEquivalent}</Text>
+            </View>
+            <Text style={styles.rowAmount}>{formatReceiptAmount(receipt)}</Text>
+          </View>
+        ))}
       </View>
     </View>
   );
