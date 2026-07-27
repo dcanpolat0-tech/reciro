@@ -236,7 +236,6 @@ const translations = {
     noReceiptsText: 'İlk fişi eklediğinde harcamaların, marketlerin ve raporların burada görünecek.',
     noReportData: 'Bu filtrede veri yok',
     thisMonth: 'Bu ay',
-    thisWeek: 'Bu hafta',
     allTime: 'Tüm zamanlar',
     currency: 'Para birimi',
     selectedCurrency: (symbol, name) => `Seçili para birimi: ${symbol} ${name}`,
@@ -481,7 +480,6 @@ const translations = {
     noReceiptsText: 'After you add your first receipt, spending, stores, and reports will appear here.',
     noReportData: 'No data for this filter',
     thisMonth: 'This month',
-    thisWeek: 'This week',
     allTime: 'All time',
     currency: 'Currency',
     selectedCurrency: (symbol, name) => `Selected currency: ${symbol} ${name}`,
@@ -726,7 +724,6 @@ const translations = {
     noReceiptsText: 'Ajoutez votre premier ticket pour voir les depenses, magasins et rapports.',
     noReportData: 'Aucune donnee pour ce filtre',
     thisMonth: 'Ce mois',
-    thisWeek: 'Cette semaine',
     allTime: 'Tout',
     currency: 'Devise',
     selectedCurrency: (symbol, name) => `Devise selectionnee: ${symbol} ${name}`,
@@ -971,7 +968,6 @@ const translations = {
     noReceiptsText: 'Nach dem ersten Beleg erscheinen Ausgaben, Geschaefte und Berichte hier.',
     noReportData: 'Keine Daten fuer diesen Filter',
     thisMonth: 'Dieser Monat',
-    thisWeek: 'Diese Woche',
     allTime: 'Gesamt',
     currency: 'Waehrung',
     selectedCurrency: (symbol, name) => `Ausgewaehlte Waehrung: ${symbol} ${name}`,
@@ -1216,7 +1212,6 @@ const translations = {
     noReceiptsText: 'Cuando anadas el primer ticket, veras gastos, tiendas e informes aqui.',
     noReportData: 'No hay datos para este filtro',
     thisMonth: 'Este mes',
-    thisWeek: 'Esta semana',
     allTime: 'Todo',
     currency: 'Moneda',
     selectedCurrency: (symbol, name) => `Moneda seleccionada: ${symbol} ${name}`,
@@ -2023,7 +2018,13 @@ function cleanEditableItems(items, fallbackCategory) {
 }
 
 function getReceiptTime(receipt) {
-  return receipt.createdAt || receipt.id || 0;
+  const receiptDate = parseReceiptDateText(receipt?.date);
+
+  if (receiptDate) {
+    return receiptDate.getTime();
+  }
+
+  return receipt?.createdAt || receipt?.id || 0;
 }
 
 function getMonthKey(date = new Date()) {
@@ -3470,6 +3471,13 @@ export default function App() {
       },
     };
   }, [baseTranslations, otherCategoryLabel]);
+
+  useEffect(() => {
+    if (reportPeriod === 'week') {
+      setReportPeriod('month');
+    }
+  }, [reportPeriod]);
+
   activeCurrency = selectedCurrency;
   const currentAnalysisMonthKey = getMonthKey();
   const monthlyAnalysisUsage = Number(analysisUsageByMonth[currentAnalysisMonthKey]) || 0;
@@ -5385,7 +5393,6 @@ function ReportScreen({
   const topCategoryLabel = getCategoryLabel(topCategory.key, t);
   const periodFilters = [
     { key: 'month', label: t.thisMonth },
-    { key: 'week', label: t.thisWeek },
     { key: 'all', label: t.allTime },
   ];
   const reportViews = [
