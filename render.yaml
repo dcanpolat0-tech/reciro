@@ -13,6 +13,12 @@ services:
         value: gpt-4.1-mini
       - key: ANALYSIS_CLIENT_TOKEN
         sync: false
+      - key: FEEDBACK_EMAIL_TO
+        value: denizcanpolat2307@gmail.com
+      - key: FEEDBACK_EMAIL_FROM
+        value: Reciro <onboarding@resend.dev>
+      - key: RESEND_API_KEY
+        sync: false
       - key: RATE_LIMIT_WINDOW_MS
         value: "60000"
       - key: RATE_LIMIT_MAX_REQUESTS

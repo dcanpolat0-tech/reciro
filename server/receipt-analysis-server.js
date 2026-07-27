@@ -8,6 +8,9 @@ const PORT = Number(process.env.PORT || process.env.RECEIPT_ANALYSIS_PORT || 878
 const OPENAI_API_KEY = process.env.OPENAI_API_KEY;
 const OPENAI_MODEL = process.env.OPENAI_MODEL || 'gpt-4.1-mini';
 const ANALYSIS_CLIENT_TOKEN = process.env.ANALYSIS_CLIENT_TOKEN || '';
+const FEEDBACK_EMAIL_TO = process.env.FEEDBACK_EMAIL_TO || 'denizcanpolat2307@gmail.com';
+const FEEDBACK_EMAIL_FROM = process.env.FEEDBACK_EMAIL_FROM || 'Reciro <onboarding@resend.dev>';
+const RESEND_API_KEY = process.env.RESEND_API_KEY || '';
 const MAX_BODY_BYTES = 18 * 1024 * 1024;
 const RATE_LIMIT_WINDOW_MS = Number(process.env.RATE_LIMIT_WINDOW_MS || 60 * 1000);
 const RATE_LIMIT_MAX_REQUESTS = Number(process.env.RATE_LIMIT_MAX_REQUESTS || 20);
@@ -294,6 +297,53 @@ async function analyzeReceiptPdf(fileBase64, fileName = 'receipt.pdf', mimeType 
     },
   ]);
 }
+
+function normalizeFeedback(body) {
+  return {
+    message: String(body.message || '').trim().slice(0, 4000),
+    language: String(body.language || '').trim().slice(0, 20),
+    currency: String(body.currency || '').trim().slice(0, 10),
+    app: String(body.app || 'Reciro').trim().slice(0, 80),
+    sentAt: String(body.sentAt || new Date().toISOString()).trim().slice(0, 80),
+  };
+}
+
+async function sendFeedbackEmail(feedback) {
+  if (!RESEND_API_KEY) {
+    console.log('[feedback]', JSON.stringify({ ...feedback, emailDelivery: 'not_configured' }));
+    return { emailed: false, reason: 'RESEND_API_KEY_MISSING' };
+  }
+
+  const emailResponse = await fetch('https://api.resend.com/emails', {
+    method: 'POST',
+    headers: {
+      Authorization: `Bearer ${RESEND_API_KEY}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      from: FEEDBACK_EMAIL_FROM,
+      to: FEEDBACK_EMAIL_TO,
+      subject: 'Reciro feedback',
+      text:
+        `${feedback.message}\n\n` +
+        `---\n` +
+        `App: ${feedback.app}\n` +
+        `Language: ${feedback.language || '-'}\n` +
+        `Currency: ${feedback.currency || '-'}\n` +
+        `Sent at: ${feedback.sentAt}\n`,
+    }),
+  });
+
+  if (!emailResponse.ok) {
+    const message = await emailResponse.text().catch(() => '');
+    const error = new Error(message || `Feedback email failed: ${emailResponse.status}`);
+    error.code = 'FEEDBACK_EMAIL_FAILED';
+    throw error;
+  }
+
+  return { emailed: true };
+}
+
 const server = http.createServer(async (request, response) => {
   if (request.method === 'OPTIONS') {
     sendJson(response, 204, {});
@@ -307,6 +357,36 @@ const server = http.createServer(async (request, response) => {
 
   if (request.method === 'GET' && request.url === '/health') {
     sendJson(response, 200, { ok: true });
+    return;
+  }
+
+  if (request.method === 'POST' && request.url === '/feedback') {
+    if (!isClientAuthorized(request)) {
+      sendJson(response, 401, { error: 'UNAUTHORIZED' });
+      return;
+    }
+
+    if (isRateLimited(request)) {
+      sendJson(response, 429, { error: 'RATE_LIMITED', message: 'Too many feedback requests.' });
+      return;
+    }
+
+    try {
+      const feedback = normalizeFeedback(await readJsonBody(request));
+
+      if (!feedback.message) {
+        sendJson(response, 400, { error: 'FEEDBACK_MESSAGE_REQUIRED' });
+        return;
+      }
+
+      const delivery = await sendFeedbackEmail(feedback);
+      sendJson(response, 200, { ok: true, ...delivery });
+    } catch (error) {
+      sendJson(response, 500, {
+        error: error.code || 'FEEDBACK_FAILED',
+        message: error.message || 'Feedback could not be sent.',
+      });
+    }
     return;
   }
 
@@ -355,4 +435,5 @@ const server = http.createServer(async (request, response) => {
 server.listen(PORT, '0.0.0.0', () => {
   console.log(`Receipt analysis server running on http://localhost:${PORT}`);
   console.log('Endpoint: POST /analyze-receipt');
+  console.log('Endpoint: POST /feedback');
 });

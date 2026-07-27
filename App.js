@@ -49,6 +49,7 @@ const RECEIPT_ANALYSIS_ENDPOINT =
   APP_CONFIG_EXTRA.receiptAnalysisUrl ||
   process.env.EXPO_PUBLIC_RECEIPT_ANALYSIS_URL ||
   DEFAULT_RECEIPT_ANALYSIS_ENDPOINT;
+const FEEDBACK_ENDPOINT = RECEIPT_ANALYSIS_ENDPOINT.replace(/\/analyze-receipt\/?$/, '/feedback');
 const RECEIPT_ANALYSIS_CLIENT_TOKEN =
   APP_CONFIG_EXTRA.analysisClientToken ||
   process.env.EXPO_PUBLIC_ANALYSIS_CLIENT_TOKEN ||
@@ -298,11 +299,13 @@ const translations = {
     feedback: 'Geri bildirim',
     feedbackInfo: 'Öneri, hata veya isteklerini bize gönder.',
     feedbackTitle: 'Bize neyi düzeltelim?',
-    feedbackText: 'Mesajın e-posta olarak bize gelir. Böylece kullanıcıların istediği şeyleri okuyup uygulamayı ona göre geliştiririz.',
+    feedbackText: 'Mesajın uygulama içinden bize ulaşır. Böylece kullanıcıların istediği şeyleri okuyup uygulamayı ona göre geliştiririz.',
     feedbackPlaceholder: 'Örn. Fiş okuma daha hızlı olsun, şu ekran karışık...',
     sendFeedback: 'Geri Bildirim Gönder',
     feedbackEmptyTitle: 'Mesaj boş',
     feedbackEmptyText: 'Göndermeden önce kısa bir mesaj yaz.',
+    feedbackSentTitle: 'Geri bildirim gönderildi',
+    feedbackSentText: 'Mesajın uygulama içinden alındı. Teşekkürler.',
     feedbackMailTitle: 'E-posta açılamadı',
     feedbackMailText: 'Telefonunda e-posta uygulaması yoksa mesaj gönderilemeyebilir.',
     analysisUnavailableTitle: 'Analiz servisi bağlı değil',
@@ -542,11 +545,13 @@ const translations = {
     feedback: 'Feedback',
     feedbackInfo: 'Send suggestions, bugs, or feature requests.',
     feedbackTitle: 'What should we improve?',
-    feedbackText: 'Your message comes to us by email, so we can read user feedback and improve the app.',
+    feedbackText: 'Your message is sent from inside the app, so we can read user feedback and improve the app.',
     feedbackPlaceholder: 'Example: make receipt reading faster, this screen feels confusing...',
     sendFeedback: 'Send Feedback',
     feedbackEmptyTitle: 'Message is empty',
     feedbackEmptyText: 'Write a short message before sending.',
+    feedbackSentTitle: 'Feedback sent',
+    feedbackSentText: 'Your message was sent from inside the app. Thank you.',
     feedbackMailTitle: 'Email could not open',
     feedbackMailText: 'If there is no email app on the phone, the message may not be sent.',
     analysisUnavailableTitle: 'Analysis service is not connected',
@@ -786,11 +791,13 @@ const translations = {
     feedback: 'Avis',
     feedbackInfo: 'Envoyez une idee, un bug ou une demande.',
     feedbackTitle: 'Que devons-nous ameliorer ?',
-    feedbackText: 'Votre message nous arrive par e-mail afin de lire les retours et ameliorer l app.',
+    feedbackText: 'Votre message est envoye depuis l app afin de lire les retours et ameliorer l app.',
     feedbackPlaceholder: 'Ex. rendre la lecture plus rapide, cet ecran est confus...',
     sendFeedback: 'Envoyer un avis',
     feedbackEmptyTitle: 'Message vide',
     feedbackEmptyText: 'Ecrivez un court message avant l envoi.',
+    feedbackSentTitle: 'Avis envoye',
+    feedbackSentText: 'Votre message a ete envoye depuis l app. Merci.',
     feedbackMailTitle: 'E-mail impossible a ouvrir',
     feedbackMailText: 'Sans application e-mail sur le telephone, le message peut ne pas etre envoye.',
     analysisUnavailableTitle: 'Service d analyse non connecte',
@@ -1030,11 +1037,13 @@ const translations = {
     feedback: 'Feedback',
     feedbackInfo: 'Sende Ideen, Fehler oder Wuensche.',
     feedbackTitle: 'Was sollen wir verbessern?',
-    feedbackText: 'Deine Nachricht kommt per E-Mail zu uns, damit wir Feedback lesen und die App verbessern.',
+    feedbackText: 'Deine Nachricht wird direkt aus der App gesendet, damit wir Feedback lesen und die App verbessern.',
     feedbackPlaceholder: 'Z.B. Belege schneller lesen, dieser Bildschirm ist unklar...',
     sendFeedback: 'Feedback senden',
     feedbackEmptyTitle: 'Nachricht leer',
     feedbackEmptyText: 'Schreibe vor dem Senden eine kurze Nachricht.',
+    feedbackSentTitle: 'Feedback gesendet',
+    feedbackSentText: 'Deine Nachricht wurde direkt aus der App gesendet. Danke.',
     feedbackMailTitle: 'E-Mail konnte nicht geoeffnet werden',
     feedbackMailText: 'Ohne E-Mail-App auf dem Telefon kann die Nachricht eventuell nicht gesendet werden.',
     analysisUnavailableTitle: 'Analysedienst nicht verbunden',
@@ -1274,11 +1283,13 @@ const translations = {
     feedback: 'Comentarios',
     feedbackInfo: 'Envia sugerencias, errores o ideas.',
     feedbackTitle: 'Que deberiamos mejorar?',
-    feedbackText: 'Tu mensaje nos llega por email para leer los comentarios y mejorar la app.',
+    feedbackText: 'Tu mensaje se envia desde la app para leer los comentarios y mejorar la app.',
     feedbackPlaceholder: 'Ej. hacer la lectura mas rapida, esta pantalla es confusa...',
     sendFeedback: 'Enviar comentario',
     feedbackEmptyTitle: 'Mensaje vacio',
     feedbackEmptyText: 'Escribe un mensaje corto antes de enviar.',
+    feedbackSentTitle: 'Comentario enviado',
+    feedbackSentText: 'Tu mensaje se envio desde la app. Gracias.',
     feedbackMailTitle: 'No se pudo abrir el email',
     feedbackMailText: 'Si no hay app de email en el telefono, el mensaje puede no enviarse.',
     analysisUnavailableTitle: 'Servicio de analisis no conectado',
@@ -2246,6 +2257,8 @@ Object.assign(translations.it, {
   noProductDataText: "Dopo l'analisi dello scontrino, qui appariranno le quantità dei prodotti.",
   feedbackEmptyTitle: "Messaggio vuoto",
   feedbackEmptyText: "Scrivi un breve messaggio prima di inviare.",
+  feedbackSentTitle: "Feedback inviato",
+  feedbackSentText: "Il tuo messaggio è stato inviato dall'app. Grazie.",
   remainingMoney: "Totale rimanente",
   previousMonth: "Mese precedente",
   nextMonth: "Mese successivo",
@@ -2254,7 +2267,7 @@ Object.assign(translations.it, {
   reportButton: "Visualizza report",
   backupInfo: "Scontrini, reddito e valuta sono salvati in backup su questo telefono.",
   feedbackTitle: "Cosa dovremmo migliorare?",
-  feedbackText: "Il tuo messaggio ci arriva via email, così possiamo leggere i feedback e migliorare l'app.",
+  feedbackText: "Il tuo messaggio viene inviato dall'app, così possiamo leggere i feedback e migliorare l'app.",
   feedbackPlaceholder: "Esempio: rendere la lettura scontrini piu veloce, questa schermata e confusa...",
   sendFeedback: "Invia feedback",
   premiumTitle: "Reciro Premium",
@@ -2439,6 +2452,8 @@ Object.assign(translations.pt, {
   noProductDataText: "Após a análise do recibo, as quantidades dos produtos aparecerão aqui.",
   feedbackEmptyTitle: "Mensagem vazia",
   feedbackEmptyText: "Escreva uma mensagem curta antes de enviar.",
+  feedbackSentTitle: "Feedback enviado",
+  feedbackSentText: "A sua mensagem foi enviada pela app. Obrigado.",
   remainingMoney: "Total restante",
   previousMonth: "Mês anterior",
   nextMonth: "Mês seguinte",
@@ -2447,7 +2462,7 @@ Object.assign(translations.pt, {
   reportButton: "Ver relatório",
   backupInfo: "Recibos, receitas e moeda estão guardados neste telefone.",
   feedbackTitle: "O que devemos melhorar?",
-  feedbackText: "A sua mensagem chega-nos por email, para podermos ler o feedback dos utilizadores e melhorar a app.",
+  feedbackText: "A sua mensagem é enviada pela app, para podermos ler o feedback dos utilizadores e melhorar a app.",
   feedbackPlaceholder: "Exemplo: tornar a leitura de recibos mais rápida, este ecrã é confuso...",
   sendFeedback: "Enviar feedback",
   premiumTitle: "Reciro Premium",
@@ -2632,6 +2647,8 @@ Object.assign(translations.nl, {
   noProductDataText: "Na bonanalyse verschijnen hier productaantallen.",
   feedbackEmptyTitle: "Bericht is leeg",
   feedbackEmptyText: "Schrijf een kort bericht voordat je verzendt.",
+  feedbackSentTitle: "Feedback verzonden",
+  feedbackSentText: "Je bericht is vanuit de app verzonden. Bedankt.",
   remainingMoney: "Totaal over",
   previousMonth: "Vorige maand",
   nextMonth: "Volgende maand",
@@ -2640,7 +2657,7 @@ Object.assign(translations.nl, {
   reportButton: "Bekijk rapport",
   backupInfo: "Bonnen, inkomen en valuta worden op deze telefoon geback-upt.",
   feedbackTitle: "Wat kunnen we verbeteren?",
-  feedbackText: "Je bericht komt per e-mail bij ons binnen, zodat we feedback kunnen lezen en de app verbeteren.",
+  feedbackText: "Je bericht wordt vanuit de app verzonden, zodat we feedback kunnen lezen en de app verbeteren.",
   feedbackPlaceholder: "Bijv: bonlezen sneller maken, dit scherm is verwarrend...",
   sendFeedback: "Feedback verzenden",
   premiumTitle: "Reciro Premium",
@@ -2798,6 +2815,7 @@ const categoryOptions = [
 
 function buildCategorySummary(receiptList) {
   const totals = new Map();
+  const fixedCategoryKeys = new Set(categoryOptions.map((category) => category.key));
 
   receiptList.forEach((receipt) => {
     const key = normalizeCategoryKey(receipt.category);
@@ -2811,7 +2829,7 @@ function buildCategorySummary(receiptList) {
   }));
 
   const customCategories = Array.from(totals.entries())
-    .filter(([key]) => isCustomCategory(key))
+    .filter(([key]) => !fixedCategoryKeys.has(key))
     .map(([key, amount]) => ({
       key,
       color: '#6b7280',
@@ -2913,7 +2931,46 @@ function getCategoryLabel(category, t) {
 
 function getCategoryIcon(category) {
   const key = normalizeCategoryKey(category);
-  return categoryOptions.find((option) => option.key === key)?.icon || '•';
+  return categoryOptions.find((option) => option.key === key)?.icon || '🏷️';
+}
+
+async function sendFeedbackMessage({ message, language, currency }) {
+  if (!FEEDBACK_ENDPOINT) {
+    const error = new Error('Feedback endpoint is not configured.');
+    error.code = 'FEEDBACK_NOT_CONFIGURED';
+    throw error;
+  }
+
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), 15000);
+
+  try {
+    const response = await fetch(FEEDBACK_ENDPOINT, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        ...(RECEIPT_ANALYSIS_CLIENT_TOKEN ? { 'X-Client-Token': RECEIPT_ANALYSIS_CLIENT_TOKEN } : {}),
+      },
+      signal: controller.signal,
+      body: JSON.stringify({
+        message,
+        language,
+        currency,
+        app: 'Reciro',
+        sentAt: new Date().toISOString(),
+      }),
+    });
+
+    if (!response.ok) {
+      const error = new Error(`Feedback failed: ${response.status}`);
+      error.code = 'FEEDBACK_SEND_FAILED';
+      throw error;
+    }
+
+    return response.json();
+  } finally {
+    clearTimeout(timeoutId);
+  }
 }
 
 const appSpaces = [
@@ -7259,14 +7316,28 @@ function SettingsScreen({
       return;
     }
 
-    const subject = encodeURIComponent('Reciro feedback');
-    const body = encodeURIComponent(`${message}\n\n---\nLanguage: ${selectedLanguage}\nCurrency: ${selectedCurrency}`);
-    const mailUrl = `mailto:${FEEDBACK_EMAIL}?subject=${subject}&body=${body}`;
-
     try {
-      await Linking.openURL(mailUrl);
+      await sendFeedbackMessage({
+        message,
+        language: selectedLanguage,
+        currency: selectedCurrency,
+      });
+      setFeedbackText('');
+      Alert.alert(
+        t.feedbackSentTitle || translations.en.feedbackSentTitle,
+        t.feedbackSentText || translations.en.feedbackSentText
+      );
     } catch (error) {
-      Alert.alert(t.feedbackMailTitle, t.feedbackMailText);
+      console.warn('Feedback could not be sent from the app.', error);
+      const subject = encodeURIComponent('Reciro feedback');
+      const body = encodeURIComponent(`${message}\n\n---\nLanguage: ${selectedLanguage}\nCurrency: ${selectedCurrency}`);
+      const mailUrl = `mailto:${FEEDBACK_EMAIL}?subject=${subject}&body=${body}`;
+
+      try {
+        await Linking.openURL(mailUrl);
+      } catch (mailError) {
+        Alert.alert(t.feedbackMailTitle, t.feedbackMailText);
+      }
     }
   }
 
