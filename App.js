@@ -39,6 +39,7 @@ const RECURRING_EXPENSES_STORAGE_KEY = 'reciro.recurringExpenses.v1';
 const ACTIVE_SPACE_STORAGE_KEY = 'reciro.activeSpace.v1';
 const OTHER_CATEGORY_LABEL_STORAGE_KEY = 'reciro.otherCategoryLabel.v1';
 const RECEIPT_SETTINGS_STORAGE_KEY = 'reciro.receiptSettings.v1';
+const REWARDED_ANALYSIS_CREDITS_STORAGE_KEY = 'reciro.rewardedAnalysisCredits.v1';
 const RECEIPT_IMAGE_DIR = `${FileSystem.documentDirectory}receipts/`;
 const RECEIPT_FILE_DIR = `${FileSystem.documentDirectory}receipt-files/`;
 const BACKUP_DIR = `${FileSystem.documentDirectory}backups/`;
@@ -60,7 +61,8 @@ const ANALYSIS_REQUEST_TIMEOUT_MS = 35000;
 const EXCHANGE_RATE_ENDPOINT = 'https://api.frankfurter.dev/v2/rates';
 const FREE_MONTHLY_ANALYSIS_LIMIT = 5;
 const ENABLE_START_ACCOUNT_GATE = false;
-const ENABLE_PREMIUM_PAYWALL = false;
+const ENABLE_PREMIUM_PAYWALL = true;
+const ENABLE_REWARDED_ADS = false;
 const IMAGE_PICKER_MEDIA_TYPES = ['images'];
 const FEEDBACK_EMAIL = 'denizcanpolat2307@gmail.com';
 const DEFAULT_SPACE_KEY = 'personal';
@@ -167,7 +169,12 @@ const translations = {
     addReceipt: 'Fiş ekle',
     freeUsageText: (used, limit) => `Bu ay ${used}/${limit} ücretsiz fiş analizi kullandın.`,
     freeLimitTitle: 'Ücretsiz limit doldu',
-    freeLimitText: (limit) => `Bu ay ${limit} ücretsiz fiş analizi hakkını kullandın. Sınırsız analiz için Premium gerekli olacak.`,
+    freeLimitText: (limit) => `Bu ay ${limit} ücretsiz fiş analizi hakkını kullandın. 1 ekstra analiz için reklam izleyebilir veya sınırsız analiz için Premium’a geçebilirsin.`,
+    watchAdForScan: 'Reklam izle +1 hak',
+    rewardedAdSetupTitle: 'Reklam sistemi hazırlanıyor',
+    rewardedAdSetupText: 'Gerçek ödüllü reklam için AdMob App Store sürümünde bağlanacak. Şimdilik test için 1 analiz hakkı eklendi.',
+    rewardedCreditTitle: '1 analiz hakkı eklendi',
+    rewardedCreditText: 'Şimdi fişini tekrar analiz edebilirsin.',
     receiptHelp: 'Kamerayla çek, analiz et, kontrol edip harcamalara ekle.',
     noReceiptPhoto: 'Fiş fotoğrafı yok',
     choosePhotoHelp: 'Kamerayla çek veya galeriden seç.',
@@ -256,14 +263,14 @@ const translations = {
     premiumInfo: 'Sınırsız AI fiş analizi ve gelişmiş raporlar.',
     premiumTitle: 'Reciro Premium',
     premiumSubtitle: 'Sınırsız fiş analizi, ürün raporları ve reklamsız kullanım.',
-    premiumMonthly: 'Aylık: €2,99',
-    premiumYearly: 'Yıllık: €24,99',
+    premiumMonthly: 'Aylık: €1,99',
+    premiumYearly: 'Yıllık: €21,49 (%10 indirim)',
     premiumBenefits: [
       'Sınırsız AI fiş analizi',
-      'Market ve mağaza raporları',
-      'Ürün bazlı aylık analiz',
-      'PDF / Excel dışa aktarma yakında',
-      'Bulut yedekleme yakında',
+      'PDF ve fotoğraf fiş analizi',
+      'Ürün, kategori, market ve mağaza raporları',
+      'Aylık ve tüm zamanlar raporları',
+      'Reklamsız kullanım',
     ],
     startPremium: 'Premium’a Geç',
     premiumSetupTitle: 'Premium yakında',
@@ -413,7 +420,12 @@ const translations = {
     addReceipt: 'Add receipt',
     freeUsageText: (used, limit) => `You used ${used}/${limit} free receipt scans this month.`,
     freeLimitTitle: 'Free limit reached',
-    freeLimitText: (limit) => `You used your ${limit} free receipt scans this month. Unlimited scanning will require Premium.`,
+    freeLimitText: (limit) => `You used your ${limit} free receipt scans this month. Watch an ad for 1 extra scan or go Premium for unlimited scans.`,
+    watchAdForScan: 'Watch ad +1 scan',
+    rewardedAdSetupTitle: 'Ads are being prepared',
+    rewardedAdSetupText: 'Real rewarded ads will be connected with AdMob in the App Store build. For now, 1 test scan was added.',
+    rewardedCreditTitle: '1 scan added',
+    rewardedCreditText: 'You can analyze your receipt again now.',
     receiptHelp: 'Take a photo, analyze it, review it, and add it to spending.',
     noReceiptPhoto: 'No receipt photo',
     choosePhotoHelp: 'Take a photo or choose from gallery.',
@@ -502,14 +514,14 @@ const translations = {
     premiumInfo: 'Unlimited AI receipt scans and advanced reports.',
     premiumTitle: 'Reciro Premium',
     premiumSubtitle: 'Unlimited receipt scans, product reports, and ad-free use.',
-    premiumMonthly: 'Monthly: €2.99',
-    premiumYearly: 'Yearly: €24.99',
+    premiumMonthly: 'Monthly: €1.99',
+    premiumYearly: 'Yearly: €21.49 (10% off)',
     premiumBenefits: [
       'Unlimited AI receipt scans',
-      'Store and merchant reports',
-      'Monthly product analysis',
-      'PDF / Excel export soon',
-      'Cloud backup soon',
+      'PDF and photo receipt analysis',
+      'Product, category, store, and merchant reports',
+      'Monthly and all-time reports',
+      'Ad-free use',
     ],
     startPremium: 'Go Premium',
     premiumSetupTitle: 'Premium coming soon',
@@ -659,7 +671,12 @@ const translations = {
     addReceipt: 'Ajouter un ticket',
     freeUsageText: (used, limit) => `${used}/${limit} analyses gratuites utilisees ce mois-ci.`,
     freeLimitTitle: 'Limite gratuite atteinte',
-    freeLimitText: (limit) => `Vous avez utilise vos ${limit} analyses gratuites ce mois-ci. Les analyses illimitees demanderont Premium.`,
+    freeLimitText: (limit) => `Vous avez utilise vos ${limit} analyses gratuites ce mois-ci. Regardez une publicite pour 1 analyse en plus ou passez Premium.`,
+    watchAdForScan: 'Voir une pub +1 analyse',
+    rewardedAdSetupTitle: 'Publicites en preparation',
+    rewardedAdSetupText: 'Les vraies publicites recompensees seront connectees avec AdMob dans la version App Store. Pour le test, 1 analyse a ete ajoutee.',
+    rewardedCreditTitle: '1 analyse ajoutee',
+    rewardedCreditText: 'Vous pouvez analyser votre ticket maintenant.',
     receiptHelp: 'Prenez une photo, analysez, verifiez et ajoutez aux depenses.',
     noReceiptPhoto: 'Aucune photo de ticket',
     choosePhotoHelp: 'Prenez une photo ou choisissez depuis la galerie.',
@@ -748,8 +765,8 @@ const translations = {
     premiumInfo: 'Analyses AI illimitees et rapports avances.',
     premiumTitle: 'Reciro Premium',
     premiumSubtitle: 'Analyses illimitees, rapports produits et sans publicite.',
-    premiumMonthly: 'Mensuel: €2,99',
-    premiumYearly: 'Annuel: €24,99',
+    premiumMonthly: 'Mensuel: €1,99',
+    premiumYearly: 'Annuel: €21,49 (-10%)',
     premiumBenefits: [
       'Analyses AI illimitees',
       'Rapports par magasin',
@@ -905,7 +922,12 @@ const translations = {
     addReceipt: 'Beleg hinzufuegen',
     freeUsageText: (used, limit) => `${used}/${limit} kostenlose Beleganalysen diesen Monat genutzt.`,
     freeLimitTitle: 'Kostenloses Limit erreicht',
-    freeLimitText: (limit) => `Du hast deine ${limit} kostenlosen Beleganalysen diesen Monat genutzt. Unbegrenzte Analysen brauchen Premium.`,
+    freeLimitText: (limit) => `Du hast deine ${limit} kostenlosen Beleganalysen diesen Monat genutzt. Sieh eine Anzeige fuer 1 weitere Analyse oder aktiviere Premium.`,
+    watchAdForScan: 'Anzeige ansehen +1 Scan',
+    rewardedAdSetupTitle: 'Anzeigen werden vorbereitet',
+    rewardedAdSetupText: 'Echte Rewarded Ads werden im App-Store-Build mit AdMob verbunden. Zum Testen wurde 1 Analyse hinzugefuegt.',
+    rewardedCreditTitle: '1 Analyse hinzugefuegt',
+    rewardedCreditText: 'Du kannst deinen Beleg jetzt erneut analysieren.',
     receiptHelp: 'Foto aufnehmen, analysieren, pruefen und speichern.',
     noReceiptPhoto: 'Kein Belegfoto',
     choosePhotoHelp: 'Foto aufnehmen oder aus Galerie waehlen.',
@@ -994,8 +1016,8 @@ const translations = {
     premiumInfo: 'Unbegrenzte AI-Beleganalysen und erweiterte Berichte.',
     premiumTitle: 'Reciro Premium',
     premiumSubtitle: 'Unbegrenzte Beleganalysen, Produktberichte und werbefrei.',
-    premiumMonthly: 'Monatlich: €2,99',
-    premiumYearly: 'Jaehrlich: €24,99',
+    premiumMonthly: 'Monatlich: €1,99',
+    premiumYearly: 'Jaehrlich: €21,49 (10% Rabatt)',
     premiumBenefits: [
       'Unbegrenzte AI-Beleganalysen',
       'Berichte nach Geschaeft',
@@ -1151,7 +1173,12 @@ const translations = {
     addReceipt: 'Anadir ticket',
     freeUsageText: (used, limit) => `Has usado ${used}/${limit} analisis gratis este mes.`,
     freeLimitTitle: 'Limite gratis alcanzado',
-    freeLimitText: (limit) => `Has usado tus ${limit} analisis gratis este mes. El analisis ilimitado requerira Premium.`,
+    freeLimitText: (limit) => `Has usado tus ${limit} analisis gratis este mes. Mira un anuncio para 1 analisis extra o pasa a Premium.`,
+    watchAdForScan: 'Ver anuncio +1 analisis',
+    rewardedAdSetupTitle: 'Anuncios en preparacion',
+    rewardedAdSetupText: 'Los anuncios recompensados reales se conectaran con AdMob en la version de App Store. Por ahora se anadio 1 analisis de prueba.',
+    rewardedCreditTitle: '1 analisis anadido',
+    rewardedCreditText: 'Ya puedes analizar tu ticket otra vez.',
     receiptHelp: 'Haz una foto, analiza, revisa y anade al gasto.',
     noReceiptPhoto: 'Sin foto de ticket',
     choosePhotoHelp: 'Haz una foto o elige desde la galeria.',
@@ -1240,8 +1267,8 @@ const translations = {
     premiumInfo: 'Analisis AI ilimitado y reportes avanzados.',
     premiumTitle: 'Reciro Premium',
     premiumSubtitle: 'Tickets ilimitados, reportes de productos y sin anuncios.',
-    premiumMonthly: 'Mensual: €2,99',
-    premiumYearly: 'Anual: €24,99',
+    premiumMonthly: 'Mensual: €1,99',
+    premiumYearly: 'Anual: €21,49 (10% desc.)',
     premiumBenefits: [
       'Analisis AI ilimitado',
       'Reportes por tienda',
@@ -2272,8 +2299,8 @@ Object.assign(translations.it, {
   sendFeedback: "Invia feedback",
   premiumTitle: "Reciro Premium",
   premiumSubtitle: "Scansioni illimitate, report prodotti e uso senza pubblicita.",
-  premiumMonthly: "Mensile: €2.99",
-  premiumYearly: "Annuale: €24.99",
+  premiumMonthly: "Mensile: €1.99",
+  premiumYearly: "Annuale: €21.49 (10% sconto)",
   premiumBenefits: ["Scansioni illimitate AI degli scontrini", "Report negozi e commercianti", "Analisi prodotti mensile", "Esportazione PDF / Excel presto", "Backup cloud presto"],
   startPremium: "Attiva Premium",
   premiumSetupTitle: "Premium in arrivo",
@@ -2306,7 +2333,12 @@ Object.assign(translations.it, {
   cameraCapture: "Scatta",
   freeUsageText: (used, limit) => `Hai usato ${used}/${limit} scansioni gratuite questo mese.`,
   backupReadyText: fileName => `Backup creato: ${fileName}`,
-  freeLimitText: limit => `Hai usato le ${limit} scansioni gratuite di questo mese. Per scansioni illimitate servira Premium.`,
+  freeLimitText: limit => `Hai usato le ${limit} scansioni gratuite di questo mese. Guarda una pubblicita per 1 scansione extra o passa a Premium.`,
+  watchAdForScan: "Guarda pubblicita +1",
+  rewardedAdSetupTitle: "Pubblicita in preparazione",
+  rewardedAdSetupText: "Le vere pubblicita con ricompensa saranno collegate con AdMob nella versione App Store. Per ora e stata aggiunta 1 scansione di test.",
+  rewardedCreditTitle: "1 scansione aggiunta",
+  rewardedCreditText: "Ora puoi analizzare di nuovo lo scontrino.",
   topCategorySentence: (category, amount) => `La spesa maggiore e in ${category}: ${amount}.`,
   merchantReceiptsTitle: store => `Scontrini di ${store}`,
   searchResultCount: count => `${count} scontrini trovati`,
@@ -2467,8 +2499,8 @@ Object.assign(translations.pt, {
   sendFeedback: "Enviar feedback",
   premiumTitle: "Reciro Premium",
   premiumSubtitle: "Digitalizações ilimitadas de recibos, relatórios de produtos e uso sem anúncios.",
-  premiumMonthly: "Mensal: €2.99",
-  premiumYearly: "Anual: €24.99",
+  premiumMonthly: "Mensal: €1.99",
+  premiumYearly: "Anual: €21.49 (10% desc.)",
   premiumBenefits: ["Digitalizações ilimitadas de recibos com IA", "Relatórios de lojas e comerciantes", "Análise mensal de produtos", "Exportação PDF / Excel em breve", "Cópia de segurança na nuvem em breve"],
   startPremium: "Tornar-se Premium",
   premiumSetupTitle: "Premium em breve",
@@ -2501,7 +2533,12 @@ Object.assign(translations.pt, {
   cameraCapture: "Capturar",
   freeUsageText: (used, limit) => `Usou ${used}/${limit} analises gratuitas este mes.`,
   backupReadyText: fileName => `Backup criado: ${fileName}`,
-  freeLimitText: limit => `Usou as ${limit} analises gratuitas deste mes. A analise ilimitada vai exigir Premium.`,
+  freeLimitText: limit => `Usou as ${limit} analises gratuitas deste mes. Veja um anuncio para 1 analise extra ou passe para Premium.`,
+  watchAdForScan: "Ver anuncio +1",
+  rewardedAdSetupTitle: "Anuncios em preparacao",
+  rewardedAdSetupText: "Os anuncios recompensados reais serao ligados com AdMob na versao da App Store. Por agora foi adicionada 1 analise de teste.",
+  rewardedCreditTitle: "1 analise adicionada",
+  rewardedCreditText: "Agora pode analisar o recibo novamente.",
   topCategorySentence: (category, amount) => `A maior despesa esta em ${category}: ${amount}.`,
   merchantReceiptsTitle: store => `Recibos de ${store}`,
   searchResultCount: count => `${count} recibos encontrados`,
@@ -2662,8 +2699,8 @@ Object.assign(translations.nl, {
   sendFeedback: "Feedback verzenden",
   premiumTitle: "Reciro Premium",
   premiumSubtitle: "Onbeperkt bonnen scannen, productrapporten en reclamevrij gebruik.",
-  premiumMonthly: "Maandelijks: €2.99",
-  premiumYearly: "Jaarlijks: €24.99",
+  premiumMonthly: "Maandelijks: €1.99",
+  premiumYearly: "Jaarlijks: €21.49 (10% korting)",
   premiumBenefits: ["Onbeperkt AI bonnen scannen", "Winkel- en verkopersrapporten", "Maandelijkse productanalyse", "PDF / Excel export binnenkort", "Cloud backup binnenkort"],
   startPremium: "Word Premium",
   premiumSetupTitle: "Premium komt binnenkort",
@@ -2696,7 +2733,12 @@ Object.assign(translations.nl, {
   cameraCapture: "Opnemen",
   freeUsageText: (used, limit) => `Je hebt deze maand ${used}/${limit} gratis bonscans gebruikt.`,
   backupReadyText: fileName => `Backup gemaakt: ${fileName}`,
-  freeLimitText: limit => `Je hebt je ${limit} gratis bonscans deze maand gebruikt. Onbeperkt scannen vereist Premium.`,
+  freeLimitText: limit => `Je hebt je ${limit} gratis bonscans deze maand gebruikt. Bekijk een advertentie voor 1 extra scan of kies Premium.`,
+  watchAdForScan: "Advertentie bekijken +1",
+  rewardedAdSetupTitle: "Advertenties worden voorbereid",
+  rewardedAdSetupText: "Echte beloningsadvertenties worden in de App Store-build met AdMob verbonden. Voor nu is 1 testscan toegevoegd.",
+  rewardedCreditTitle: "1 scan toegevoegd",
+  rewardedCreditText: "Je kunt je bon nu opnieuw analyseren.",
   topCategorySentence: (category, amount) => `De meeste uitgaven zijn in ${category}: ${amount}.`,
   merchantReceiptsTitle: store => `Bonnen van ${store}`,
   searchResultCount: count => `${count} bonnen gevonden`,
@@ -4438,6 +4480,7 @@ export default function App() {
   const [selectedCurrency, setSelectedCurrency] = useState(getDeviceCurrency);
   const [authChoice, setAuthChoice] = useState(null);
   const [analysisUsageByMonth, setAnalysisUsageByMonth] = useState({});
+  const [rewardedAnalysisCreditsByMonth, setRewardedAnalysisCreditsByMonth] = useState({});
   const [categoryMemory, setCategoryMemory] = useState({});
   const [budgetsByCategory, setBudgetsByCategory] = useState({});
   const [recurringExpenses, setRecurringExpenses] = useState([]);
@@ -4466,6 +4509,7 @@ export default function App() {
           savedCurrency,
           savedAuthChoice,
           savedAnalysisUsage,
+          savedRewardedAnalysisCredits,
           savedCategoryMemory,
           savedBudgets,
           savedRecurringExpenses,
@@ -4479,6 +4523,7 @@ export default function App() {
           AsyncStorage.getItem(CURRENCY_STORAGE_KEY),
           AsyncStorage.getItem(AUTH_CHOICE_STORAGE_KEY),
           AsyncStorage.getItem(ANALYSIS_USAGE_STORAGE_KEY),
+          AsyncStorage.getItem(REWARDED_ANALYSIS_CREDITS_STORAGE_KEY),
           AsyncStorage.getItem(CATEGORY_MEMORY_STORAGE_KEY),
           AsyncStorage.getItem(BUDGETS_STORAGE_KEY),
           AsyncStorage.getItem(RECURRING_EXPENSES_STORAGE_KEY),
@@ -4521,6 +4566,15 @@ export default function App() {
         const parsedAnalysisUsage = safeParseStoredJson(savedAnalysisUsage, null);
         if (parsedAnalysisUsage && typeof parsedAnalysisUsage === 'object' && !Array.isArray(parsedAnalysisUsage)) {
           setAnalysisUsageByMonth(parsedAnalysisUsage);
+        }
+
+        const parsedRewardedAnalysisCredits = safeParseStoredJson(savedRewardedAnalysisCredits, null);
+        if (
+          parsedRewardedAnalysisCredits &&
+          typeof parsedRewardedAnalysisCredits === 'object' &&
+          !Array.isArray(parsedRewardedAnalysisCredits)
+        ) {
+          setRewardedAnalysisCreditsByMonth(parsedRewardedAnalysisCredits);
         }
 
         const parsedCategoryMemory = safeParseStoredJson(savedCategoryMemory, null);
@@ -4680,6 +4734,16 @@ export default function App() {
       return;
     }
 
+    AsyncStorage.setItem(REWARDED_ANALYSIS_CREDITS_STORAGE_KEY, JSON.stringify(rewardedAnalysisCreditsByMonth)).catch(() => {
+      console.warn('Rewarded analysis credits could not be saved.');
+    });
+  }, [rewardedAnalysisCreditsByMonth, storageReady]);
+
+  useEffect(() => {
+    if (!storageReady) {
+      return;
+    }
+
     AsyncStorage.setItem(BUDGETS_STORAGE_KEY, JSON.stringify(budgetsByCategory)).catch(() => {
       console.warn('Budgets could not be saved.');
     });
@@ -4793,11 +4857,13 @@ export default function App() {
   activeCurrency = selectedCurrency;
   const currentAnalysisMonthKey = getMonthKey();
   const monthlyAnalysisUsage = Number(analysisUsageByMonth[currentAnalysisMonthKey]) || 0;
+  const monthlyRewardedCredits = Number(rewardedAnalysisCreditsByMonth[currentAnalysisMonthKey]) || 0;
+  const monthlyAnalysisAllowance = FREE_MONTHLY_ANALYSIS_LIMIT + Math.max(0, monthlyRewardedCredits);
   const isPremium = !ENABLE_PREMIUM_PAYWALL;
-  const canUseReceiptAnalysis = isPremium || monthlyAnalysisUsage < FREE_MONTHLY_ANALYSIS_LIMIT;
+  const canUseReceiptAnalysis = isPremium || monthlyAnalysisUsage < monthlyAnalysisAllowance;
   const freeUsageText = t.freeUsageText(
-    Math.min(monthlyAnalysisUsage, FREE_MONTHLY_ANALYSIS_LIMIT),
-    FREE_MONTHLY_ANALYSIS_LIMIT
+    Math.min(monthlyAnalysisUsage, monthlyAnalysisAllowance),
+    monthlyAnalysisAllowance
   );
   const reportVisibleReceipts = useMemo(
     () => [
@@ -5446,6 +5512,10 @@ export default function App() {
     Alert.alert(t.freeLimitTitle, t.freeLimitText(FREE_MONTHLY_ANALYSIS_LIMIT), [
       { text: t.cancel, style: 'cancel' },
       {
+        text: t.watchAdForScan,
+        onPress: watchRewardedAdForScan,
+      },
+      {
         text: t.viewPremium,
         onPress: () => {
           setPhotoOptionsOpen(false);
@@ -5454,6 +5524,31 @@ export default function App() {
         },
       },
     ]);
+  }
+
+  function addRewardedAnalysisCredit() {
+    const monthKey = getMonthKey();
+    setRewardedAnalysisCreditsByMonth((currentCredits) => ({
+      ...currentCredits,
+      [monthKey]: (Number(currentCredits[monthKey]) || 0) + 1,
+    }));
+    Alert.alert(t.rewardedCreditTitle, t.rewardedCreditText);
+  }
+
+  function watchRewardedAdForScan() {
+    setPhotoOptionsOpen(false);
+
+    if (!ENABLE_REWARDED_ADS) {
+      Alert.alert(t.rewardedAdSetupTitle, t.rewardedAdSetupText, [
+        {
+          text: 'OK',
+          onPress: addRewardedAnalysisCredit,
+        },
+      ]);
+      return;
+    }
+
+    addRewardedAnalysisCredit();
   }
 
   function incrementAnalysisUsage() {
