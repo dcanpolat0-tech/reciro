@@ -2184,7 +2184,12 @@ function buildMonthlyReceiptGroups(receipts, recurringExpenses, spaceKey, curren
 }
 
 function getReceiptProductMonthOptions(receipts) {
-  const monthKeys = new Set([getMonthKey()]);
+  const now = new Date();
+  const monthKeys = new Set();
+
+  for (let monthIndex = 0; monthIndex <= now.getMonth(); monthIndex += 1) {
+    monthKeys.add(getMonthKey(new Date(now.getFullYear(), monthIndex, 1)));
+  }
 
   receipts.forEach((receipt) => {
     const receiptDate = getDateFromReceipt(receipt);
