@@ -62,7 +62,10 @@ const EXCHANGE_RATE_ENDPOINT = 'https://api.frankfurter.dev/v2/rates';
 const FREE_MONTHLY_ANALYSIS_LIMIT = 5;
 const ENABLE_START_ACCOUNT_GATE = false;
 const ENABLE_PREMIUM_PAYWALL = true;
-const ENABLE_REWARDED_ADS = false;
+const ENABLE_REWARDED_ADS = true;
+const ADMOB_ANDROID_REWARDED_AD_UNIT_ID = 'ca-app-pub-8547815405822008/8421426783';
+const ADMOB_IOS_REWARDED_AD_UNIT_ID = 'ca-app-pub-8547815405822008/1911858751';
+const REWARDED_AD_LOAD_TIMEOUT_MS = 20000;
 const IMAGE_PICKER_MEDIA_TYPES = ['images'];
 const FEEDBACK_EMAIL = 'denizcanpolat2307@gmail.com';
 const DEFAULT_SPACE_KEY = 'personal';
@@ -74,6 +77,7 @@ const DEFAULT_RECEIPT_SETTINGS = {
 };
 
 let activeCurrency = 'TRY';
+let mobileAdsInitializePromise = null;
 
 const languages = [
   { code: 'tr', name: 'Türkçe' },
@@ -171,8 +175,8 @@ const translations = {
     freeLimitTitle: 'Ücretsiz limit doldu',
     freeLimitText: (limit) => `Bu ay ${limit} ücretsiz fiş analizi hakkını kullandın. 1 ekstra analiz için reklam izleyebilir veya sınırsız analiz için Premium’a geçebilirsin.`,
     watchAdForScan: 'Reklam izle +1 hak',
-    rewardedAdSetupTitle: 'Reklam sistemi hazırlanıyor',
-    rewardedAdSetupText: 'Gerçek ödüllü reklam için AdMob App Store sürümünde bağlanacak. Şimdilik test için 1 analiz hakkı eklendi.',
+    rewardedAdSetupTitle: 'Reklam şu an açılamadı',
+    rewardedAdSetupText: 'Gerçek ödüllü reklam Expo Go içinde çalışmaz. Dev build veya yayın sürümünde reklam izleyince 1 analiz hakkı eklenir.',
     rewardedCreditTitle: '1 analiz hakkı eklendi',
     rewardedCreditText: 'Şimdi fişini tekrar analiz edebilirsin.',
     receiptHelp: 'Kamerayla çek, analiz et, kontrol edip harcamalara ekle.',
@@ -422,8 +426,8 @@ const translations = {
     freeLimitTitle: 'Free limit reached',
     freeLimitText: (limit) => `You used your ${limit} free receipt scans this month. Watch an ad for 1 extra scan or go Premium for unlimited scans.`,
     watchAdForScan: 'Watch ad +1 scan',
-    rewardedAdSetupTitle: 'Ads are being prepared',
-    rewardedAdSetupText: 'Real rewarded ads will be connected with AdMob in the App Store build. For now, 1 test scan was added.',
+    rewardedAdSetupTitle: 'Ad could not open',
+    rewardedAdSetupText: 'Real rewarded ads do not run inside Expo Go. In a dev build or store build, watching an ad adds 1 scan.',
     rewardedCreditTitle: '1 scan added',
     rewardedCreditText: 'You can analyze your receipt again now.',
     receiptHelp: 'Take a photo, analyze it, review it, and add it to spending.',
@@ -673,8 +677,8 @@ const translations = {
     freeLimitTitle: 'Limite gratuite atteinte',
     freeLimitText: (limit) => `Vous avez utilise vos ${limit} analyses gratuites ce mois-ci. Regardez une publicite pour 1 analyse en plus ou passez Premium.`,
     watchAdForScan: 'Voir une pub +1 analyse',
-    rewardedAdSetupTitle: 'Publicites en preparation',
-    rewardedAdSetupText: 'Les vraies publicites recompensees seront connectees avec AdMob dans la version App Store. Pour le test, 1 analyse a ete ajoutee.',
+    rewardedAdSetupTitle: 'Publicite indisponible',
+    rewardedAdSetupText: 'Les publicites recompensees ne fonctionnent pas dans Expo Go. Dans un dev build ou la version store, une publicite ajoute 1 analyse.',
     rewardedCreditTitle: '1 analyse ajoutee',
     rewardedCreditText: 'Vous pouvez analyser votre ticket maintenant.',
     receiptHelp: 'Prenez une photo, analysez, verifiez et ajoutez aux depenses.',
@@ -924,8 +928,8 @@ const translations = {
     freeLimitTitle: 'Kostenloses Limit erreicht',
     freeLimitText: (limit) => `Du hast deine ${limit} kostenlosen Beleganalysen diesen Monat genutzt. Sieh eine Anzeige fuer 1 weitere Analyse oder aktiviere Premium.`,
     watchAdForScan: 'Anzeige ansehen +1 Scan',
-    rewardedAdSetupTitle: 'Anzeigen werden vorbereitet',
-    rewardedAdSetupText: 'Echte Rewarded Ads werden im App-Store-Build mit AdMob verbunden. Zum Testen wurde 1 Analyse hinzugefuegt.',
+    rewardedAdSetupTitle: 'Anzeige konnte nicht geoeffnet werden',
+    rewardedAdSetupText: 'Rewarded Ads laufen nicht in Expo Go. In einem Dev Build oder Store Build fuegt eine angesehene Anzeige 1 Analyse hinzu.',
     rewardedCreditTitle: '1 Analyse hinzugefuegt',
     rewardedCreditText: 'Du kannst deinen Beleg jetzt erneut analysieren.',
     receiptHelp: 'Foto aufnehmen, analysieren, pruefen und speichern.',
@@ -1175,8 +1179,8 @@ const translations = {
     freeLimitTitle: 'Limite gratis alcanzado',
     freeLimitText: (limit) => `Has usado tus ${limit} analisis gratis este mes. Mira un anuncio para 1 analisis extra o pasa a Premium.`,
     watchAdForScan: 'Ver anuncio +1 analisis',
-    rewardedAdSetupTitle: 'Anuncios en preparacion',
-    rewardedAdSetupText: 'Los anuncios recompensados reales se conectaran con AdMob en la version de App Store. Por ahora se anadio 1 analisis de prueba.',
+    rewardedAdSetupTitle: 'No se pudo abrir el anuncio',
+    rewardedAdSetupText: 'Los anuncios recompensados no funcionan en Expo Go. En un dev build o version de tienda, ver un anuncio anade 1 analisis.',
     rewardedCreditTitle: '1 analisis anadido',
     rewardedCreditText: 'Ya puedes analizar tu ticket otra vez.',
     receiptHelp: 'Haz una foto, analiza, revisa y anade al gasto.',
@@ -2335,8 +2339,8 @@ Object.assign(translations.it, {
   backupReadyText: fileName => `Backup creato: ${fileName}`,
   freeLimitText: limit => `Hai usato le ${limit} scansioni gratuite di questo mese. Guarda una pubblicita per 1 scansione extra o passa a Premium.`,
   watchAdForScan: "Guarda pubblicita +1",
-  rewardedAdSetupTitle: "Pubblicita in preparazione",
-  rewardedAdSetupText: "Le vere pubblicita con ricompensa saranno collegate con AdMob nella versione App Store. Per ora e stata aggiunta 1 scansione di test.",
+  rewardedAdSetupTitle: "Pubblicita non disponibile",
+  rewardedAdSetupText: "Le pubblicita con ricompensa non funzionano in Expo Go. In un dev build o nella versione store, guardare una pubblicita aggiunge 1 scansione.",
   rewardedCreditTitle: "1 scansione aggiunta",
   rewardedCreditText: "Ora puoi analizzare di nuovo lo scontrino.",
   topCategorySentence: (category, amount) => `La spesa maggiore e in ${category}: ${amount}.`,
@@ -2535,8 +2539,8 @@ Object.assign(translations.pt, {
   backupReadyText: fileName => `Backup criado: ${fileName}`,
   freeLimitText: limit => `Usou as ${limit} analises gratuitas deste mes. Veja um anuncio para 1 analise extra ou passe para Premium.`,
   watchAdForScan: "Ver anuncio +1",
-  rewardedAdSetupTitle: "Anuncios em preparacao",
-  rewardedAdSetupText: "Os anuncios recompensados reais serao ligados com AdMob na versao da App Store. Por agora foi adicionada 1 analise de teste.",
+  rewardedAdSetupTitle: "Anuncio indisponivel",
+  rewardedAdSetupText: "Os anuncios recompensados nao funcionam no Expo Go. Num dev build ou versao da loja, ver um anuncio adiciona 1 analise.",
   rewardedCreditTitle: "1 analise adicionada",
   rewardedCreditText: "Agora pode analisar o recibo novamente.",
   topCategorySentence: (category, amount) => `A maior despesa esta em ${category}: ${amount}.`,
@@ -2735,8 +2739,8 @@ Object.assign(translations.nl, {
   backupReadyText: fileName => `Backup gemaakt: ${fileName}`,
   freeLimitText: limit => `Je hebt je ${limit} gratis bonscans deze maand gebruikt. Bekijk een advertentie voor 1 extra scan of kies Premium.`,
   watchAdForScan: "Advertentie bekijken +1",
-  rewardedAdSetupTitle: "Advertenties worden voorbereid",
-  rewardedAdSetupText: "Echte beloningsadvertenties worden in de App Store-build met AdMob verbonden. Voor nu is 1 testscan toegevoegd.",
+  rewardedAdSetupTitle: "Advertentie niet beschikbaar",
+  rewardedAdSetupText: "Beloningsadvertenties werken niet in Expo Go. In een dev build of store build voegt een advertentie 1 scan toe.",
   rewardedCreditTitle: "1 scan toegevoegd",
   rewardedCreditText: "Je kunt je bon nu opnieuw analyseren.",
   topCategorySentence: (category, amount) => `De meeste uitgaven zijn in ${category}: ${amount}.`,
@@ -3013,6 +3017,106 @@ async function sendFeedbackMessage({ message, language, currency }) {
   } finally {
     clearTimeout(timeoutId);
   }
+}
+
+function getMobileAdsModule() {
+  try {
+    return require('react-native-google-mobile-ads');
+  } catch (error) {
+    return null;
+  }
+}
+
+async function initializeMobileAds() {
+  const adsModule = getMobileAdsModule();
+  const mobileAds = adsModule?.default;
+
+  if (!mobileAds) {
+    const error = new Error('Google Mobile Ads SDK is not available in this build.');
+    error.code = 'ADS_SDK_NOT_AVAILABLE';
+    throw error;
+  }
+
+  if (!mobileAdsInitializePromise) {
+    mobileAdsInitializePromise = mobileAds().initialize();
+  }
+
+  return mobileAdsInitializePromise;
+}
+
+function getRewardedAdUnitId(adsModule) {
+  if (__DEV__ && adsModule?.TestIds?.REWARDED) {
+    return adsModule.TestIds.REWARDED;
+  }
+
+  return Platform.select({
+    ios: ADMOB_IOS_REWARDED_AD_UNIT_ID,
+    android: ADMOB_ANDROID_REWARDED_AD_UNIT_ID,
+    default: '',
+  });
+}
+
+async function showRewardedScanAd() {
+  await initializeMobileAds();
+
+  const adsModule = getMobileAdsModule();
+  const { AdEventType, RewardedAd, RewardedAdEventType } = adsModule || {};
+  const adUnitId = getRewardedAdUnitId(adsModule);
+
+  if (!RewardedAd || !RewardedAdEventType || !AdEventType || !adUnitId) {
+    const error = new Error('Rewarded ads are not available in this build.');
+    error.code = 'REWARDED_AD_NOT_AVAILABLE';
+    throw error;
+  }
+
+  return new Promise((resolve, reject) => {
+    let earnedReward = false;
+    let finished = false;
+    let timeoutId;
+    const rewardedAd = RewardedAd.createForAdRequest(adUnitId, {
+      requestNonPersonalizedAdsOnly: true,
+    });
+
+    const subscriptions = [
+      rewardedAd.addAdEventListener(RewardedAdEventType.LOADED, () => {
+        rewardedAd.show();
+      }),
+      rewardedAd.addAdEventListener(RewardedAdEventType.EARNED_REWARD, () => {
+        earnedReward = true;
+      }),
+      rewardedAd.addAdEventListener(AdEventType.CLOSED, () => {
+        if (earnedReward) {
+          finish(resolve);
+        } else {
+          const error = new Error('Rewarded ad closed before reward.');
+          error.code = 'REWARDED_AD_NO_REWARD';
+          finish(reject, error);
+        }
+      }),
+      rewardedAd.addAdEventListener(AdEventType.ERROR, (error) => {
+        finish(reject, error);
+      }),
+    ];
+
+    function finish(callback, value) {
+      if (finished) {
+        return;
+      }
+
+      finished = true;
+      clearTimeout(timeoutId);
+      subscriptions.forEach((unsubscribe) => unsubscribe?.());
+      callback(value);
+    }
+
+    timeoutId = setTimeout(() => {
+      const error = new Error('Rewarded ad timed out.');
+      error.code = 'REWARDED_AD_TIMEOUT';
+      finish(reject, error);
+    }, REWARDED_AD_LOAD_TIMEOUT_MS);
+
+    rewardedAd.load();
+  });
 }
 
 const appSpaces = [
@@ -5535,7 +5639,7 @@ export default function App() {
     Alert.alert(t.rewardedCreditTitle, t.rewardedCreditText);
   }
 
-  function watchRewardedAdForScan() {
+  async function watchRewardedAdForScan() {
     setPhotoOptionsOpen(false);
 
     if (!ENABLE_REWARDED_ADS) {
@@ -5548,7 +5652,24 @@ export default function App() {
       return;
     }
 
-    addRewardedAnalysisCredit();
+    try {
+      await showRewardedScanAd();
+      addRewardedAnalysisCredit();
+    } catch (error) {
+      console.warn('Rewarded ad could not be shown.', error);
+
+      if (__DEV__) {
+        Alert.alert(t.rewardedAdSetupTitle, t.rewardedAdSetupText, [
+          {
+            text: 'OK',
+            onPress: addRewardedAnalysisCredit,
+          },
+        ]);
+        return;
+      }
+
+      Alert.alert(t.rewardedAdSetupTitle, t.rewardedAdSetupText);
+    }
   }
 
   function incrementAnalysisUsage() {

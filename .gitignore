@@ -8,6 +8,7 @@ node_modules/
 .expo/*
 dist/
 dist-check/
+dist-check-android/
 web-build/
 expo-env.d.ts
 expo-*.log

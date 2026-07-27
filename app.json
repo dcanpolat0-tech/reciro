@@ -52,6 +52,13 @@
           "microphonePermission": false,
           "recordAudioAndroid": false
         }
+      ],
+      [
+        "react-native-google-mobile-ads",
+        {
+          "androidAppId": "ca-app-pub-8547815405822008~3094032770",
+          "iosAppId": "ca-app-pub-8547815405822008~5448733377"
+        }
       ]
     ]
   }
