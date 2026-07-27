@@ -3603,15 +3603,23 @@ export default function App() {
       (screen === 'home' && photoOptionsOpen) ||
       screen === 'detail');
 
-  useEffect(() => {
-    if (screen !== 'detail') {
-      return;
-    }
+  const scrollResetKey = [
+    screen,
+    settingsSection,
+    reportView,
+    reportPeriod,
+    selectedMerchantKey || '',
+    selectedReportCategoryKey || '',
+    selectedMonthlyReceiptKey || '',
+    selectedReceipt?.id || '',
+    isReceiptComposerActive ? 'receipt-composer' : 'main-content',
+  ].join('|');
 
+  useEffect(() => {
     requestAnimationFrame(() => {
       mainScrollRef.current?.scrollTo({ y: 0, animated: false });
     });
-  }, [screen, selectedReceipt?.id]);
+  }, [scrollResetKey]);
 
   function openReceiptDetail(receipt) {
     const normalizedReceipt = normalizeReceiptCategories(receipt);
