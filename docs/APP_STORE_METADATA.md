@@ -55,15 +55,15 @@ receipt,scanner,expense,budget,spending,money,tracker,AI,shopping,finance,invoic
 
 ## Support URL
 
-https://dcanpolat0-tech.github.io/reciro/
+https://reciro-receipt-analysis.onrender.com/support
 
 ## Privacy Policy URL
 
-https://dcanpolat0-tech.github.io/reciro/privacy.html
+https://reciro-receipt-analysis.onrender.com/privacy
 
 ## Terms Of Use URL
 
-https://dcanpolat0-tech.github.io/reciro/terms.html
+https://reciro-receipt-analysis.onrender.com/terms
 
 ## Subscription Draft
 

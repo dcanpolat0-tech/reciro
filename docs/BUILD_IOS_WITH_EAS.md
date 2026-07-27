@@ -10,9 +10,9 @@ Use this guide after the Apple Developer Program enrollment is approved.
 - App Store Connect access working.
 - App record created for `Reciro`.
 - Bundle ID: `com.dcanpolat.reciro`.
-- Support URL: `https://dcanpolat0-tech.github.io/reciro/`
-- Privacy Policy URL: `https://dcanpolat0-tech.github.io/reciro/privacy.html`
-- Terms of Use URL: `https://dcanpolat0-tech.github.io/reciro/terms.html`
+- Support URL: `https://reciro-receipt-analysis.onrender.com/support`
+- Privacy Policy URL: `https://reciro-receipt-analysis.onrender.com/privacy`
+- Terms of Use URL: `https://reciro-receipt-analysis.onrender.com/terms`
 - EAS/Expo environment variables added for the mobile build.
 
 ## Required EAS Environment Variables

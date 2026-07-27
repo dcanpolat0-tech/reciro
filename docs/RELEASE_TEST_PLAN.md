@@ -77,7 +77,7 @@ Run this test on a real iPhone before each release.
 
 - Open Settings.
 - Tap Feedback.
-- Confirm the email opens to `dcanpolat0@gmail.com`.
+- Confirm feedback is sent to `denizcanpolat2307@gmail.com`.
 - Confirm subject/body are understandable.
 
 ## Backend

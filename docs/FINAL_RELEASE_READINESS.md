@@ -15,9 +15,9 @@ Reciro is technically prepared for the first iPhone release path. The remaining 
 - First release target: iPhone only
 - Android package is reserved as `com.dcanpolat.reciro`.
 - Android microphone permission is not requested because receipt scanning does not need audio.
-- Support URL works: `https://dcanpolat0-tech.github.io/reciro/`
-- Privacy Policy URL works: `https://dcanpolat0-tech.github.io/reciro/privacy.html`
-- Terms of Use URL works: `https://dcanpolat0-tech.github.io/reciro/terms.html`
+- Support URL works: `https://reciro-receipt-analysis.onrender.com/support`
+- Privacy Policy URL works: `https://reciro-receipt-analysis.onrender.com/privacy`
+- Terms of Use URL works: `https://reciro-receipt-analysis.onrender.com/terms`
 - Render backend health check works: `https://reciro-receipt-analysis.onrender.com/health`
 - iOS Expo export completed successfully.
 - No real OpenAI API key is committed to GitHub.

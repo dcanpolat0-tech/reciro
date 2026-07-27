@@ -99,6 +99,31 @@ function sendJson(response, statusCode, payload) {
   response.end(JSON.stringify(payload));
 }
 
+function sendHtmlFile(response, fileName) {
+  const filePath = path.join(__dirname, '..', 'docs', fileName);
+
+  fs.readFile(filePath, 'utf8', (error, html) => {
+    if (error) {
+      sendJson(response, 404, { error: 'NOT_FOUND' });
+      return;
+    }
+
+    response.writeHead(200, {
+      'Content-Type': 'text/html; charset=utf-8',
+      'Cache-Control': 'public, max-age=300',
+    });
+    response.end(html);
+  });
+}
+
+function getRequestPath(request) {
+  try {
+    return new URL(request.url, 'http://localhost').pathname;
+  } catch (error) {
+    return request.url || '/';
+  }
+}
+
 function getClientIp(request) {
   const forwardedFor = request.headers['x-forwarded-for'];
 
@@ -345,22 +370,51 @@ async function sendFeedbackEmail(feedback) {
 }
 
 const server = http.createServer(async (request, response) => {
+  const requestPath = getRequestPath(request);
+
   if (request.method === 'OPTIONS') {
     sendJson(response, 204, {});
     return;
   }
 
-  if (request.method === 'GET' && request.url === '/') {
-    sendJson(response, 200, { ok: true, service: 'reciro-receipt-analysis' });
+  if (request.method === 'GET' && (requestPath === '/' || requestPath === '/support')) {
+    sendHtmlFile(response, 'index.html');
     return;
   }
 
-  if (request.method === 'GET' && request.url === '/health') {
+  if (request.method === 'GET' && (requestPath === '/privacy' || requestPath === '/privacy.html')) {
+    sendHtmlFile(response, 'privacy.html');
+    return;
+  }
+
+  if (request.method === 'GET' && (requestPath === '/terms' || requestPath === '/terms.html')) {
+    sendHtmlFile(response, 'terms.html');
+    return;
+  }
+
+  if (request.method === 'GET' && requestPath === '/styles.css') {
+    const filePath = path.join(__dirname, '..', 'docs', 'styles.css');
+    fs.readFile(filePath, 'utf8', (error, css) => {
+      if (error) {
+        sendJson(response, 404, { error: 'NOT_FOUND' });
+        return;
+      }
+
+      response.writeHead(200, {
+        'Content-Type': 'text/css; charset=utf-8',
+        'Cache-Control': 'public, max-age=300',
+      });
+      response.end(css);
+    });
+    return;
+  }
+
+  if (request.method === 'GET' && requestPath === '/health') {
     sendJson(response, 200, { ok: true });
     return;
   }
 
-  if (request.method === 'POST' && request.url === '/feedback') {
+  if (request.method === 'POST' && requestPath === '/feedback') {
     if (!isClientAuthorized(request)) {
       sendJson(response, 401, { error: 'UNAUTHORIZED' });
       return;
@@ -390,7 +444,7 @@ const server = http.createServer(async (request, response) => {
     return;
   }
 
-  if (request.method !== 'POST' || request.url !== '/analyze-receipt') {
+  if (request.method !== 'POST' || requestPath !== '/analyze-receipt') {
     sendJson(response, 404, { error: 'NOT_FOUND' });
     return;
   }

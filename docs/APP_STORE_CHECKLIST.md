@@ -53,9 +53,9 @@ Use this checklist before sending Reciro to Apple review.
 
 These need public web URLs before App Store submission:
 
-- Privacy Policy: `https://dcanpolat0-tech.github.io/reciro/privacy.html`
-- Terms of Use: `https://dcanpolat0-tech.github.io/reciro/terms.html`
-- Support / Contact page: `https://dcanpolat0-tech.github.io/reciro/`
+- Privacy Policy: `https://reciro-receipt-analysis.onrender.com/privacy`
+- Terms of Use: `https://reciro-receipt-analysis.onrender.com/terms`
+- Support / Contact page: `https://reciro-receipt-analysis.onrender.com/support`
 
 Current local drafts:
 
@@ -72,7 +72,7 @@ Current local drafts:
 - Users can edit AI analysis results before saving.
 - Users can re-analyze a receipt when AI reads it badly.
 - Users can add a custom category from `Other`.
-- Feedback email opens to `dcanpolat0@gmail.com`.
+- Feedback is sent to `denizcanpolat2307@gmail.com`.
 - First release does not show an inactive Apple/Google sign-in gate.
 - No real API keys are committed to GitHub.
 

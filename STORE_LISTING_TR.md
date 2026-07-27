@@ -121,6 +121,11 @@ Reciro kisisel harcama takibi icin sunulur. AI fis analizi hatali sonuc verebili
 ## Destek E-postasi
 denizcanpolat2307@gmail.com
 
+## Yayinda Kullanilacak Linkler
+- Support URL: https://reciro-receipt-analysis.onrender.com/support
+- Privacy Policy URL: https://reciro-receipt-analysis.onrender.com/privacy
+- Terms of Use URL: https://reciro-receipt-analysis.onrender.com/terms
+
 ## Magaza Oncesi Kontrol Listesi
 - Google Play gelistirici hesabi onaylandi
 - App Store Connect hesabi aktif
