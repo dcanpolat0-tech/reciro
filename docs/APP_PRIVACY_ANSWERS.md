@@ -1,8 +1,8 @@
 # Reciro App Privacy Answers
 
-Last updated: July 13, 2026
+Last updated: July 27, 2026
 
-Use this when App Store Connect asks for App Privacy information.
+Use this when App Store Connect asks for App Privacy information. For Google Play, use `GOOGLE_PLAY_SUBMISSION_TR.md`.
 
 This is a practical draft based on the current release. Review it again before final submission.
 
@@ -13,6 +13,7 @@ This is a practical draft based on the current release. Review it again before f
 Examples:
 
 - Receipt photos
+- PDF receipts or documents
 - Receipt item names
 - Store names
 - Receipt totals
@@ -30,11 +31,11 @@ Purpose:
 Linked to user:
 
 - In the current release, receipt data is mainly stored on the device.
-- If AI analysis is used, the receipt image is sent to the Reciro analysis server and processed by AI.
+- If AI analysis is used, the receipt image or PDF is sent to the Reciro analysis server and processed by AI.
 
 Tracking:
 
-- No tracking for third-party advertising is planned.
+- Rewarded ads are planned through Google AdMob. If Apple's tracking permission is required for personalized advertising, it must be reviewed before release.
 
 ### Financial Info
 
@@ -56,7 +57,7 @@ Tracking:
 
 Examples:
 
-- Future paid subscription state after Apple subscriptions are connected
+- Future paid subscription state after App Store / Google Play subscriptions are connected
 
 Purpose:
 
@@ -64,7 +65,7 @@ Purpose:
 
 Handled by:
 
-- Apple App Store purchase system
+- App Store or Google Play purchase system, coordinated later through RevenueCat
 
 ### Identifiers
 
@@ -89,7 +90,7 @@ Tracking:
 - Precise location
 - Browsing history
 - Search history
-- Third-party advertising tracking
+- Third-party advertising tracking beyond the rewarded ad provider setup
 
 ## Notes For Apple Review
 

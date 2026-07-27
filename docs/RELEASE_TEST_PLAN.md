@@ -1,8 +1,8 @@
 # Reciro Release Test Plan
 
-Last updated: July 14, 2026
+Last updated: July 27, 2026
 
-Run this test on a real iPhone before each release.
+Run this test on a real iPhone and a real Android device before each release.
 
 ## Fresh Install
 
@@ -15,8 +15,9 @@ Run this test on a real iPhone before each release.
 ## Language And Currency
 
 - Set phone language to Turkish and open the app.
-- Change app language to English, French, German, and Spanish.
-- Confirm bottom tabs, settings, reports, categories, buttons, and empty states translate.
+- Set phone language to English, French, German, Spanish, Italian, Portuguese, and Dutch when possible.
+- Confirm bottom tabs, settings, reports, categories, buttons, and empty states use the phone language.
+- If the phone language is not supported, confirm the app falls back to English.
 - Change currency to TRY, EUR, and GBP.
 - Confirm Home, Reports, receipt detail, and Products use the selected currency.
 
@@ -66,12 +67,13 @@ Run this test on a real iPhone before each release.
 - Confirm the top product is the most purchased item.
 - Confirm product names, counts, units, receipt count, and total price are readable.
 
-## Free Limit And Premium
+## Free Limit, Ads, And Premium
 
-- Confirm Premium is hidden until Apple subscriptions are connected.
-- Confirm receipt analysis is not blocked by an inactive purchase flow.
+- Confirm the monthly free limit is 5 AI analyses.
+- Confirm the Premium screen explains that real purchases are coming through App Store / Google Play.
+- Confirm rewarded ad flow grants an extra analysis credit in the correct build type.
 - Confirm manual entry remains available.
-- Before paid release, connect real Apple subscriptions and test purchase restore.
+- Before paid release, connect real RevenueCat subscriptions and test purchase and restore on iOS and Android.
 
 ## Feedback
 

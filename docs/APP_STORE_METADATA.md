@@ -1,6 +1,6 @@
 ﻿# Reciro App Store Metadata Draft
 
-Last updated: July 23, 2026
+Last updated: July 27, 2026
 
 ## App Name
 
@@ -30,7 +30,7 @@ Take a photo of a receipt, let AI read the details, review the result, and save 
 
 Key features:
 
-- Scan receipts with the camera or choose from gallery
+- Scan receipts with the camera, choose from gallery, or add PDFs
 - AI receipt analysis for store, date, total, category, and items
 - Edit products, quantities, prices, categories, and totals before saving
 - Track monthly spending and remaining money
@@ -38,7 +38,7 @@ Key features:
 - Search receipts by store, category, item, date, or amount
 - Save receipt photos so you can view them later
 - Add custom categories when the default categories are not enough
-- Multi-language support: English, Turkish, French, German, and Spanish
+- Multi-language support: English, Turkish, French, German, Spanish, Italian, Portuguese, and Dutch
 - Currency support for Turkish Lira, Euro, and British Pound
 
 Reciro is built for simple daily use: scan, save, and simplify.
@@ -67,19 +67,19 @@ https://reciro-receipt-analysis.onrender.com/terms
 
 ## Subscription Draft
 
-Subscriptions are planned but should stay hidden in the first App Store release until Apple purchases are connected and tested.
+Subscriptions are planned, but real purchase unlocking must not be enabled until RevenueCat and App Store purchases are connected and tested.
 
 ### Free Plan
 
-- First release: receipt analysis available without a visible paywall
-- Future free plan: 5 AI receipt analyses per month
+- 5 AI receipt analyses per month
+- Optional rewarded ads for extra analysis credits
 - Manual receipt entry
 - Receipt archive
 - Basic reports
 
 ### Reciro Premium Monthly
 
-Suggested price: EUR 2.99 / month
+Suggested price: EUR 1.99 / month
 
 Benefits:
 
@@ -91,7 +91,7 @@ Benefits:
 
 ### Reciro Premium Yearly
 
-Suggested price: EUR 24.99 / year
+Suggested price: EUR 21.49 / year
 
 Same benefits as monthly, with yearly savings.
 
@@ -100,7 +100,7 @@ Same benefits as monthly, with yearly savings.
 Use clean sample data and hide personal information.
 
 1. Home screen
-   - Shows monthly total, remaining money, receipt count, recent receipts
+   - Shows monthly total, receipt count, recent receipts, and quick receipt add action
    - Caption idea: "See your monthly spending at a glance"
 
 2. Add receipt
@@ -124,7 +124,7 @@ Use clean sample data and hide personal information.
    - Caption idea: "Find what you buy most often"
 
 7. Settings
-   - Shows language, currency, income, and feedback
+   - Shows monthly payments, budgets, data controls, legal links, and feedback
    - Caption idea: "Customize the app for daily use"
 
 ## Turkish Store Text Draft

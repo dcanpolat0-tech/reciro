@@ -1,6 +1,6 @@
 # Reciro iOS Build Guide
 
-Last updated: July 14, 2026
+Last updated: July 27, 2026
 
 Use this guide after the Apple Developer Program enrollment is approved.
 
@@ -63,8 +63,10 @@ Because development is on Windows, use Expo Application Services to build the iP
 - Test the app on a real iPhone with Expo Go.
 - Confirm receipt analysis works through Render.
 - Confirm camera and gallery permissions are clear.
+- Confirm PDF selection works.
 - Confirm first release has no inactive Apple/Google sign-in gate.
-- Confirm Premium paywall is hidden until Apple subscriptions are connected.
+- Confirm Premium explains that real subscriptions will be connected through App Store / Google Play.
+- Confirm purchase restore does not claim to work until RevenueCat is connected.
 - Confirm the support, privacy, and terms links open.
 
 ## Version Rules
