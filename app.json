@@ -18,7 +18,10 @@
     },
     "android": {
       "package": "com.dcanpolat.reciro",
-      "permissions": [],
+      "versionCode": 1,
+      "permissions": [
+        "android.permission.CAMERA"
+      ],
       "blockedPermissions": [
         "android.permission.RECORD_AUDIO"
       ],
@@ -45,7 +48,9 @@
       [
         "expo-camera",
         {
-          "cameraPermission": "Reciro needs camera access so you can scan receipt photos."
+          "cameraPermission": "Reciro needs camera access so you can scan receipt photos.",
+          "microphonePermission": false,
+          "recordAudioAndroid": false
         }
       ]
     ]
