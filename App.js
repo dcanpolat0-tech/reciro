@@ -4297,14 +4297,7 @@ export default function App() {
     return (
       <SafeAreaView style={styles.safeArea}>
         <StatusBar style="dark" />
-        <View style={styles.app}>
-          <View style={styles.header}>
-            <View style={styles.headerTitle}>
-              <Text style={styles.appName}>Reciro</Text>
-              <Text style={styles.muted}>{t.appSubtitle}</Text>
-            </View>
-          </View>
-        </View>
+        <View style={styles.app} />
       </SafeAreaView>
     );
   }
@@ -4334,17 +4327,13 @@ export default function App() {
     <SafeAreaView style={styles.safeArea}>
       <StatusBar style="dark" />
       <View style={styles.app}>
-        <View style={styles.header}>
-          {canShowBackControl && (
+        {canShowBackControl && (
+          <View style={styles.header}>
             <Pressable style={styles.headerBackButton} onPress={goBack}>
               <Text style={styles.headerBackText}>‹</Text>
             </Pressable>
-          )}
-          <View style={styles.headerTitle}>
-            <Text style={styles.appName}>Reciro</Text>
-            <Text style={styles.muted}>{t.appSubtitle}</Text>
           </View>
-        </View>
+        )}
 
         <ScrollView
           contentContainerStyle={styles.content}
