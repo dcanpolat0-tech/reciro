@@ -5393,6 +5393,37 @@ function ReportScreen({
     { key: 'merchants', label: `🏬 ${t.merchantBreakdown}` },
   ];
 
+  if (selectedMerchantGroup) {
+    return (
+      <View>
+        <View style={styles.reportHero}>
+          <Text style={styles.label}>🏬 {selectedMerchantGroup.store}</Text>
+          <Text style={styles.reportAmount}>{formatTL(selectedMerchantGroup.amount)}</Text>
+          <View style={styles.reportInfoRow}>
+            <View style={styles.reportInfoItem}>
+              <Text style={styles.reportInfoLabel}>{t.receiptCount}</Text>
+              <Text style={styles.reportInfoValue}>{selectedMerchantGroup.count}</Text>
+            </View>
+            <View style={styles.reportInfoItem}>
+              <Text style={styles.reportInfoLabel}>{t.merchantBreakdown}</Text>
+              <Text style={styles.reportInfoValue}>{selectedMerchantGroup.store}</Text>
+            </View>
+          </View>
+        </View>
+
+        <SecondaryButton label={t.clearMerchantFilter} onPress={onClearSelectedMerchant} />
+
+        <ReceiptList
+          title={t.merchantReceiptsTitle(selectedMerchantGroup.store)}
+          subtitle={`${selectedMerchantGroup.count} ${t.receiptsShort}`}
+          receipts={selectedMerchantGroup.receipts}
+          onSelectReceipt={onSelectReceipt}
+          t={t}
+        />
+      </View>
+    );
+  }
+
   if (selectedCategory) {
     const selectedCategoryLabel = getCategoryLabel(selectedCategory.key, t);
 
@@ -5526,26 +5557,6 @@ function ReportScreen({
       ) : (
         <>
           <MerchantList merchantGroups={merchantGroups} onSelectMerchant={onSelectMerchant} t={t} />
-
-          {selectedMerchantGroup && (
-            <View style={styles.selectedMerchantSection}>
-              <View style={styles.selectedMerchantHeader}>
-                <Text style={styles.selectedMerchantTitle}>
-                  {t.merchantReceiptsTitle(selectedMerchantGroup.store)}
-                </Text>
-                <Pressable onPress={onClearSelectedMerchant} hitSlop={8}>
-                  <Text style={styles.clearSelectionText}>{t.clearMerchantFilter}</Text>
-                </Pressable>
-              </View>
-              <ReceiptList
-                title=""
-                subtitle={`${selectedMerchantGroup.count} ${t.receiptsShort}`}
-                receipts={selectedMerchantGroup.receipts}
-                onSelectReceipt={onSelectReceipt}
-                t={t}
-              />
-            </View>
-          )}
         </>
       )}
     </View>
@@ -5640,11 +5651,13 @@ function ProductsScreen({
   productMonthOptions,
   t,
 }) {
+  const [monthPickerOpen, setMonthPickerOpen] = useState(false);
   const productPeriodOptions = [
     { key: 'month', label: t.productMonthPeriod },
     { key: 'year', label: t.productThisYear },
     { key: 'all', label: t.allTime },
   ];
+  const selectedProductMonth = productMonthOptions.find((month) => month.key === productMonthKey);
 
   return (
     <View>
@@ -5664,25 +5677,41 @@ function ProductsScreen({
 
       {productPeriod === 'month' && (
         <View>
-          <Text style={styles.sectionSubtitle}>{t.productMonthSelect}</Text>
-          <View style={styles.productMonthGrid}>
-            {productMonthOptions.map((month) => (
-              <Pressable
-                key={month.key}
-                style={[styles.productMonthChip, productMonthKey === month.key && styles.productMonthChipActive]}
-                onPress={() => setProductMonthKey(month.key)}
-              >
-                <Text
-                  style={[
-                    styles.productMonthChipText,
-                    productMonthKey === month.key && styles.productMonthChipTextActive,
-                  ]}
+          <Pressable
+            style={styles.monthSelectButton}
+            onPress={() => setMonthPickerOpen((isOpen) => !isOpen)}
+          >
+            <View>
+              <Text style={styles.monthSelectLabel}>{t.productMonthSelect}</Text>
+              <Text style={styles.monthSelectValue}>{selectedProductMonth?.label || formatMonthKey(productMonthKey)}</Text>
+            </View>
+            <Text style={styles.merchantChevron}>{monthPickerOpen ? '⌃' : '⌄'}</Text>
+          </Pressable>
+
+          {monthPickerOpen && (
+            <View style={styles.monthPickerCard}>
+              {productMonthOptions.map((month) => (
+                <Pressable
+                  key={month.key}
+                  style={[styles.monthPickerRow, productMonthKey === month.key && styles.monthPickerRowActive]}
+                  onPress={() => {
+                    setProductMonthKey(month.key);
+                    setMonthPickerOpen(false);
+                  }}
                 >
-                  {month.label}
-                </Text>
-              </Pressable>
-            ))}
-          </View>
+                  <Text
+                    style={[
+                      styles.monthPickerText,
+                      productMonthKey === month.key && styles.monthPickerTextActive,
+                    ]}
+                  >
+                    {month.label}
+                  </Text>
+                  {productMonthKey === month.key && <Text style={styles.monthPickerCheck}>✓</Text>}
+                </Pressable>
+              ))}
+            </View>
+          )}
         </View>
       )}
 
@@ -8162,21 +8191,6 @@ const styles = StyleSheet.create({
     fontSize: 17,
     fontWeight: '900',
   },
-  selectedMerchantSection: {
-    marginTop: 18,
-  },
-  selectedMerchantHeader: {
-    alignItems: 'center',
-    flexDirection: 'row',
-    gap: 12,
-    justifyContent: 'space-between',
-  },
-  selectedMerchantTitle: {
-    color: '#172018',
-    flex: 1,
-    fontSize: 19,
-    fontWeight: '900',
-  },
   clearSelectionText: {
     color: '#0d5f2b',
     fontSize: 12,
@@ -8234,33 +8248,61 @@ const styles = StyleSheet.create({
     minWidth: 76,
     textAlign: 'right',
   },
-  productMonthGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 8,
-    marginBottom: 6,
-    marginTop: 8,
-  },
-  productMonthChip: {
+  monthSelectButton: {
     alignItems: 'center',
     backgroundColor: '#ffffff',
     borderColor: '#dfe8e0',
     borderRadius: 8,
     borderWidth: 1,
-    paddingHorizontal: 12,
-    paddingVertical: 10,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginTop: 10,
+    paddingHorizontal: 16,
+    paddingVertical: 14,
   },
-  productMonthChipActive: {
-    backgroundColor: '#e6f5ea',
-    borderColor: '#157f3b',
-  },
-  productMonthChipText: {
+  monthSelectLabel: {
     color: '#68766b',
     fontSize: 12,
     fontWeight: '900',
   },
-  productMonthChipTextActive: {
+  monthSelectValue: {
+    color: '#172018',
+    fontSize: 18,
+    fontWeight: '900',
+    marginTop: 4,
+  },
+  monthPickerCard: {
+    backgroundColor: '#ffffff',
+    borderColor: '#dfe8e0',
+    borderRadius: 8,
+    borderWidth: 1,
+    marginTop: 8,
+    overflow: 'hidden',
+  },
+  monthPickerRow: {
+    alignItems: 'center',
+    borderBottomColor: '#edf2ee',
+    borderBottomWidth: 1,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    paddingHorizontal: 16,
+    paddingVertical: 14,
+  },
+  monthPickerRowActive: {
+    backgroundColor: '#e6f5ea',
+  },
+  monthPickerText: {
+    color: '#344337',
+    fontSize: 15,
+    fontWeight: '800',
+  },
+  monthPickerTextActive: {
     color: '#0d5f2b',
+  },
+  monthPickerCheck: {
+    color: '#0d5f2b',
+    fontSize: 16,
+    fontWeight: '900',
   },
   productRow: {
     alignItems: 'center',
