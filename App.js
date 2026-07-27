@@ -4,9 +4,11 @@ import {
   Alert,
   AppState,
   Image,
+  KeyboardAvoidingView,
   Linking,
   Modal,
   PanResponder,
+  Platform,
   Pressable,
   SafeAreaView,
   ScrollView,
@@ -59,7 +61,7 @@ const FREE_MONTHLY_ANALYSIS_LIMIT = 5;
 const ENABLE_START_ACCOUNT_GATE = false;
 const ENABLE_PREMIUM_PAYWALL = false;
 const IMAGE_PICKER_MEDIA_TYPES = ['images'];
-const FEEDBACK_EMAIL = 'dcanpolat0@gmail.com';
+const FEEDBACK_EMAIL = 'denizcanpolat23-7@gmail.com';
 const DEFAULT_SPACE_KEY = 'personal';
 const DEFAULT_RECEIPT_SETTINGS = {
   autoAnalyze: true,
@@ -276,7 +278,7 @@ const translations = {
     signOutTitle: 'Hesaptan çık',
     signOutMessage: 'Çıkış yaparsan uygulama tekrar başlangıç ekranına döner. Kayıtlı fişlerin telefonda kalır.',
     signOutConfirm: 'Çıkış yap',
-    notSignedIn: 'Hesap seçilmedi',
+    notSignedIn: 'Bulut hesabı bağlı değil',
     signInWithGoogle: 'Google ile Giriş Yap',
     signInWithICloud: 'iCloud ile Bağlan',
     cloudSetupNeededTitle: 'Bulut girişi hazır değil',
@@ -520,7 +522,7 @@ const translations = {
     signOutTitle: 'Sign out',
     signOutMessage: 'If you sign out, the app will return to the start screen. Saved receipts stay on this phone.',
     signOutConfirm: 'Sign out',
-    notSignedIn: 'No account selected',
+    notSignedIn: 'Cloud account not connected',
     signInWithGoogle: 'Sign in with Google',
     signInWithICloud: 'Connect iCloud',
     cloudSetupNeededTitle: 'Cloud sign-in is not ready',
@@ -764,7 +766,7 @@ const translations = {
     signOutTitle: 'Deconnexion',
     signOutMessage: 'En vous deconnectant, l app revient a l ecran de depart. Les tickets restent sur ce telephone.',
     signOutConfirm: 'Se deconnecter',
-    notSignedIn: 'Aucun compte choisi',
+    notSignedIn: 'Compte cloud non connecte',
     signInWithGoogle: 'Se connecter avec Google',
     signInWithICloud: 'Connecter iCloud',
     cloudSetupNeededTitle: 'Connexion cloud non prete',
@@ -1008,7 +1010,7 @@ const translations = {
     signOutTitle: 'Abmelden',
     signOutMessage: 'Nach dem Abmelden kehrt die App zum Startbildschirm zurueck. Gespeicherte Belege bleiben auf dem Telefon.',
     signOutConfirm: 'Abmelden',
-    notSignedIn: 'Kein Konto ausgewaehlt',
+    notSignedIn: 'Cloud-Konto nicht verbunden',
     signInWithGoogle: 'Mit Google anmelden',
     signInWithICloud: 'iCloud verbinden',
     cloudSetupNeededTitle: 'Cloud-Anmeldung nicht bereit',
@@ -1252,7 +1254,7 @@ const translations = {
     signOutTitle: 'Cerrar sesion',
     signOutMessage: 'Si cierras sesion, la app volvera a la pantalla inicial. Los tickets guardados permanecen en este telefono.',
     signOutConfirm: 'Cerrar sesion',
-    notSignedIn: 'Ninguna cuenta seleccionada',
+    notSignedIn: 'Cuenta cloud no conectada',
     signInWithGoogle: 'Entrar con Google',
     signInWithICloud: 'Conectar iCloud',
     cloudSetupNeededTitle: 'Inicio en nube no listo',
@@ -2151,7 +2153,7 @@ Object.assign(featureTranslations.es, {
 
 
 Object.assign(translations.it, {
-  notSignedIn: "Nessun account selezionato",
+  notSignedIn: "Account cloud non collegato",
   saveError: "Errore salvataggio",
   receiptsSaveError: "Gli scontrini non possono essere salvati sul telefono.",
   incomeSaveError: "Il reddito non può essere salvato.",
@@ -2344,7 +2346,7 @@ Object.assign(featureTranslations.it, {
 });
 
 Object.assign(translations.pt, {
-  notSignedIn: "Nenhuma conta selecionada",
+  notSignedIn: "Conta cloud nao ligada",
   saveError: "Erro ao salvar",
   receiptsSaveError: "Os recibos não puderam ser salvos no telefone.",
   incomeSaveError: "A receita não pôde ser salva.",
@@ -2537,7 +2539,7 @@ Object.assign(featureTranslations.pt, {
 });
 
 Object.assign(translations.nl, {
-  notSignedIn: "Geen account geselecteerd",
+  notSignedIn: "Cloudaccount niet gekoppeld",
   saveError: "Fout bij opslaan",
   receiptsSaveError: "Bonnen konden niet op de telefoon worden opgeslagen.",
   incomeSaveError: "Inkomen kon niet worden opgeslagen.",
@@ -5931,11 +5933,17 @@ export default function App() {
           </View>
         )}
 
-        <ScrollView
-          ref={mainScrollRef}
-          contentContainerStyle={styles.content}
-          showsVerticalScrollIndicator={false}
+        <KeyboardAvoidingView
+          style={styles.keyboardAvoidingView}
+          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+          keyboardVerticalOffset={Platform.OS === 'ios' ? 12 : 0}
         >
+          <ScrollView
+            ref={mainScrollRef}
+            contentContainerStyle={styles.content}
+            keyboardShouldPersistTaps="handled"
+            showsVerticalScrollIndicator={false}
+          >
           {screen === 'home' && (
             <HomeScreen
               totalSpend={selectedMonthSpend}
@@ -6156,7 +6164,8 @@ export default function App() {
               t={t}
             />
           )}
-        </ScrollView>
+          </ScrollView>
+        </KeyboardAvoidingView>
 
         {canShowBackControl && (
           <View style={styles.edgeBackZone} {...swipeResponder.panHandlers} />
@@ -7476,6 +7485,17 @@ function SettingsScreen({
         </View>
 
         <Text style={styles.settingGroupTitle}>{t.defaultCategory}</Text>
+        <View style={styles.card}>
+          <Text style={styles.settingsTitle}>{t.otherCategoryName}</Text>
+          <Text style={styles.settingsText}>{t.defaultCategoryInfo}</Text>
+          <TextInput
+            style={styles.inlineSettingsInput}
+            value={otherCategoryLabel}
+            onChangeText={setOtherCategoryLabel}
+            placeholder={t.otherCategoryPlaceholder}
+            returnKeyType="done"
+          />
+        </View>
         <View style={styles.settingsList}>
           {categoryOptions.map((category) => (
             <Pressable
@@ -7526,6 +7546,7 @@ function SettingsScreen({
                       value={otherCategoryLabel}
                       onChangeText={setOtherCategoryLabel}
                       placeholder={t.otherCategoryPlaceholder}
+                      returnKeyType="done"
                     />
                   </>
                 )}
@@ -7540,6 +7561,7 @@ function SettingsScreen({
                   }
                   keyboardType="decimal-pad"
                   placeholder={t.monthlyLimit}
+                  returnKeyType="done"
                 />
               </View>
             </View>
@@ -7901,16 +7923,16 @@ function SettingsScreen({
           <SettingsRow
             icon="🔒"
             title={t.privacyPolicy}
-            subtitle={t.privacyPolicyText}
+            subtitle={t.privacySummary}
             value=">"
-            onPress={() => Alert.alert(t.privacyPolicy, t.privacyPolicyText)}
+            onPress={() => setSettingsSection('privacyPolicy')}
           />
           <SettingsRow
             icon="📄"
             title={t.termsOfUse}
-            subtitle={t.termsOfUseText}
+            subtitle={t.termsOfUse}
             value=">"
-            onPress={() => Alert.alert(t.termsOfUse, t.termsOfUseText)}
+            onPress={() => setSettingsSection('termsOfUse')}
           />
           <SettingsRow
             icon="ℹ️"
@@ -7921,6 +7943,32 @@ function SettingsScreen({
         </View>
 
         <SecondaryButton label={t.back} onPress={() => setSettingsSection('main')} />
+      </View>
+    );
+  }
+
+  if (settingsSection === 'privacyPolicy') {
+    return (
+      <View>
+        <View style={styles.legalDocumentCard}>
+          <Text style={styles.legalDocumentTitle}>{t.privacyPolicy}</Text>
+          <Text style={styles.legalDocumentText}>{t.privacyPolicyText}</Text>
+        </View>
+
+        <SecondaryButton label={t.back} onPress={() => setSettingsSection('privacy')} />
+      </View>
+    );
+  }
+
+  if (settingsSection === 'termsOfUse') {
+    return (
+      <View>
+        <View style={styles.legalDocumentCard}>
+          <Text style={styles.legalDocumentTitle}>{t.termsOfUse}</Text>
+          <Text style={styles.legalDocumentText}>{t.termsOfUseText}</Text>
+        </View>
+
+        <SecondaryButton label={t.back} onPress={() => setSettingsSection('privacy')} />
       </View>
     );
   }
@@ -8722,6 +8770,9 @@ const styles = StyleSheet.create({
   app: {
     flex: 1,
     backgroundColor: '#f4f7f4',
+  },
+  keyboardAvoidingView: {
+    flex: 1,
   },
   header: {
     paddingHorizontal: 20,
@@ -9659,6 +9710,27 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     padding: 16,
     marginTop: 12,
+  },
+  legalDocumentCard: {
+    backgroundColor: '#fff',
+    borderColor: '#dfe8e0',
+    borderWidth: 1,
+    borderRadius: 8,
+    padding: 18,
+    marginTop: 12,
+  },
+  legalDocumentTitle: {
+    color: '#172018',
+    fontSize: 22,
+    fontWeight: '900',
+    lineHeight: 28,
+  },
+  legalDocumentText: {
+    color: '#4f5d52',
+    fontSize: 15,
+    fontWeight: '600',
+    lineHeight: 23,
+    marginTop: 14,
   },
   emptyState: {
     alignItems: 'center',
