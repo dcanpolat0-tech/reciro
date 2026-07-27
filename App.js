@@ -35,6 +35,7 @@ const CATEGORY_MEMORY_STORAGE_KEY = 'reciro.categoryMemory.v1';
 const BUDGETS_STORAGE_KEY = 'reciro.budgets.v1';
 const RECURRING_EXPENSES_STORAGE_KEY = 'reciro.recurringExpenses.v1';
 const ACTIVE_SPACE_STORAGE_KEY = 'reciro.activeSpace.v1';
+const OTHER_CATEGORY_LABEL_STORAGE_KEY = 'reciro.otherCategoryLabel.v1';
 const RECEIPT_IMAGE_DIR = `${FileSystem.documentDirectory}receipts/`;
 const RECEIPT_FILE_DIR = `${FileSystem.documentDirectory}receipt-files/`;
 const BACKUP_DIR = `${FileSystem.documentDirectory}backups/`;
@@ -1333,6 +1334,8 @@ const featureTranslations = {
     budgetLeft: 'left',
     budgetOver: 'over',
     monthlyLimit: 'Monthly limit',
+    otherCategoryName: 'Other category name',
+    otherCategoryPlaceholder: 'Example: school, car care, taxes...',
     saveBudgets: 'Save budgets',
     recurring: 'Monthly payments',
     recurringInfo: 'Track rent, subscriptions, bills, and fixed monthly costs.',
@@ -1382,6 +1385,8 @@ const featureTranslations = {
     budgetLeft: 'kaldı',
     budgetOver: 'aşıldı',
     monthlyLimit: 'Aylık limit',
+    otherCategoryName: 'Diğer kategori adı',
+    otherCategoryPlaceholder: 'Örn. okul, oto bakım, vergi...',
     saveBudgets: 'Bütçeleri kaydet',
     recurring: 'Aylık ödemeler',
     recurringInfo: 'Kira, abonelik, fatura ve sabit aylık ödemeleri takip et.',
@@ -1431,6 +1436,8 @@ const featureTranslations = {
     budgetLeft: 'restant',
     budgetOver: 'depasse',
     monthlyLimit: 'Limite mensuelle',
+    otherCategoryName: 'Nom de la categorie autre',
+    otherCategoryPlaceholder: 'Ex. ecole, voiture, taxes...',
     saveBudgets: 'Enregistrer les budgets',
     recurring: 'Paiements mensuels',
     recurringInfo: 'Suivez loyer, abonnements, factures et frais fixes mensuels.',
@@ -1480,6 +1487,8 @@ const featureTranslations = {
     budgetLeft: 'uebrig',
     budgetOver: 'ueberschritten',
     monthlyLimit: 'Monatslimit',
+    otherCategoryName: 'Name fuer Sonstiges',
+    otherCategoryPlaceholder: 'Z.B. Schule, Auto, Steuern...',
     saveBudgets: 'Budgets speichern',
     recurring: 'Monatliche Zahlungen',
     recurringInfo: 'Miete, Abos, Rechnungen und feste monatliche Kosten verfolgen.',
@@ -1529,6 +1538,8 @@ const featureTranslations = {
     budgetLeft: 'restante',
     budgetOver: 'superado',
     monthlyLimit: 'Limite mensual',
+    otherCategoryName: 'Nombre de otra categoria',
+    otherCategoryPlaceholder: 'Ej. escuela, coche, impuestos...',
     saveBudgets: 'Guardar presupuestos',
     recurring: 'Pagos mensuales',
     recurringInfo: 'Controla alquiler, suscripciones, facturas y costes fijos mensuales.',
@@ -3092,6 +3103,7 @@ export default function App() {
   const [categoryMemory, setCategoryMemory] = useState({});
   const [budgetsByCategory, setBudgetsByCategory] = useState({});
   const [recurringExpenses, setRecurringExpenses] = useState([]);
+  const [otherCategoryLabel, setOtherCategoryLabel] = useState('');
   const [activeSpace, setActiveSpace] = useState(DEFAULT_SPACE_KEY);
   const [settingsSection, setSettingsSection] = useState('main');
   const [reportPeriod, setReportPeriod] = useState('month');
@@ -3116,6 +3128,7 @@ export default function App() {
           savedBudgets,
           savedRecurringExpenses,
           savedActiveSpace,
+          savedOtherCategoryLabel,
         ] = await Promise.all([
           AsyncStorage.getItem(RECEIPTS_STORAGE_KEY),
           AsyncStorage.getItem(SALARY_STORAGE_KEY),
@@ -3127,6 +3140,7 @@ export default function App() {
           AsyncStorage.getItem(BUDGETS_STORAGE_KEY),
           AsyncStorage.getItem(RECURRING_EXPENSES_STORAGE_KEY),
           AsyncStorage.getItem(ACTIVE_SPACE_STORAGE_KEY),
+          AsyncStorage.getItem(OTHER_CATEGORY_LABEL_STORAGE_KEY),
         ]);
 
         const startupCurrency =
@@ -3182,6 +3196,10 @@ export default function App() {
 
         if (savedActiveSpace) {
           setActiveSpace(normalizeSpaceKey(savedActiveSpace));
+        }
+
+        if (savedOtherCategoryLabel) {
+          setOtherCategoryLabel(savedOtherCategoryLabel);
         }
       } catch (error) {
         console.warn('Saved app data could not be loaded:', error);
@@ -3324,6 +3342,24 @@ export default function App() {
     });
   }, [activeSpace, storageReady]);
 
+  useEffect(() => {
+    if (!storageReady) {
+      return;
+    }
+
+    const cleanLabel = otherCategoryLabel.trim();
+
+    if (cleanLabel) {
+      AsyncStorage.setItem(OTHER_CATEGORY_LABEL_STORAGE_KEY, cleanLabel).catch(() => {
+        console.warn('Other category label could not be saved.');
+      });
+    } else {
+      AsyncStorage.removeItem(OTHER_CATEGORY_LABEL_STORAGE_KEY).catch(() => {
+        console.warn('Other category label could not be removed.');
+      });
+    }
+  }, [otherCategoryLabel, storageReady]);
+
   const salaryText = incomeByMonth[incomeMonthKey] || '';
   const salary = parseAmount(salaryText);
   const visibleReceipts = useMemo(
@@ -3368,7 +3404,22 @@ export default function App() {
     );
   }, [categories]);
 
-  const t = getAppTranslations(selectedLanguage);
+  const baseTranslations = getAppTranslations(selectedLanguage);
+  const t = useMemo(() => {
+    const cleanOtherLabel = otherCategoryLabel.trim();
+
+    if (!cleanOtherLabel) {
+      return baseTranslations;
+    }
+
+    return {
+      ...baseTranslations,
+      categories: {
+        ...baseTranslations.categories,
+        other: cleanOtherLabel,
+      },
+    };
+  }, [baseTranslations, otherCategoryLabel]);
   activeCurrency = selectedCurrency;
   const currentAnalysisMonthKey = getMonthKey();
   const monthlyAnalysisUsage = Number(analysisUsageByMonth[currentAnalysisMonthKey]) || 0;
@@ -3796,6 +3847,7 @@ export default function App() {
         budgetsByCategory,
         recurringExpenses,
         activeSpace,
+        otherCategoryLabel,
       };
 
       await FileSystem.writeAsStringAsync(targetUri, JSON.stringify(backupData, null, 2));
@@ -3854,6 +3906,7 @@ export default function App() {
       );
       setRecurringExpenses(Array.isArray(backupData.recurringExpenses) ? backupData.recurringExpenses : []);
       setActiveSpace(normalizeSpaceKey(backupData.activeSpace));
+      setOtherCategoryLabel(String(backupData.otherCategoryLabel || '').trim());
 
       setSelectedReceipt(null);
       setSettingsSection('main');
@@ -4546,6 +4599,8 @@ export default function App() {
               setSelectedCurrency={setSelectedCurrency}
               budgetsByCategory={budgetsByCategory}
               setBudgetsByCategory={setBudgetsByCategory}
+              otherCategoryLabel={otherCategoryLabel}
+              setOtherCategoryLabel={setOtherCategoryLabel}
               recurringExpenses={recurringExpenses}
               setRecurringExpenses={setRecurringExpenses}
               activeSpace={activeSpace}
@@ -5492,6 +5547,8 @@ function SettingsScreen({
   setSelectedCurrency,
   budgetsByCategory,
   setBudgetsByCategory,
+  otherCategoryLabel,
+  setOtherCategoryLabel,
   recurringExpenses,
   setRecurringExpenses,
   activeSpace,
@@ -5649,6 +5706,17 @@ function SettingsScreen({
               </View>
               <View style={styles.settingsTextBlock}>
                 <Text style={styles.settingsTitle}>{getCategoryLabel(category.key, t)}</Text>
+                {category.key === 'other' && (
+                  <>
+                    <Text style={styles.settingsText}>{t.otherCategoryName}</Text>
+                    <TextInput
+                      style={styles.inlineSettingsInput}
+                      value={otherCategoryLabel}
+                      onChangeText={setOtherCategoryLabel}
+                      placeholder={t.otherCategoryPlaceholder}
+                    />
+                  </>
+                )}
                 <TextInput
                   style={styles.inlineSettingsInput}
                   value={String(budgetsByCategory[category.key] || '')}
