@@ -1,7 +1,8 @@
 ﻿import { StatusBar } from 'expo-status-bar';
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   Alert,
+  Animated,
   AppState,
   Image,
   KeyboardAvoidingView,
@@ -26,6 +27,7 @@ import * as ImageManipulator from 'expo-image-manipulator';
 import * as Sharing from 'expo-sharing';
 import Constants from 'expo-constants';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { getMobileAdsModule } from './mobileAds';
 
 const RECEIPTS_STORAGE_KEY = 'reciro.receipts.v2';
 const SALARY_STORAGE_KEY = 'reciro.salary.v1';
@@ -347,7 +349,6 @@ const translations = {
     itemAmount: 'Fiyat',
     quantity: 'Adet',
     unit: 'Birim',
-    autoTotalFromItems: 'Toplamı ürünlerden hesapla',
     tapForDetails: 'Detayı görmek için dokun',
     photoAvailable: 'fotoğraf var',
     deleteTitle: 'Fişi sil',
@@ -598,7 +599,6 @@ const translations = {
     itemAmount: 'Price',
     quantity: 'Quantity',
     unit: 'Unit',
-    autoTotalFromItems: 'Calculate total from items',
     tapForDetails: 'Tap to see details',
     photoAvailable: 'photo available',
     deleteTitle: 'Delete receipt',
@@ -849,7 +849,6 @@ const translations = {
     itemAmount: 'Prix',
     quantity: 'Quantite',
     unit: 'Unite',
-    autoTotalFromItems: 'Calculer le total des articles',
     tapForDetails: 'Touchez pour voir les details',
     photoAvailable: 'photo disponible',
     deleteTitle: 'Supprimer le ticket',
@@ -1100,7 +1099,6 @@ const translations = {
     itemAmount: 'Preis',
     quantity: 'Menge',
     unit: 'Einheit',
-    autoTotalFromItems: 'Summe aus Artikeln berechnen',
     tapForDetails: 'Tippen fuer Details',
     photoAvailable: 'Foto vorhanden',
     deleteTitle: 'Beleg loeschen',
@@ -1351,7 +1349,6 @@ const translations = {
     itemAmount: 'Precio',
     quantity: 'Cantidad',
     unit: 'Unidad',
-    autoTotalFromItems: 'Calcular total desde productos',
     tapForDetails: 'Toca para ver detalles',
     photoAvailable: 'foto disponible',
     deleteTitle: 'Eliminar ticket',
@@ -2278,7 +2275,6 @@ Object.assign(translations.it, {
   itemAmount: "Prezzo",
   unit: "Unità",
   addItem: "Aggiungi articolo",
-  autoTotalFromItems: "Calcola totale dagli articoli",
   clearMerchantFilter: "Cancella selezione",
   noReportData: "Nessun dato per questo filtro",
   archiveInfo: "Tutti gli scontrini caricati rimangono qui. Tocca uno scontrino per vedere i dettagli.",
@@ -2478,7 +2474,6 @@ Object.assign(translations.pt, {
   itemAmount: "Preço",
   unit: "Unidade",
   addItem: "Adicionar item",
-  autoTotalFromItems: "Calcular total a partir dos itens",
   clearMerchantFilter: "Limpar seleção",
   noReportData: "Sem dados para este filtro",
   archiveInfo: "Todos os recibos carregados ficam aqui. Toque num recibo para ver detalhes.",
@@ -2678,7 +2673,6 @@ Object.assign(translations.nl, {
   itemAmount: "Prijs",
   unit: "Eenheid",
   addItem: "Item toevoegen",
-  autoTotalFromItems: "Totaal berekenen uit items",
   clearMerchantFilter: "Selectie wissen",
   noReportData: "Geen gegevens voor deze filter",
   archiveInfo: "Alle geuploade bonnen blijven hier. Tik op een bon voor details.",
@@ -3016,14 +3010,6 @@ async function sendFeedbackMessage({ message, language, currency }) {
     return response.json();
   } finally {
     clearTimeout(timeoutId);
-  }
-}
-
-function getMobileAdsModule() {
-  try {
-    return require('react-native-google-mobile-ads');
-  } catch (error) {
-    return null;
   }
 }
 
@@ -3369,6 +3355,10 @@ function getReceiptTime(receipt) {
     return receiptDate.getTime();
   }
 
+  return receipt?.createdAt || receipt?.id || 0;
+}
+
+function getReceiptAddedTime(receipt) {
   return receipt?.createdAt || receipt?.id || 0;
 }
 
@@ -4601,6 +4591,7 @@ export default function App() {
   const [selectedMerchantKey, setSelectedMerchantKey] = useState(null);
   const [selectedReportCategoryKey, setSelectedReportCategoryKey] = useState(null);
   const [selectedMonthlyReceiptKey, setSelectedMonthlyReceiptKey] = useState(null);
+  const [openSwipeReceiptId, setOpenSwipeReceiptId] = useState(null);
   const [storageReady, setStorageReady] = useState(false);
 
   useEffect(() => {
@@ -4984,7 +4975,7 @@ export default function App() {
     () =>
       visibleReceipts
         .filter((receipt) => !receipt.isRecurring)
-        .sort((first, second) => getReceiptTime(second) - getReceiptTime(first))
+        .sort((first, second) => getReceiptAddedTime(second) - getReceiptAddedTime(first))
         .slice(0, 3),
     [visibleReceipts]
   );
@@ -5034,6 +5025,14 @@ export default function App() {
     () => reportReceipts.reduce((sum, receipt) => sum + getReceiptSignedAmount(receipt), 0),
     [reportReceipts]
   );
+  const reportIncomeTotal = useMemo(() => {
+    if (reportPeriod === 'all') {
+      return getIncomeTotalUntilMonth(incomeByMonth, getMonthKey());
+    }
+
+    return parseAmount(incomeByMonth[getMonthKey()] || '');
+  }, [incomeByMonth, reportPeriod]);
+  const reportBalance = reportIncomeTotal - reportTotalSpend;
   const reportCategories = useMemo(
     () => buildCategorySummary(reportReceipts),
     [reportReceipts]
@@ -5239,6 +5238,10 @@ export default function App() {
     });
   }, [scrollResetKey]);
 
+  useEffect(() => {
+    setOpenSwipeReceiptId(null);
+  }, [scrollResetKey]);
+
   function openReceiptDetail(receipt) {
     const normalizedReceipt = normalizeReceiptCategories(receipt);
     setDetailReturnScreen(screen === 'detail' ? detailReturnScreen : screen);
@@ -5372,12 +5375,10 @@ export default function App() {
     setEditingReceipt(false);
   }
 
-  function deleteSelectedReceipt() {
-    if (!selectedReceipt) {
+  function requestDeleteReceipt(receiptToDelete, options = {}) {
+    if (!receiptToDelete || receiptToDelete.isRecurring) {
       return;
     }
-
-    const receiptToDelete = selectedReceipt;
 
     Alert.alert(t.deleteTitle, t.deleteMessage, [
       { text: t.cancel, style: 'cancel' },
@@ -5390,11 +5391,20 @@ export default function App() {
           );
           await deleteReceiptImage(receiptToDelete.image);
           await deleteReceiptFile(receiptToDelete.file);
-          setSelectedReceipt(null);
-          setScreen(detailReturnScreen);
+          if (selectedReceipt?.id === receiptToDelete.id) {
+            setSelectedReceipt(null);
+            setEditingReceipt(false);
+            if (options.returnToDetailScreen !== false) {
+              setScreen(detailReturnScreen);
+            }
+          }
         },
       },
     ]);
+  }
+
+  function deleteSelectedReceipt() {
+    requestDeleteReceipt(selectedReceipt);
   }
 
   async function createDataBackup() {
@@ -5718,14 +5728,6 @@ export default function App() {
 
   function removeReceiptItem(itemId) {
     setReceiptItems((currentItems) => currentItems.filter((item) => item.id !== itemId));
-  }
-
-  function setTotalFromReceiptItems() {
-    const total = getItemsTotal(receiptItems);
-
-    if (total > 0) {
-      setAmountText(String(Number(total.toFixed(2))).replace('.', ','));
-    }
   }
 
   async function pickReceiptImage() {
@@ -6211,6 +6213,12 @@ export default function App() {
             ref={mainScrollRef}
             contentContainerStyle={styles.content}
             keyboardShouldPersistTaps="handled"
+            onScrollBeginDrag={() => setOpenSwipeReceiptId(null)}
+            onTouchStart={() => {
+              if (openSwipeReceiptId) {
+                setOpenSwipeReceiptId(null);
+              }
+            }}
             showsVerticalScrollIndicator={false}
           >
           {screen === 'home' && (
@@ -6226,6 +6234,9 @@ export default function App() {
               onOpenRecurringPayments={() => setHomeRecurringOpen(true)}
               onCloseRecurringPayments={() => setHomeRecurringOpen(false)}
               onSelectReceipt={openReceiptDetail}
+              onDeleteReceipt={(receipt) => requestDeleteReceipt(receipt, { returnToDetailScreen: false })}
+              openSwipeReceiptId={openSwipeReceiptId}
+              setOpenSwipeReceiptId={setOpenSwipeReceiptId}
               isReceiptComposerActive={isReceiptComposerActive}
               t={t}
               receiptComposer={
@@ -6265,7 +6276,6 @@ export default function App() {
                   onUpdateReceiptItem={updateReceiptItem}
                   onAddReceiptItem={addReceiptItem}
                   onRemoveReceiptItem={removeReceiptItem}
-                  onSetTotalFromReceiptItems={setTotalFromReceiptItems}
                   analysisStatus={analysisStatus}
                   analysisConfidence={analysisConfidence}
                   usageText={freeUsageText}
@@ -6315,6 +6325,8 @@ export default function App() {
           {screen === 'report' && (
             <ReportScreen
               totalSpend={reportTotalSpend}
+              incomeTotal={reportIncomeTotal}
+              balance={reportBalance}
               receiptCount={reportReceipts.length}
               categories={reportCategories}
               topCategory={reportTopCategory}
@@ -6334,6 +6346,9 @@ export default function App() {
               onSelectMerchant={selectReportMerchant}
               onClearSelectedMerchant={() => setSelectedMerchantKey(null)}
               onSelectReceipt={openReceiptDetail}
+              onDeleteReceipt={(receipt) => requestDeleteReceipt(receipt, { returnToDetailScreen: false })}
+              openSwipeReceiptId={openSwipeReceiptId}
+              setOpenSwipeReceiptId={setOpenSwipeReceiptId}
               t={t}
             />
           )}
@@ -6345,6 +6360,9 @@ export default function App() {
               onSelectMonth={(group) => setSelectedMonthlyReceiptKey(group.key)}
               onClearMonth={() => setSelectedMonthlyReceiptKey(null)}
               onSelectReceipt={openReceiptDetail}
+              onDeleteReceipt={(receipt) => requestDeleteReceipt(receipt, { returnToDetailScreen: false })}
+              openSwipeReceiptId={openSwipeReceiptId}
+              setOpenSwipeReceiptId={setOpenSwipeReceiptId}
               t={t}
             />
           )}
@@ -6440,7 +6458,10 @@ export default function App() {
           <View style={styles.edgeBackZone} {...swipeResponder.panHandlers} />
         )}
 
-        <View style={styles.navArea} pointerEvents="box-none">
+        <View
+          style={[styles.navArea, Platform.OS === 'web' && styles.pointerEventsBoxNone]}
+          {...(Platform.OS === 'web' ? {} : { pointerEvents: 'box-none' })}
+        >
           <View style={styles.nav}>
             <NavButton
               icon="🏠"
@@ -6497,6 +6518,9 @@ function HomeScreen({
   onOpenRecurringPayments,
   onCloseRecurringPayments,
   onSelectReceipt,
+  onDeleteReceipt,
+  openSwipeReceiptId,
+  setOpenSwipeReceiptId,
   isReceiptComposerActive,
   receiptComposer,
   t,
@@ -6571,6 +6595,9 @@ function HomeScreen({
         title={t.recentSpending}
         receipts={recentReceipts}
         onSelectReceipt={onSelectReceipt}
+        onDeleteReceipt={onDeleteReceipt}
+        openSwipeReceiptId={openSwipeReceiptId}
+        setOpenSwipeReceiptId={setOpenSwipeReceiptId}
         t={t}
       />
 
@@ -6653,7 +6680,6 @@ function ReceiptScreen({
   onUpdateReceiptItem,
   onAddReceiptItem,
   onRemoveReceiptItem,
-  onSetTotalFromReceiptItems,
   analysisStatus,
   analysisConfidence,
   usageText,
@@ -7076,9 +7102,6 @@ function ReceiptScreen({
             <Pressable style={styles.addItemButton} onPress={onAddReceiptItem}>
               <Text style={styles.addItemText}>+ {t.addItem}</Text>
             </Pressable>
-            {receiptItems.length > 0 && (
-              <SecondaryButton label={t.autoTotalFromItems} onPress={onSetTotalFromReceiptItems} />
-            )}
           </View>
         </View>
       )}
@@ -7095,6 +7118,8 @@ function ReceiptScreen({
 
 function ReportScreen({
   totalSpend,
+  incomeTotal,
+  balance,
   receiptCount,
   categories,
   topCategory,
@@ -7114,6 +7139,9 @@ function ReportScreen({
   onSelectMerchant,
   onClearSelectedMerchant,
   onSelectReceipt,
+  onDeleteReceipt,
+  openSwipeReceiptId,
+  setOpenSwipeReceiptId,
   t,
 }) {
   const maxAmount = Math.max(1, ...categories.map((category) => category.amount));
@@ -7152,6 +7180,9 @@ function ReportScreen({
           subtitle={`${selectedMerchantGroup.count} ${t.receiptsShort}`}
           receipts={selectedMerchantGroup.receipts}
           onSelectReceipt={onSelectReceipt}
+          onDeleteReceipt={onDeleteReceipt}
+          openSwipeReceiptId={openSwipeReceiptId}
+          setOpenSwipeReceiptId={setOpenSwipeReceiptId}
           t={t}
         />
       </View>
@@ -7185,6 +7216,9 @@ function ReportScreen({
           subtitle={`${selectedCategoryReceipts.length} ${t.receiptsShort}`}
           receipts={selectedCategoryReceipts}
           onSelectReceipt={onSelectReceipt}
+          onDeleteReceipt={onDeleteReceipt}
+          openSwipeReceiptId={openSwipeReceiptId}
+          setOpenSwipeReceiptId={setOpenSwipeReceiptId}
           t={t}
         />
       </View>
@@ -7204,6 +7238,16 @@ function ReportScreen({
           <View style={styles.reportInfoItem}>
             <Text style={styles.reportInfoLabel}>{t.highest}</Text>
             <Text style={styles.reportInfoValue}>{topCategoryLabel}</Text>
+          </View>
+        </View>
+        <View style={styles.reportInfoRow}>
+          <View style={styles.reportInfoItem}>
+            <Text style={styles.reportInfoLabel}>{t.income}</Text>
+            <Text style={styles.reportInfoValue}>{formatTL(incomeTotal)}</Text>
+          </View>
+          <View style={[styles.reportInfoItem, balance < 0 && styles.reportInfoItemWarning]}>
+            <Text style={styles.reportInfoLabel}>{t.remainingMoney}</Text>
+            <Text style={styles.reportInfoValue}>{formatTL(balance)}</Text>
           </View>
         </View>
       </View>
@@ -7285,6 +7329,9 @@ function ReportScreen({
             subtitle={t.archiveInfo}
             receipts={receipts}
             onSelectReceipt={onSelectReceipt}
+            onDeleteReceipt={onDeleteReceipt}
+            openSwipeReceiptId={openSwipeReceiptId}
+            setOpenSwipeReceiptId={setOpenSwipeReceiptId}
             t={t}
           />
         </>
@@ -7303,6 +7350,9 @@ function MonthlyReceiptsScreen({
   onSelectMonth,
   onClearMonth,
   onSelectReceipt,
+  onDeleteReceipt,
+  openSwipeReceiptId,
+  setOpenSwipeReceiptId,
   t,
 }) {
   if (selectedGroup) {
@@ -7330,6 +7380,9 @@ function MonthlyReceiptsScreen({
           subtitle={`${selectedGroup.count} ${t.receiptsShort}`}
           receipts={selectedGroup.receipts}
           onSelectReceipt={onSelectReceipt}
+          onDeleteReceipt={onDeleteReceipt}
+          openSwipeReceiptId={openSwipeReceiptId}
+          setOpenSwipeReceiptId={setOpenSwipeReceiptId}
           t={t}
         />
       </View>
@@ -8364,8 +8417,8 @@ function ReceiptDetailScreen({
     <View>
       {receipt.image ? (
         <View style={styles.detailImageBox}>
-          <Pressable onPress={() => onPreviewImage(receipt.image)}>
-            <Image source={{ uri: receipt.image }} style={styles.detailImage} />
+          <Pressable style={styles.detailImagePressable} onPress={() => onPreviewImage(receipt.image)}>
+            <Image source={{ uri: String(receipt.image) }} style={styles.detailImage} />
           </Pressable>
         </View>
       ) : receipt.file ? (
@@ -8562,10 +8615,6 @@ function ReceiptDetailScreen({
             <Pressable style={styles.addItemButton} onPress={onAddEditItem}>
               <Text style={styles.addItemText}>+ {t.addItem}</Text>
             </Pressable>
-
-            <Pressable style={styles.calculateItemsButton} onPress={onSetTotalFromItems}>
-              <Text style={styles.calculateItemsText}>{t.autoTotalFromItems}</Text>
-            </Pressable>
           </View>
 
           <PrimaryButton label={t.saveChanges} onPress={onSaveEdit} />
@@ -8688,7 +8737,16 @@ function ReceiptDetailScreen({
   );
 }
 
-function ReceiptList({ title, subtitle, receipts, onSelectReceipt, t }) {
+function ReceiptList({
+  title,
+  subtitle,
+  receipts,
+  onSelectReceipt,
+  onDeleteReceipt,
+  openSwipeReceiptId,
+  setOpenSwipeReceiptId,
+  t,
+}) {
   return (
     <View>
       {Boolean(title) && <Text style={styles.sectionTitle}>{title}</Text>}
@@ -8701,24 +8759,162 @@ function ReceiptList({ title, subtitle, receipts, onSelectReceipt, t }) {
           </View>
         )}
         {receipts.map((receipt) => (
-          <Pressable
-            style={styles.row}
+          <SwipeableReceiptRow
             key={receipt.id}
-            onPress={() => !receipt.isRecurring && onSelectReceipt?.(receipt)}
-            disabled={Boolean(receipt.isRecurring)}
-          >
-            <View style={styles.receiptTextBlock}>
-              <Text style={styles.rowText}>{receipt.store}</Text>
-              <Text style={styles.rowMeta}>
-                {getCategoryLabel(receipt.category, t)} - {normalizeDateDisplay(receipt.date, receipt.createdAt)}
-                {receipt.isRecurring ? ` - ${t.recurring}` : receipt.image ? ` - ${t?.photoAvailable || 'photo'}` : ''}
-              </Text>
-              {onSelectReceipt && !receipt.isRecurring && <Text style={styles.rowHint}>{t?.tapForDetails}</Text>}
-            </View>
-            <Text style={styles.rowAmount}>{formatReceiptAmount(receipt)}</Text>
-          </Pressable>
+            receipt={receipt}
+            onSelectReceipt={onSelectReceipt}
+            onDeleteReceipt={onDeleteReceipt}
+            openSwipeReceiptId={openSwipeReceiptId}
+            setOpenSwipeReceiptId={setOpenSwipeReceiptId}
+            t={t}
+          />
         ))}
       </View>
+    </View>
+  );
+}
+
+function SwipeableReceiptRow({
+  receipt,
+  onSelectReceipt,
+  onDeleteReceipt,
+  openSwipeReceiptId,
+  setOpenSwipeReceiptId,
+  t,
+  rowVariant = 'default',
+}) {
+  const [deleteVisible, setDeleteVisible] = useState(false);
+  const swipeTranslateX = useRef(new Animated.Value(0)).current;
+  const canDelete = Boolean(onDeleteReceipt && !receipt.isRecurring);
+  const isHomeRow = rowVariant === 'home';
+  const isOpenFromOutside = openSwipeReceiptId === receipt.id;
+
+  const animateSwipeTo = useCallback((value) => {
+    Animated.spring(swipeTranslateX, {
+      toValue: value,
+      useNativeDriver: true,
+      tension: 90,
+      friction: 14,
+    }).start();
+  }, [swipeTranslateX]);
+
+  const rowSwipeResponder = useMemo(
+    () =>
+      PanResponder.create({
+        onStartShouldSetPanResponder: () => false,
+        onStartShouldSetPanResponderCapture: () => false,
+        onMoveShouldSetPanResponderCapture: (_, gestureState) =>
+          canDelete &&
+          Math.abs(gestureState.dx) > 12 &&
+          Math.abs(gestureState.dx) > Math.abs(gestureState.dy) * 1.15,
+        onMoveShouldSetPanResponder: (_, gestureState) =>
+          canDelete &&
+          Math.abs(gestureState.dx) > 12 &&
+          Math.abs(gestureState.dx) > Math.abs(gestureState.dy) * 1.15,
+        onPanResponderTerminationRequest: () => false,
+        onPanResponderGrant: () => {
+          swipeTranslateX.stopAnimation();
+        },
+        onPanResponderMove: (_, gestureState) => {
+          if (!canDelete) {
+            return;
+          }
+
+          const baseOffset = deleteVisible ? -96 : 0;
+          const nextOffset = Math.max(-110, Math.min(0, baseOffset + gestureState.dx));
+          swipeTranslateX.setValue(nextOffset);
+        },
+        onPanResponderRelease: (_, gestureState) => {
+          if (gestureState.dx < -38 || gestureState.vx < -0.3) {
+            setDeleteVisible(true);
+            setOpenSwipeReceiptId?.(receipt.id);
+            animateSwipeTo(-96);
+            return;
+          }
+
+          if (deleteVisible && gestureState.dx > 26) {
+            setDeleteVisible(false);
+            setOpenSwipeReceiptId?.(null);
+            animateSwipeTo(0);
+            return;
+          }
+
+          if (deleteVisible) {
+            animateSwipeTo(-96);
+            return;
+          }
+
+          setDeleteVisible(false);
+          setOpenSwipeReceiptId?.(null);
+          animateSwipeTo(0);
+        },
+      }),
+    [animateSwipeTo, canDelete, deleteVisible, receipt.id, setOpenSwipeReceiptId, swipeTranslateX]
+  );
+
+  useEffect(() => {
+    if (deleteVisible && !isOpenFromOutside) {
+      setDeleteVisible(false);
+      animateSwipeTo(0);
+    }
+  }, [animateSwipeTo, deleteVisible, isOpenFromOutside]);
+
+  return (
+    <View style={styles.swipeReceiptShell} {...rowSwipeResponder.panHandlers}>
+      {canDelete && (
+        <Pressable
+          style={styles.swipeDeleteButton}
+          onTouchStart={(event) => event.stopPropagation?.()}
+          onPress={() => {
+            setDeleteVisible(false);
+            setOpenSwipeReceiptId?.(null);
+            animateSwipeTo(0);
+            onDeleteReceipt(receipt);
+          }}
+        >
+          <Text style={styles.swipeDeleteText}>{t.deleteConfirm}</Text>
+        </Pressable>
+      )}
+      <Animated.View
+        style={[
+          styles.swipeReceiptContent,
+          {
+            transform: [{ translateX: swipeTranslateX }],
+          },
+        ]}
+      >
+        <Pressable
+          style={isHomeRow ? styles.homeReceiptRow : styles.row}
+          onPress={() => {
+            if (openSwipeReceiptId && openSwipeReceiptId !== receipt.id) {
+              setOpenSwipeReceiptId?.(null);
+              return;
+            }
+
+            if (deleteVisible) {
+              setDeleteVisible(false);
+              setOpenSwipeReceiptId?.(null);
+              animateSwipeTo(0);
+              return;
+            }
+
+            if (!receipt.isRecurring) {
+              onSelectReceipt?.(receipt);
+            }
+          }}
+          disabled={Boolean(receipt.isRecurring)}
+        >
+          <View style={styles.receiptTextBlock}>
+            <Text style={isHomeRow ? styles.homeReceiptStore : styles.rowText}>{receipt.store}</Text>
+            <Text style={styles.rowMeta}>
+              {getCategoryLabel(receipt.category, t)} - {normalizeDateDisplay(receipt.date, receipt.createdAt)}
+              {receipt.isRecurring ? ` - ${t.recurring}` : receipt.image ? ` - ${t?.photoAvailable || 'photo'}` : ''}
+            </Text>
+            {onSelectReceipt && !receipt.isRecurring && <Text style={styles.rowHint}>{t?.tapForDetails}</Text>}
+          </View>
+          <Text style={isHomeRow ? styles.homeReceiptAmount : styles.rowAmount}>{formatReceiptAmount(receipt)}</Text>
+        </Pressable>
+      </Animated.View>
     </View>
   );
 }
@@ -8763,7 +8959,15 @@ function MerchantList({ merchantGroups, onSelectMerchant, t }) {
   );
 }
 
-function HomeReceiptList({ title, receipts, onSelectReceipt, t }) {
+function HomeReceiptList({
+  title,
+  receipts,
+  onSelectReceipt,
+  onDeleteReceipt,
+  openSwipeReceiptId,
+  setOpenSwipeReceiptId,
+  t,
+}) {
   return (
     <View>
       <Text style={styles.sectionTitle}>{title}</Text>
@@ -8775,21 +8979,16 @@ function HomeReceiptList({ title, receipts, onSelectReceipt, t }) {
           </View>
         )}
         {receipts.map((receipt) => (
-          <Pressable
-            style={styles.homeReceiptRow}
+          <SwipeableReceiptRow
             key={receipt.id}
-            onPress={() => !receipt.isRecurring && onSelectReceipt?.(receipt)}
-            disabled={Boolean(receipt.isRecurring)}
-          >
-            <View style={styles.receiptTextBlock}>
-              <Text style={styles.homeReceiptStore}>{receipt.store}</Text>
-              <Text style={styles.rowMeta}>
-                {getCategoryLabel(receipt.category, t)} - {normalizeDateDisplay(receipt.date, receipt.createdAt)}
-                {receipt.isRecurring ? ` - ${t.recurring}` : ''}
-              </Text>
-            </View>
-            <Text style={styles.homeReceiptAmount}>{formatReceiptAmount(receipt)}</Text>
-          </Pressable>
+            receipt={receipt}
+            onSelectReceipt={onSelectReceipt}
+            onDeleteReceipt={onDeleteReceipt}
+            openSwipeReceiptId={openSwipeReceiptId}
+            setOpenSwipeReceiptId={setOpenSwipeReceiptId}
+            t={t}
+            rowVariant="home"
+          />
         ))}
       </View>
     </View>
@@ -8801,17 +9000,9 @@ function ImagePreviewModal({ imageUri, onClose, closeLabel }) {
     <Modal visible={Boolean(imageUri)} transparent animationType="fade" onRequestClose={onClose}>
       <View style={styles.previewOverlay}>
         {imageUri && (
-          <ScrollView
-            style={styles.previewZoomArea}
-            contentContainerStyle={styles.previewZoomContent}
-            maximumZoomScale={4}
-            minimumZoomScale={1}
-            showsHorizontalScrollIndicator={false}
-            showsVerticalScrollIndicator={false}
-            bouncesZoom
-          >
+          <View style={styles.previewImageFrame}>
             <Image source={{ uri: imageUri }} style={styles.previewImage} />
-          </ScrollView>
+          </View>
         )}
         <Pressable style={styles.previewCloseButton} onPress={onClose}>
           <Text style={styles.previewCloseText}>{closeLabel}</Text>
@@ -8968,16 +9159,6 @@ function ReciroCameraScreen({ t, onCancel, onUsePhoto }) {
         </CameraView>
       )}
 
-      <View style={styles.cameraOverlayTop}>
-        <Pressable style={styles.cameraCloseButton} onPress={onCancel}>
-          <Text style={styles.cameraCloseText}>‹</Text>
-        </Pressable>
-        <View style={styles.cameraTitleBlock}>
-          <Text style={styles.cameraTitle}>Reciro</Text>
-          <Text style={styles.cameraSubtitle}>{t.cameraHint}</Text>
-        </View>
-      </View>
-
       <View style={styles.cameraControls}>
         {capturedUri ? (
           <>
@@ -8996,9 +9177,7 @@ function ReciroCameraScreen({ t, onCancel, onUsePhoto }) {
             <Pressable style={styles.cameraShutterButton} onPress={capturePhoto} disabled={cameraBusy}>
               <View style={styles.cameraShutterInner} />
             </Pressable>
-            <View style={styles.cameraSidePlaceholder}>
-              <Text style={styles.cameraSideText}>{cameraBusy ? '' : t.cameraCapture}</Text>
-            </View>
+            <View style={styles.cameraSidePlaceholder} />
           </>
         )}
       </View>
@@ -9174,7 +9353,6 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontWeight: '900',
     textAlign: 'center',
-    textTransform: 'uppercase',
   },
   homeAmount: {
     color: '#172018',
@@ -9216,6 +9394,9 @@ const styles = StyleSheet.create({
     backgroundColor: '#eaf8ec',
     borderRadius: 8,
     padding: 10,
+  },
+  reportInfoItemWarning: {
+    backgroundColor: '#fff0f0',
   },
   reportInfoLabel: {
     color: '#68766b',
@@ -9407,7 +9588,6 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontWeight: '900',
     letterSpacing: 0.3,
-    textTransform: 'uppercase',
   },
   receiptStartTitle: {
     color: '#172018',
@@ -9470,6 +9650,7 @@ const styles = StyleSheet.create({
     lineHeight: 27,
   },
   detailImageBox: {
+    alignItems: 'center',
     borderRadius: 8,
     overflow: 'hidden',
     borderWidth: 1,
@@ -9480,7 +9661,10 @@ const styles = StyleSheet.create({
   detailImage: {
     width: '100%',
     height: 320,
-    resizeMode: 'cover',
+    resizeMode: 'contain',
+  },
+  detailImagePressable: {
+    width: '100%',
   },
   photoEmpty: {
     minHeight: 190,
@@ -9525,11 +9709,18 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     borderWidth: 1,
     padding: 14,
-    shadowColor: '#0f2415',
-    shadowOffset: { width: 0, height: 10 },
-    shadowOpacity: 0.16,
-    shadowRadius: 24,
-    elevation: 12,
+    ...Platform.select({
+      web: {
+        boxShadow: '0 10px 24px rgba(15, 36, 21, 0.16)',
+      },
+      default: {
+        shadowColor: '#0f2415',
+        shadowOffset: { width: 0, height: 10 },
+        shadowOpacity: 0.16,
+        shadowRadius: 24,
+        elevation: 12,
+      },
+    }),
     zIndex: 2,
   },
   sheetHandle: {
@@ -9583,48 +9774,6 @@ const styles = StyleSheet.create({
   cameraPreviewImage: {
     flex: 1,
     resizeMode: 'contain',
-  },
-  cameraOverlayTop: {
-    alignItems: 'center',
-    left: 18,
-    position: 'absolute',
-    right: 18,
-    top: 18,
-  },
-  cameraCloseButton: {
-    alignItems: 'center',
-    backgroundColor: 'rgba(255,255,255,0.18)',
-    borderRadius: 999,
-    height: 44,
-    justifyContent: 'center',
-    left: 0,
-    position: 'absolute',
-    top: 2,
-    width: 44,
-  },
-  cameraCloseText: {
-    color: '#ffffff',
-    fontSize: 34,
-    fontWeight: '800',
-    lineHeight: 36,
-  },
-  cameraTitleBlock: {
-    alignItems: 'center',
-    backgroundColor: 'rgba(0,0,0,0.26)',
-    borderRadius: 8,
-    paddingHorizontal: 16,
-    paddingVertical: 10,
-  },
-  cameraTitle: {
-    color: '#ffffff',
-    fontSize: 24,
-    fontWeight: '900',
-  },
-  cameraSubtitle: {
-    color: '#d9eadf',
-    fontSize: 13,
-    fontWeight: '800',
-    marginTop: 2,
   },
   cameraFrame: {
     borderColor: 'rgba(255,255,255,0.28)',
@@ -9743,11 +9892,6 @@ const styles = StyleSheet.create({
   cameraSidePlaceholder: {
     alignItems: 'center',
     minWidth: 108,
-  },
-  cameraSideText: {
-    color: '#d9eadf',
-    fontSize: 13,
-    fontWeight: '900',
   },
   cameraTop: {
     backgroundColor: '#ffffff',
@@ -10370,14 +10514,11 @@ const styles = StyleSheet.create({
     paddingBottom: 20,
     paddingTop: 48,
   },
-  previewZoomArea: {
-    flex: 1,
-    width: '100%',
-  },
-  previewZoomContent: {
+  previewImageFrame: {
     alignItems: 'center',
-    flexGrow: 1,
+    flex: 1,
     justifyContent: 'center',
+    width: '100%',
   },
   previewImage: {
     width: '100%',
@@ -10403,6 +10544,31 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
     borderBottomColor: '#edf2ee',
     borderBottomWidth: 1,
+  },
+  swipeReceiptShell: {
+    backgroundColor: '#c62828',
+    overflow: 'hidden',
+    position: 'relative',
+  },
+  swipeReceiptContent: {
+    backgroundColor: '#ffffff',
+    zIndex: 1,
+  },
+  swipeDeleteButton: {
+    alignItems: 'center',
+    backgroundColor: '#c62828',
+    bottom: 0,
+    justifyContent: 'center',
+    position: 'absolute',
+    right: 0,
+    top: 0,
+    width: 96,
+    zIndex: 0,
+  },
+  swipeDeleteText: {
+    color: '#ffffff',
+    fontSize: 13,
+    fontWeight: '900',
   },
   receiptTextBlock: {
     flex: 1,
@@ -10728,18 +10894,6 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: '900',
   },
-  calculateItemsButton: {
-    borderRadius: 8,
-    alignItems: 'center',
-    paddingVertical: 13,
-    backgroundColor: '#e6f5ea',
-    marginTop: 10,
-  },
-  calculateItemsText: {
-    color: '#0d5f2b',
-    fontSize: 14,
-    fontWeight: '900',
-  },
   categoryGrid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
@@ -10790,7 +10944,6 @@ const styles = StyleSheet.create({
     letterSpacing: 0,
     marginBottom: -6,
     marginTop: 18,
-    textTransform: 'uppercase',
   },
   settingsRow: {
     minHeight: 68,
@@ -10899,6 +11052,9 @@ const styles = StyleSheet.create({
     borderTopColor: '#e1e9e2',
     borderTopWidth: 1,
   },
+  pointerEventsBoxNone: {
+    pointerEvents: 'box-none',
+  },
   edgeBackZone: {
     bottom: 104,
     left: 0,
@@ -10914,11 +11070,18 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     flexDirection: 'row',
     padding: 5,
-    shadowColor: '#0f2415',
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.12,
-    shadowRadius: 18,
-    elevation: 8,
+    ...Platform.select({
+      web: {
+        boxShadow: '0 8px 18px rgba(15, 36, 21, 0.12)',
+      },
+      default: {
+        shadowColor: '#0f2415',
+        shadowOffset: { width: 0, height: 8 },
+        shadowOpacity: 0.12,
+        shadowRadius: 18,
+        elevation: 8,
+      },
+    }),
   },
   navButton: {
     flex: 1,
