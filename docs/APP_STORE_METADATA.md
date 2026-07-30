@@ -39,7 +39,7 @@ Key features:
 - Save receipt photos so you can view them later
 - Add custom categories when the default categories are not enough
 - Multi-language support: English, Turkish, French, German, Spanish, Italian, Portuguese, and Dutch
-- Currency support for Turkish Lira, Euro, and British Pound
+- Currency support for Turkish Lira, Euro, British Pound, and US Dollar
 
 Reciro is built for simple daily use: scan, save, and simplify.
 

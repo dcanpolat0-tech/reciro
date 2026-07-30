@@ -127,14 +127,14 @@ denizcanpolat2307@gmail.com
 - Terms of Use URL: https://reciro-receipt-analysis.onrender.com/terms
 
 ## Magaza Oncesi Kontrol Listesi
-- Google Play gelistirici hesabi onaylandi
-- App Store Connect hesabi aktif
-- Android AAB build alindi
-- iOS build hazirlandi
-- AdMob odeme profili tamamlandi
-- AdMob Android ve iOS reklam birimleri olusturuldu
-- RevenueCat aylik ve yillik urunlerle baglandi
-- Gizlilik politikasi linki hazir
-- Kullanim sartlari linki hazir
-- Ekran goruntuleri hazir
-- Uygulama icinde gercek premium satin alma testi yapildi
+- [ ] Google Play gelistirici hesabi onaylandi
+- [ ] App Store Connect hesabi aktif
+- [ ] Android production AAB build alindi
+- [ ] iOS production build hazirlandi
+- [ ] AdMob odeme profili tamamlandi
+- [x] AdMob Android ve iOS odullu reklam birimleri olusturuldu
+- [ ] RevenueCat aylik ve yillik urunlerle baglanacak
+- [x] Gizlilik politikasi linki hazir
+- [x] Kullanim sartlari linki hazir
+- [ ] Ekran goruntuleri hazir
+- [ ] Uygulama icinde gercek premium satin alma testi yapilacak

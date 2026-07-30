@@ -773,10 +773,10 @@ const translations = {
     premiumYearly: 'Annuel: €21,49 (-10%)',
     premiumBenefits: [
       'Analyses AI illimitees',
-      'Rapports par magasin',
+      'Analyse des tickets PDF et photo',
+      'Rapports produits, categories et magasins',
       'Analyse mensuelle des produits',
-      'Export PDF / Excel bientot',
-      'Sauvegarde cloud bientot',
+      'Utilisation sans publicite',
     ],
     startPremium: 'Passer Premium',
     premiumSetupTitle: 'Premium bientot',
@@ -1024,10 +1024,10 @@ const translations = {
     premiumYearly: 'Jaehrlich: €21,49 (10% Rabatt)',
     premiumBenefits: [
       'Unbegrenzte AI-Beleganalysen',
-      'Berichte nach Geschaeft',
+      'PDF- und Foto-Beleganalyse',
+      'Produkt-, Kategorie- und Geschaeftsberichte',
       'Monatliche Produktanalyse',
-      'PDF / Excel Export bald',
-      'Cloud-Backup bald',
+      'Werbefreie Nutzung',
     ],
     startPremium: 'Premium aktivieren',
     premiumSetupTitle: 'Premium kommt bald',
@@ -1275,10 +1275,10 @@ const translations = {
     premiumYearly: 'Anual: €21,49 (10% desc.)',
     premiumBenefits: [
       'Analisis AI ilimitado',
-      'Reportes por tienda',
+      'Analisis de tickets PDF y foto',
+      'Reportes de productos, categorias y tiendas',
       'Analisis mensual de productos',
-      'Exportar PDF / Excel pronto',
-      'Copia en la nube pronto',
+      'Uso sin anuncios',
     ],
     startPremium: 'Pasar a Premium',
     premiumSetupTitle: 'Premium pronto',
@@ -2305,7 +2305,7 @@ Object.assign(translations.it, {
   premiumSubtitle: "Scansioni illimitate, report prodotti e uso senza pubblicita.",
   premiumMonthly: "Mensile: €1.99",
   premiumYearly: "Annuale: €21.49 (10% sconto)",
-  premiumBenefits: ["Scansioni illimitate AI degli scontrini", "Report negozi e commercianti", "Analisi prodotti mensile", "Esportazione PDF / Excel presto", "Backup cloud presto"],
+  premiumBenefits: ["Scansioni illimitate AI degli scontrini", "Analisi PDF e foto degli scontrini", "Report prodotti, categorie e negozi", "Analisi prodotti mensile", "Uso senza pubblicita"],
   startPremium: "Attiva Premium",
   premiumSetupTitle: "Premium in arrivo",
   premiumSetupText: "Gli abbonamenti reali saranno collegati tramite acquisti App Store e Google Play.",
@@ -2505,7 +2505,7 @@ Object.assign(translations.pt, {
   premiumSubtitle: "Digitalizações ilimitadas de recibos, relatórios de produtos e uso sem anúncios.",
   premiumMonthly: "Mensal: €1.99",
   premiumYearly: "Anual: €21.49 (10% desc.)",
-  premiumBenefits: ["Digitalizações ilimitadas de recibos com IA", "Relatórios de lojas e comerciantes", "Análise mensal de produtos", "Exportação PDF / Excel em breve", "Cópia de segurança na nuvem em breve"],
+  premiumBenefits: ["Digitalizações ilimitadas de recibos com IA", "Análise de recibos em PDF e foto", "Relatórios de produtos, categorias e lojas", "Análise mensal de produtos", "Uso sem anúncios"],
   startPremium: "Tornar-se Premium",
   premiumSetupTitle: "Premium em breve",
   premiumSetupText: "As subscrições reais serão ligadas através de compras na App Store e Google Play.",
@@ -2705,7 +2705,7 @@ Object.assign(translations.nl, {
   premiumSubtitle: "Onbeperkt bonnen scannen, productrapporten en reclamevrij gebruik.",
   premiumMonthly: "Maandelijks: €1.99",
   premiumYearly: "Jaarlijks: €21.49 (10% korting)",
-  premiumBenefits: ["Onbeperkt AI bonnen scannen", "Winkel- en verkopersrapporten", "Maandelijkse productanalyse", "PDF / Excel export binnenkort", "Cloud backup binnenkort"],
+  premiumBenefits: ["Onbeperkt AI bonnen scannen", "PDF- en foto-bonanalyse", "Product-, categorie- en winkelrapporten", "Maandelijkse productanalyse", "Reclamevrij gebruik"],
   startPremium: "Word Premium",
   premiumSetupTitle: "Premium komt binnenkort",
   premiumSetupText: "Echte abonnementen worden verbonden via App Store en Google Play aankopen.",
@@ -4984,11 +4984,7 @@ export default function App() {
     () =>
       visibleReceipts
         .filter((receipt) => !receipt.isRecurring)
-        .sort(
-          (first, second) =>
-            (second.createdAt || second.id || getReceiptTime(second)) -
-            (first.createdAt || first.id || getReceiptTime(first))
-        )
+        .sort((first, second) => getReceiptTime(second) - getReceiptTime(first))
         .slice(0, 3),
     [visibleReceipts]
   );
@@ -8830,7 +8826,7 @@ function AuthStartScreen({ onChoose, t }) {
     <View style={styles.authScreen}>
       <View style={styles.authHeader}>
         <View style={styles.authLogoLarge}>
-          <Text style={styles.authLogoText}>N</Text>
+          <Text style={styles.authLogoText}>R</Text>
         </View>
         <Text style={styles.authBrandName}>Reciro</Text>
         <Text style={styles.authTitle}>{t.welcomeTitle}</Text>
