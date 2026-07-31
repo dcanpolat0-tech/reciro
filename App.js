@@ -33,7 +33,7 @@ const RECEIPTS_STORAGE_KEY = 'reciro.receipts.v2';
 const SALARY_STORAGE_KEY = 'reciro.salary.v1';
 const INCOME_BY_MONTH_STORAGE_KEY = 'reciro.incomeByMonth.v1';
 const CURRENCY_STORAGE_KEY = 'reciro.currency.v1';
-const AUTH_CHOICE_STORAGE_KEY = 'reciro.authChoice.v1';
+const AUTH_PROVIDER_STORAGE_KEY = 'reciro.authProvider.v1';
 const ANALYSIS_USAGE_STORAGE_KEY = 'reciro.analysisUsage.v1';
 const CATEGORY_MEMORY_STORAGE_KEY = 'reciro.categoryMemory.v1';
 const BUDGETS_STORAGE_KEY = 'reciro.budgets.v1';
@@ -62,7 +62,6 @@ const ANALYSIS_IMAGE_QUALITY = 0.55;
 const ANALYSIS_REQUEST_TIMEOUT_MS = 35000;
 const EXCHANGE_RATE_ENDPOINT = 'https://api.frankfurter.dev/v2/rates';
 const FREE_MONTHLY_ANALYSIS_LIMIT = 5;
-const ENABLE_START_ACCOUNT_GATE = false;
 const ENABLE_PREMIUM_PAYWALL = true;
 const ENABLE_REWARDED_ADS = true;
 const ADMOB_ANDROID_REWARDED_AD_UNIT_ID = 'ca-app-pub-8547815405822008/8421426783';
@@ -282,21 +281,22 @@ const translations = {
     premiumSetupTitle: 'Premium yakında',
     premiumSetupText: 'Gerçek abonelik için App Store ve Google Play satın alma sistemi bağlanacak.',
     viewPremium: 'Premium’u Gör',
-    accountSync: 'Hesap ve bulut',
-    accountSyncInfo: 'Telefon değiştirince verilerini geri almak için hesap seçimi burada tutulur.',
+    accountSync: 'Premium ve satın alma',
+    accountSyncInfo: 'Verilerin bu telefonda kalır. Premium ve satın alma işlemleri mağaza hesabınla yönetilir.',
     welcomeTitle: 'Hesabını seç',
-    welcomeText: 'Harcamalarını takip etmeye başla.',
+    welcomeText: 'Verilerin telefonda kalır. Yedeklerini kendi iCloud Drive veya Google Drive hesabında saklayabilirsin.',
     chooseAccount: 'Devam et',
     signedInWith: (provider) => `${provider} seçildi`,
+    signInWithApple: 'Apple ile devam et',
     signOut: 'Çıkış Yap',
     signOutTitle: 'Hesaptan çık',
     signOutMessage: 'Çıkış yaparsan uygulama tekrar başlangıç ekranına döner. Kayıtlı fişlerin telefonda kalır.',
     signOutConfirm: 'Çıkış yap',
-    notSignedIn: 'Bulut hesabı bağlı değil',
+    notSignedIn: 'Veriler bu telefonda',
     signInWithGoogle: 'Google ile Giriş Yap',
     signInWithICloud: 'iCloud ile Bağlan',
-    cloudSetupNeededTitle: 'Bulut girişi hazır değil',
-    cloudSetupNeededText: 'Gerçek giriş için Google/Firebase veya Apple iCloud kurulumu yapılmalı. Ekran hazır, servis bağlanınca aktif olacak.',
+    cloudSetupNeededTitle: 'Veriler cihazda saklanır',
+    cloudSetupNeededText: 'Reciro fişlerini kendi sunucusunda saklamaz. Yedeklerini Verilerim bölümünden kendin dışa aktarabilirsin.',
     dataBackup: 'Veri ve yedekleme',
     createBackup: 'Yedek Oluştur',
     restoreBackup: 'Son Yedeği Geri Yükle',
@@ -308,7 +308,7 @@ const translations = {
     backupErrorText: 'Yedekleme işlemi tamamlanamadı.',
     noBackupTitle: 'Yedek yok',
     noBackupText: 'Geri yüklenecek bir yedek bulunamadı.',
-    backupInfo: 'Fişler, gelirler ve para birimi telefonda yedeklenir.',
+    backupInfo: 'Fişler, gelirler ve ayarların bu telefonda kalır. Yedeği kendi iCloud, Google Drive veya dosyalarına kaydedebilirsin.',
     feedback: 'Geri bildirim',
     feedbackInfo: 'Öneri, hata veya isteklerini bize gönder.',
     feedbackTitle: 'Bize neyi düzeltelim?',
@@ -532,21 +532,22 @@ const translations = {
     premiumSetupTitle: 'Premium coming soon',
     premiumSetupText: 'Real subscriptions will be connected through App Store and Google Play purchases.',
     viewPremium: 'View Premium',
-    accountSync: 'Account and cloud',
-    accountSyncInfo: 'Your account choice is kept here so data recovery can be connected later.',
+    accountSync: 'Premium and purchases',
+    accountSyncInfo: 'Your data stays on this phone. Premium and purchases are managed by your store account.',
     welcomeTitle: 'Choose your account',
-    welcomeText: 'Start tracking your spending.',
+    welcomeText: 'Your data stays on this phone. You can keep your backups in your own iCloud Drive or Google Drive.',
     chooseAccount: 'Continue',
     signedInWith: (provider) => `${provider} selected`,
+    signInWithApple: 'Continue with Apple',
     signOut: 'Sign out',
     signOutTitle: 'Sign out',
     signOutMessage: 'If you sign out, the app will return to the start screen. Saved receipts stay on this phone.',
     signOutConfirm: 'Sign out',
-    notSignedIn: 'Cloud account not connected',
+    notSignedIn: 'Data stays on this phone',
     signInWithGoogle: 'Sign in with Google',
     signInWithICloud: 'Connect iCloud',
-    cloudSetupNeededTitle: 'Cloud sign-in is not ready',
-    cloudSetupNeededText: 'Real sign-in needs Google/Firebase or Apple iCloud setup. The screen is ready and will become active once the service is connected.',
+    cloudSetupNeededTitle: 'Data is stored on-device',
+    cloudSetupNeededText: 'Reciro does not store your receipts on its own servers. You can export your own backup from My data.',
     dataBackup: 'Data and backup',
     createBackup: 'Create backup',
     restoreBackup: 'Restore latest backup',
@@ -558,7 +559,7 @@ const translations = {
     backupErrorText: 'Backup could not be completed.',
     noBackupTitle: 'No backup',
     noBackupText: 'No backup was found to restore.',
-    backupInfo: 'Receipts, income, and currency are backed up on this phone.',
+    backupInfo: 'Receipts, income, and settings stay on this phone. You can save the backup to your own iCloud, Google Drive, or files.',
     feedback: 'Feedback',
     feedbackInfo: 'Send suggestions, bugs, or feature requests.',
     feedbackTitle: 'What should we improve?',
@@ -782,33 +783,34 @@ const translations = {
     premiumSetupTitle: 'Premium bientot',
     premiumSetupText: 'Les abonnements reels seront connectes via l App Store et Google Play.',
     viewPremium: 'Voir Premium',
-    accountSync: 'Compte et cloud',
-    accountSyncInfo: 'Le choix du compte est conserve ici pour connecter la recuperation plus tard.',
+    accountSync: 'Premium et achats',
+    accountSyncInfo: 'Vos donnees restent sur ce telephone. Premium et les achats sont geres par votre compte de magasin.',
     welcomeTitle: 'Choisissez votre compte',
-    welcomeText: 'Commencez a suivre vos depenses.',
+    welcomeText: 'Vos donnees restent sur ce telephone. Vous pouvez garder vos sauvegardes dans votre iCloud Drive ou Google Drive.',
     chooseAccount: 'Continuer',
     signedInWith: (provider) => `${provider} selectionne`,
+    signInWithApple: 'Continuer avec Apple',
     signOut: 'Se deconnecter',
     signOutTitle: 'Deconnexion',
     signOutMessage: 'En vous deconnectant, l app revient a l ecran de depart. Les tickets restent sur ce telephone.',
     signOutConfirm: 'Se deconnecter',
-    notSignedIn: 'Compte cloud non connecte',
+    notSignedIn: 'Donnees sur ce telephone',
     signInWithGoogle: 'Se connecter avec Google',
     signInWithICloud: 'Connecter iCloud',
-    cloudSetupNeededTitle: 'Connexion cloud non prete',
-    cloudSetupNeededText: 'La vraie connexion necessite Google/Firebase ou Apple iCloud. L ecran est pret et sera actif apres connexion du service.',
+    cloudSetupNeededTitle: 'Donnees stockees sur l appareil',
+    cloudSetupNeededText: 'Reciro ne stocke pas vos tickets sur ses serveurs. Creez une sauvegarde dans Mes donnees et gardez-la dans iCloud Drive, Google Drive ou Fichiers.',
     dataBackup: 'Donnees et sauvegarde',
     createBackup: 'Creer une sauvegarde',
-    restoreBackup: 'Restaurer la derniere sauvegarde',
+    restoreBackup: 'Choisir une sauvegarde',
     backupReady: 'Sauvegarde prete',
     backupReadyText: (fileName) => `Sauvegarde creee: ${fileName}`,
     backupRestored: 'Sauvegarde restauree',
     backupRestoredText: 'Tickets, revenus et devise ont ete restaures.',
     backupError: 'Erreur de sauvegarde',
     backupErrorText: 'La sauvegarde n a pas pu etre terminee.',
-    noBackupTitle: 'Aucune sauvegarde',
-    noBackupText: 'Aucune sauvegarde a restaurer.',
-    backupInfo: 'Tickets, revenus et devise sont sauvegardes sur ce telephone.',
+    noBackupTitle: 'Aucun fichier choisi',
+    noBackupText: 'Choisissez un fichier de sauvegarde Reciro pour restaurer vos donnees.',
+    backupInfo: 'Tickets, revenus et reglages restent sur ce telephone. Vous pouvez garder la sauvegarde dans votre iCloud Drive, Google Drive ou Fichiers.',
     feedback: 'Avis',
     feedbackInfo: 'Envoyez une idee, un bug ou une demande.',
     feedbackTitle: 'Que devons-nous ameliorer ?',
@@ -1032,33 +1034,34 @@ const translations = {
     premiumSetupTitle: 'Premium kommt bald',
     premiumSetupText: 'Echte Abos werden ueber App Store und Google Play Kaeufe verbunden.',
     viewPremium: 'Premium ansehen',
-    accountSync: 'Konto und Cloud',
-    accountSyncInfo: 'Die Kontoauswahl wird hier gespeichert, damit Wiederherstellung spaeter verbunden werden kann.',
+    accountSync: 'Premium und Kaeufe',
+    accountSyncInfo: 'Deine Daten bleiben auf diesem Telefon. Premium und Kaeufe werden ueber dein Store-Konto verwaltet.',
     welcomeTitle: 'Konto auswaehlen',
-    welcomeText: 'Beginne mit dem Verfolgen deiner Ausgaben.',
+    welcomeText: 'Deine Daten bleiben auf diesem Telefon. Backups kannst du in deinem iCloud Drive oder Google Drive speichern.',
     chooseAccount: 'Fortfahren',
     signedInWith: (provider) => `${provider} ausgewaehlt`,
+    signInWithApple: 'Mit Apple fortfahren',
     signOut: 'Abmelden',
     signOutTitle: 'Abmelden',
     signOutMessage: 'Nach dem Abmelden kehrt die App zum Startbildschirm zurueck. Gespeicherte Belege bleiben auf dem Telefon.',
     signOutConfirm: 'Abmelden',
-    notSignedIn: 'Cloud-Konto nicht verbunden',
+    notSignedIn: 'Daten bleiben auf diesem Telefon',
     signInWithGoogle: 'Mit Google anmelden',
     signInWithICloud: 'iCloud verbinden',
-    cloudSetupNeededTitle: 'Cloud-Anmeldung nicht bereit',
-    cloudSetupNeededText: 'Echte Anmeldung braucht Google/Firebase oder Apple iCloud. Der Bildschirm ist bereit und wird nach Service-Anbindung aktiv.',
+    cloudSetupNeededTitle: 'Daten werden auf dem Geraet gespeichert',
+    cloudSetupNeededText: 'Reciro speichert deine Belege nicht auf eigenen Servern. Erstelle unter Meine Daten ein Backup und bewahre es in iCloud Drive, Google Drive oder Dateien auf.',
     dataBackup: 'Daten und Backup',
     createBackup: 'Backup erstellen',
-    restoreBackup: 'Letztes Backup wiederherstellen',
+    restoreBackup: 'Backup-Datei waehlen',
     backupReady: 'Backup bereit',
     backupReadyText: (fileName) => `Backup erstellt: ${fileName}`,
     backupRestored: 'Backup wiederhergestellt',
     backupRestoredText: 'Belege, Einkommen und Waehrung wurden wiederhergestellt.',
     backupError: 'Backup-Fehler',
     backupErrorText: 'Backup konnte nicht abgeschlossen werden.',
-    noBackupTitle: 'Kein Backup',
-    noBackupText: 'Kein Backup zum Wiederherstellen gefunden.',
-    backupInfo: 'Belege, Einkommen und Waehrung werden auf diesem Telefon gesichert.',
+    noBackupTitle: 'Keine Datei gewaehlt',
+    noBackupText: 'Waehle eine Reciro-Backup-Datei, um deine Daten wiederherzustellen.',
+    backupInfo: 'Belege, Einkommen und Einstellungen bleiben auf diesem Telefon. Du kannst das Backup in iCloud Drive, Google Drive oder Dateien speichern.',
     feedback: 'Feedback',
     feedbackInfo: 'Sende Ideen, Fehler oder Wuensche.',
     feedbackTitle: 'Was sollen wir verbessern?',
@@ -1282,33 +1285,34 @@ const translations = {
     premiumSetupTitle: 'Premium pronto',
     premiumSetupText: 'Las suscripciones reales se conectaran con compras de App Store y Google Play.',
     viewPremium: 'Ver Premium',
-    accountSync: 'Cuenta y nube',
-    accountSyncInfo: 'La opcion de cuenta se guarda aqui para conectar la recuperacion mas adelante.',
+    accountSync: 'Premium y compras',
+    accountSyncInfo: 'Tus datos se quedan en este telefono. Premium y las compras se gestionan con tu cuenta de la tienda.',
     welcomeTitle: 'Elige tu cuenta',
-    welcomeText: 'Empieza a controlar tus gastos.',
+    welcomeText: 'Tus datos se quedan en este telefono. Puedes guardar tus copias en tu iCloud Drive o Google Drive.',
     chooseAccount: 'Continuar',
     signedInWith: (provider) => `${provider} seleccionado`,
+    signInWithApple: 'Continuar con Apple',
     signOut: 'Cerrar sesion',
     signOutTitle: 'Cerrar sesion',
     signOutMessage: 'Si cierras sesion, la app volvera a la pantalla inicial. Los tickets guardados permanecen en este telefono.',
     signOutConfirm: 'Cerrar sesion',
-    notSignedIn: 'Cuenta cloud no conectada',
+    notSignedIn: 'Datos en este telefono',
     signInWithGoogle: 'Entrar con Google',
     signInWithICloud: 'Conectar iCloud',
-    cloudSetupNeededTitle: 'Inicio en nube no listo',
-    cloudSetupNeededText: 'El inicio real necesita Google/Firebase o Apple iCloud. La pantalla esta lista y se activara al conectar el servicio.',
+    cloudSetupNeededTitle: 'Datos guardados en el dispositivo',
+    cloudSetupNeededText: 'Reciro no guarda tus tickets en sus servidores. Crea una copia desde Mis datos y guardala en iCloud Drive, Google Drive o Archivos.',
     dataBackup: 'Datos y copia',
     createBackup: 'Crear copia',
-    restoreBackup: 'Restaurar ultima copia',
+    restoreBackup: 'Elegir copia',
     backupReady: 'Copia lista',
     backupReadyText: (fileName) => `Copia creada: ${fileName}`,
     backupRestored: 'Copia restaurada',
     backupRestoredText: 'Tickets, ingresos y moneda fueron restaurados.',
     backupError: 'Error de copia',
     backupErrorText: 'No se pudo completar la copia.',
-    noBackupTitle: 'Sin copia',
-    noBackupText: 'No se encontro ninguna copia para restaurar.',
-    backupInfo: 'Tickets, ingresos y moneda se guardan en este telefono.',
+    noBackupTitle: 'Ningun archivo elegido',
+    noBackupText: 'Elige un archivo de copia de Reciro para restaurar tus datos.',
+    backupInfo: 'Tickets, ingresos y ajustes se quedan en este telefono. Puedes guardar la copia en iCloud Drive, Google Drive o Archivos.',
     feedback: 'Comentarios',
     feedbackInfo: 'Envia sugerencias, errores o ideas.',
     feedbackTitle: 'Que deberiamos mejorar?',
@@ -1441,7 +1445,7 @@ const featureTranslations = {
     moneyAndBudget: 'Money and budget',
     receiptAndAnalysis: 'Receipt and analysis',
     dataControls: 'My data',
-    accountAndPremium: 'Account and premium',
+    accountAndPremium: 'Premium and purchases',
     supportAndFeedback: 'Support and feedback',
     privacyAndLegal: 'Privacy and legal',
     autoAnalyzeReceipts: 'Automatic receipt analysis',
@@ -1462,10 +1466,10 @@ const featureTranslations = {
     deleteAccount: 'Delete account',
     deleteAccountInfo: 'Ask us to delete account and sync data.',
     deleteAccountTitle: 'Delete account request',
-    deleteAccountText: 'This opens an email request. Local receipts on this phone can be removed from My data.',
+    deleteAccountText: 'Reciro does not keep a cloud account for your receipts. Local receipts can be removed from My data.',
     sendDeleteRequest: 'Send request',
     privacySummary: 'Receipt photos are stored on this phone unless you turn photo storage off. AI analysis sends the selected receipt image to the analysis service to read store, date, total and items.',
-    privacyPolicyText: 'Reciro stores receipts, income, budgets, monthly payments and preferences locally on this phone. If receipt photo storage is enabled, receipt images are also kept locally. When AI analysis is used, the selected receipt image is sent to the receipt analysis service only to extract store, date, totals, categories and line items. Reciro does not sell personal data and does not use receipt content for advertising. You can export, back up or delete local data from My data. Account deletion requests can be started from Account and premium.',
+    privacyPolicyText: 'Reciro stores receipts, income, budgets, monthly payments and preferences locally on this phone. If receipt photo storage is enabled, receipt images are also kept locally. When AI analysis is used, the selected receipt image is sent to the receipt analysis service only to extract store, date, totals, categories and line items. Reciro does not sell personal data, does not use receipt content for advertising, and does not store receipt backups on its own servers. You can export, back up or delete local data from My data.',
     privacyPolicy: 'Privacy policy',
     termsOfUse: 'Terms of use',
     termsOfUseText: 'Reciro helps track receipts, spending, products and monthly payments. AI receipt analysis may be imperfect, so users should review important amounts, dates and categories before relying on reports. The app is provided for personal expense tracking and is not financial, tax or legal advice. Users are responsible for keeping backups of important data and for complying with local rules about receipts, invoices and accounting.',
@@ -1530,7 +1534,7 @@ const featureTranslations = {
     moneyAndBudget: 'Para ve bütçe',
     receiptAndAnalysis: 'Fiş ve analiz',
     dataControls: 'Verilerim',
-    accountAndPremium: 'Hesap ve premium',
+    accountAndPremium: 'Premium ve satın alma',
     supportAndFeedback: 'Yardım ve geri bildirim',
     privacyAndLegal: 'Gizlilik ve yasal',
     autoAnalyzeReceipts: 'Otomatik fiş analizi',
@@ -1551,10 +1555,10 @@ const featureTranslations = {
     deleteAccount: 'Hesabı sil',
     deleteAccountInfo: 'Hesap ve senkronizasyon verileri için silme talebi gönder.',
     deleteAccountTitle: 'Hesap silme talebi',
-    deleteAccountText: 'E-posta ile talep gönderilir. Telefondaki yerel fişleri Verilerim bölümünden silebilirsin.',
+    deleteAccountText: 'Reciro fişlerin için bulut hesabı tutmaz. Telefondaki yerel fişleri Verilerim bölümünden silebilirsin.',
     sendDeleteRequest: 'Talep gönder',
     privacySummary: 'Fiş fotoğrafları, fotoğraf saklama kapalı değilse bu telefonda tutulur. AI analizi, mağaza, tarih, toplam ve ürünleri okumak için seçilen fiş görselini analiz servisine gönderir.',
-    privacyPolicyText: 'Reciro; fişleri, gelirleri, bütçeleri, aylık ödemeleri ve tercihleri bu telefonda yerel olarak saklar. Fiş fotoğrafı saklama açıksa fiş görselleri de yerel olarak tutulur. AI analizi kullanıldığında seçilen fiş görseli yalnızca mağaza, tarih, toplam, kategori ve ürün satırlarını okumak için analiz servisine gönderilir. Reciro kişisel verileri satmaz ve fiş içeriklerini reklam amacıyla kullanmaz. Yerel verilerini Verilerim bölümünden dışa aktarabilir, yedekleyebilir veya silebilirsin. Hesap silme talebi Hesap ve premium bölümünden başlatılabilir.',
+    privacyPolicyText: 'Reciro; fişleri, gelirleri, bütçeleri, aylık ödemeleri ve tercihleri bu telefonda yerel olarak saklar. Fiş fotoğrafı saklama açıksa fiş görselleri de yerel olarak tutulur. AI analizi kullanıldığında seçilen fiş görseli yalnızca mağaza, tarih, toplam, kategori ve ürün satırlarını okumak için analiz servisine gönderilir. Reciro kişisel verileri satmaz, fiş içeriklerini reklam amacıyla kullanmaz ve fiş yedeklerini kendi sunucularında saklamaz. Yerel verilerini Verilerim bölümünden dışa aktarabilir, yedekleyebilir veya silebilirsin.',
     privacyPolicy: 'Gizlilik politikası',
     termsOfUse: 'Kullanım şartları',
     termsOfUseText: 'Reciro fiş, harcama, ürün ve aylık ödeme takibi için yardımcı olur. AI fiş analizi her zaman kusursuz olmayabilir; bu yüzden önemli tutar, tarih ve kategorileri raporlara güvenmeden önce kontrol etmek kullanıcının sorumluluğundadır. Uygulama kişisel harcama takibi içindir; finansal, vergi veya hukuki danışmanlık değildir. Önemli verilerin yedeğini almak ve fiş/fatura/muhasebe kurallarına uymak kullanıcının sorumluluğundadır.',
@@ -1775,7 +1779,7 @@ translations.it = {
   restoreBackup: 'Ripristina backup',
   exportCsv: 'Esporta CSV',
   feedback: 'Feedback',
-  accountSync: 'Account e cloud',
+  accountSync: 'Premium e acquisti',
   signOut: 'Esci',
   premium: 'Premium',
   deleteReceipt: 'Elimina scontrino',
@@ -1847,7 +1851,7 @@ translations.pt = {
   restoreBackup: 'Restaurar backup',
   exportCsv: 'Exportar CSV',
   feedback: 'Feedback',
-  accountSync: 'Conta e cloud',
+  accountSync: 'Premium e compras',
   signOut: 'Terminar sessao',
   premium: 'Premium',
   deleteReceipt: 'Eliminar recibo',
@@ -1919,7 +1923,7 @@ translations.nl = {
   restoreBackup: 'Back-up herstellen',
   exportCsv: 'CSV exporteren',
   feedback: 'Feedback',
-  accountSync: 'Account en cloud',
+  accountSync: 'Premium en aankopen',
   signOut: 'Uitloggen',
   premium: 'Premium',
   deleteReceipt: 'Bon verwijderen',
@@ -2099,7 +2103,7 @@ Object.assign(featureTranslations.fr, {
   privacyAndLegal: "Confidentialite et legal",
   privacySummary: "Les photos des tickets sont stockees sur ce telephone sauf si vous desactivez le stockage des photos. L'analyse IA envoie l'image du ticket selectionne au service d'analyse pour lire le magasin, la date, le total et les articles.",
   privacyPolicy: "Politique de confidentialite",
-  privacyPolicyText: "Reciro stocke les tickets, revenus, budgets, paiements mensuels et preferences localement sur ce telephone. Si le stockage des photos de tickets est active, les images sont egalement conservees localement. Lors de l'utilisation de l'analyse IA, l'image du ticket selectionne est envoyee au service d'analyse uniquement pour extraire le magasin, la date, les totaux, categories et articles. Reciro ne vend pas de donnees personnelles et n'utilise pas le contenu des tickets pour la publicite. Vous pouvez exporter, sauvegarder ou supprimer les donnees locales depuis Mes donnees. Les demandes de suppression de compte peuvent etre lancees depuis Compte et premium.",
+  privacyPolicyText: "Reciro stocke les tickets, revenus, budgets, paiements mensuels et preferences localement sur ce telephone. Si le stockage des photos de tickets est active, les images sont egalement conservees localement. Lors de l'utilisation de l'analyse IA, l'image du ticket selectionne est envoyee au service d'analyse uniquement pour extraire le magasin, la date, les totaux, categories et articles. Reciro ne vend pas de donnees personnelles, n'utilise pas le contenu des tickets pour la publicite et ne stocke pas de sauvegardes de tickets sur ses propres serveurs. Vous pouvez exporter, sauvegarder ou supprimer les donnees locales depuis Mes donnees.",
   termsOfUse: "Conditions d'utilisation",
   termsOfUseText: "Reciro aide a suivre les tickets, depenses, produits et paiements mensuels. L'analyse IA des tickets peut etre imperfecte, les utilisateurs doivent verifier les montants, dates et categories importants avant de se fier aux rapports. L'application est fournie pour le suivi personnel des depenses et ne constitue pas un conseil financier, fiscal ou juridique. Les utilisateurs sont responsables de sauvegarder les donnees importantes et de respecter les regles locales concernant tickets, factures et comptabilite.",
   appVersion: "Version de l'application",
@@ -2140,7 +2144,7 @@ Object.assign(featureTranslations.de, {
   privacyAndLegal: "Datenschutz und Rechtliches",
   privacySummary: "Quittungsfotos werden auf diesem Telefon gespeichert, sofern die Fotospeicherung nicht deaktiviert ist. Die KI-Analyse sendet das ausgewählte Quittungsbild an den Analyse-Service, um Geschäft, Datum, Gesamtbetrag und Artikel zu lesen.",
   privacyPolicy: "Datenschutzerklärung",
-  privacyPolicyText: "Reciro speichert Quittungen, Einkommen, Budgets, monatliche Zahlungen und Einstellungen lokal auf diesem Telefon. Wenn die Fotospeicherung aktiviert ist, werden Quittungsbilder ebenfalls lokal gespeichert. Bei Nutzung der KI-Analyse wird das ausgewählte Quittungsbild nur zum Extrahieren von Geschäft, Datum, Gesamtbeträgen, Kategorien und Positionen an den Analyse-Service gesendet. Reciro verkauft keine persönlichen Daten und nutzt Quittungsinhalte nicht für Werbung. Du kannst lokale Daten unter Meine Daten exportieren, sichern oder löschen. Konto-Löschanfragen können unter Konto und Premium gestartet werden.",
+  privacyPolicyText: "Reciro speichert Quittungen, Einkommen, Budgets, monatliche Zahlungen und Einstellungen lokal auf diesem Telefon. Wenn die Fotospeicherung aktiviert ist, werden Quittungsbilder ebenfalls lokal gespeichert. Bei Nutzung der KI-Analyse wird das ausgewählte Quittungsbild nur zum Extrahieren von Geschäft, Datum, Gesamtbeträgen, Kategorien und Positionen an den Analyse-Service gesendet. Reciro verkauft keine persönlichen Daten, nutzt Quittungsinhalte nicht für Werbung und speichert keine Beleg-Backups auf eigenen Servern. Du kannst lokale Daten unter Meine Daten exportieren, sichern oder löschen.",
   termsOfUse: "Nutzungsbedingungen",
   termsOfUseText: "Reciro hilft beim Verfolgen von Quittungen, Ausgaben, Produkten und monatlichen Zahlungen. Die KI-Quittungsanalyse kann ungenau sein, daher sollten Nutzer wichtige Beträge, Daten und Kategorien vor der Nutzung der Berichte prüfen. Die App dient der persönlichen Ausgabenverfolgung und ist keine Finanz-, Steuer- oder Rechtsberatung. Nutzer sind verantwortlich für Sicherungen wichtiger Daten und die Einhaltung lokaler Vorschriften zu Quittungen, Rechnungen und Buchhaltung.",
   appVersion: "App-Version",
@@ -2181,7 +2185,7 @@ Object.assign(featureTranslations.es, {
   privacyAndLegal: "Privacidad y legal",
   privacySummary: "Las fotos de recibos se almacenan en este teléfono a menos que desactives el almacenamiento de fotos. El análisis AI envía la imagen del recibo seleccionado al servicio de análisis para leer tienda, fecha, total y artículos.",
   privacyPolicy: "Política de privacidad",
-  privacyPolicyText: "Reciro almacena recibos, ingresos, presupuestos, pagos mensuales y preferencias localmente en este teléfono. Si el almacenamiento de fotos de recibos está activado, las imágenes también se guardan localmente. Cuando se usa análisis AI, la imagen del recibo seleccionada se envía al servicio de análisis solo para extraer tienda, fecha, totales, categorías y artículos. Reciro no vende datos personales ni usa contenido de recibos para publicidad. Puedes exportar, respaldar o eliminar datos locales desde Mis datos. Las solicitudes de eliminación de cuenta pueden iniciarse desde Cuenta y premium.",
+  privacyPolicyText: "Reciro almacena recibos, ingresos, presupuestos, pagos mensuales y preferencias localmente en este teléfono. Si el almacenamiento de fotos de recibos está activado, las imágenes también se guardan localmente. Cuando se usa análisis AI, la imagen del recibo seleccionada se envía al servicio de análisis solo para extraer tienda, fecha, totales, categorías y artículos. Reciro no vende datos personales, no usa contenido de recibos para publicidad y no guarda copias de tickets en sus propios servidores. Puedes exportar, respaldar o eliminar datos locales desde Mis datos.",
   termsOfUse: "Términos de uso",
   termsOfUseText: "Reciro ayuda a rastrear recibos, gastos, productos y pagos mensuales. El análisis AI de recibos puede ser imperfecto, por lo que los usuarios deben revisar montos, fechas y categorías importantes antes de confiar en los informes. La app se ofrece para seguimiento personal de gastos y no es asesoría financiera, fiscal o legal. Los usuarios son responsables de mantener respaldos de datos importantes y cumplir con las normas locales sobre recibos, facturas y contabilidad.",
   appVersion: "Versión de la app",
@@ -2192,7 +2196,7 @@ Object.assign(featureTranslations.es, {
 
 
 Object.assign(translations.it, {
-  notSignedIn: "Account cloud non collegato",
+  notSignedIn: "Dati su questo telefono",
   saveError: "Errore salvataggio",
   receiptsSaveError: "Gli scontrini non possono essere salvati sul telefono.",
   incomeSaveError: "Il reddito non può essere salvato.",
@@ -2292,7 +2296,7 @@ Object.assign(translations.it, {
   incomeForMonth: "Reddito di questo mese",
   spending: "Spese",
   reportButton: "Visualizza report",
-  backupInfo: "Scontrini, reddito e valuta sono salvati in backup su questo telefono.",
+  backupInfo: "Scontrini, entrate e impostazioni restano su questo telefono. Puoi salvare il backup in iCloud, Google Drive o nei file.",
   feedbackTitle: "Cosa dovremmo migliorare?",
   feedbackText: "Il tuo messaggio viene inviato dall'app, così possiamo leggere i feedback e migliorare l'app.",
   feedbackPlaceholder: "Esempio: rendere la lettura scontrini piu veloce, questa schermata e confusa...",
@@ -2305,7 +2309,7 @@ Object.assign(translations.it, {
   startPremium: "Attiva Premium",
   premiumSetupTitle: "Premium in arrivo",
   premiumSetupText: "Gli abbonamenti reali saranno collegati tramite acquisti App Store e Google Play.",
-  accountSyncInfo: "La scelta dell'account è salvata qui per collegare il recupero dati in seguito.",
+  accountSyncInfo: "I tuoi dati restano su questo telefono. Premium e acquisti sono gestiti dal tuo account dello store.",
   feedbackInfo: "Invia suggerimenti, bug o richieste di funzionalita.",
   noPhoto: "Nessuna foto",
   noPhotoText: "Questo record non ha foto dello scontrino.",
@@ -2383,7 +2387,7 @@ Object.assign(featureTranslations.it, {
   restorePurchasesInfo: "Per abbonamenti App Store e Google Play una volta attivato Premium.",
   deleteAccountInfo: "Chiedici di eliminare account e dati sincronizzati.",
   privacySummary: "Le foto degli scontrini sono memorizzate su questo telefono a meno che non disattivi l'archiviazione foto. L'analisi AI invia l'immagine selezionata al servizio di analisi per leggere negozio, data, totale e articoli.",
-  privacyPolicyText: "Reciro memorizza scontrini, entrate, budget, pagamenti mensili e preferenze localmente su questo telefono. Se l'archiviazione foto scontrini è attiva, le immagini sono conservate localmente. Quando si usa l'analisi AI, l'immagine selezionata viene inviata solo per estrarre negozio, data, totali, categorie e voci. Reciro non vende dati personali né usa contenuti degli scontrini per pubblicità. Puoi esportare, fare backup o eliminare dati locali da I miei dati. Le richieste di eliminazione account si avviano da Account e premium.",
+  privacyPolicyText: "Reciro memorizza scontrini, entrate, budget, pagamenti mensili e preferenze localmente su questo telefono. Se l'archiviazione foto scontrini è attiva, le immagini sono conservate localmente. Quando si usa l'analisi AI, l'immagine selezionata viene inviata solo per estrarre negozio, data, totali, categorie e voci. Reciro non vende dati personali, non usa contenuti degli scontrini per pubblicità e non conserva backup degli scontrini sui propri server. Puoi esportare, fare backup o eliminare dati locali da I miei dati.",
   termsOfUseText: "Reciro aiuta a tracciare scontrini, spese, prodotti e pagamenti mensili. L'analisi AI degli scontrini può non essere perfetta, quindi gli utenti devono controllare importi, date e categorie importanti prima di affidarsi ai report. L'app è per la gestione personale delle spese e non fornisce consigli finanziari, fiscali o legali. Gli utenti sono responsabili di fare backup dei dati importanti e di rispettare le norme locali su scontrini, fatture e contabilità.",
   refundBadge: "Rimborso",
   markedImportant: "Importante",
@@ -2391,7 +2395,7 @@ Object.assign(featureTranslations.it, {
 });
 
 Object.assign(translations.pt, {
-  notSignedIn: "Conta cloud nao ligada",
+  notSignedIn: "Dados neste telefone",
   saveError: "Erro ao salvar",
   receiptsSaveError: "Os recibos não puderam ser salvos no telefone.",
   incomeSaveError: "A receita não pôde ser salva.",
@@ -2491,7 +2495,7 @@ Object.assign(translations.pt, {
   incomeForMonth: "Receita deste mês",
   spending: "Despesas",
   reportButton: "Ver relatório",
-  backupInfo: "Recibos, receitas e moeda estão guardados neste telefone.",
+  backupInfo: "Recibos, rendimentos e definicoes ficam neste telefone. Pode guardar o backup no iCloud, Google Drive ou ficheiros.",
   feedbackTitle: "O que devemos melhorar?",
   feedbackText: "A sua mensagem é enviada pela app, para podermos ler o feedback dos utilizadores e melhorar a app.",
   feedbackPlaceholder: "Exemplo: tornar a leitura de recibos mais rápida, este ecrã é confuso...",
@@ -2504,7 +2508,7 @@ Object.assign(translations.pt, {
   startPremium: "Tornar-se Premium",
   premiumSetupTitle: "Premium em breve",
   premiumSetupText: "As subscrições reais serão ligadas através de compras na App Store e Google Play.",
-  accountSyncInfo: "A sua escolha de conta é guardada aqui para que a recuperação de dados possa ser ligada mais tarde.",
+  accountSyncInfo: "Os seus dados ficam neste telefone. Premium e compras sao geridos pela sua conta da loja.",
   feedbackInfo: "Envie sugestões, erros ou pedidos de funcionalidades.",
   noPhoto: "Sem foto",
   noPhotoText: "Este registo não tem foto do recibo.",
@@ -2582,7 +2586,7 @@ Object.assign(featureTranslations.pt, {
   restorePurchasesInfo: "Para subscrições da App Store e Google Play após ativar o Premium.",
   deleteAccountInfo: "Peça-nos para eliminar conta e dados sincronizados.",
   privacySummary: "Fotos dos recibos são guardadas neste telemóvel a menos que desative o armazenamento. A análise AI envia a imagem do recibo selecionado para o serviço de análise para ler loja, data, total e itens.",
-  privacyPolicyText: "O Reciro guarda recibos, rendimentos, orçamentos, pagamentos mensais e preferências localmente neste telemóvel. Se o armazenamento de fotos de recibos estiver ativado, as imagens também são guardadas localmente. Quando a análise AI é usada, a imagem do recibo selecionado é enviada ao serviço de análise apenas para extrair loja, data, totais, categorias e itens. O Reciro não vende dados pessoais nem usa conteúdo dos recibos para publicidade. Pode exportar, fazer backup ou eliminar dados locais em Os meus dados. Pedidos de eliminação de conta podem ser iniciados em Conta e premium.",
+  privacyPolicyText: "O Reciro guarda recibos, rendimentos, orçamentos, pagamentos mensais e preferências localmente neste telemóvel. Se o armazenamento de fotos de recibos estiver ativado, as imagens também são guardadas localmente. Quando a análise AI é usada, a imagem do recibo selecionado é enviada ao serviço de análise apenas para extrair loja, data, totais, categorias e itens. O Reciro não vende dados pessoais, não usa conteúdo dos recibos para publicidade e não guarda backups de recibos nos seus próprios servidores. Pode exportar, fazer backup ou eliminar dados locais em Os meus dados.",
   termsOfUseText: "O Reciro ajuda a controlar recibos, despesas, produtos e pagamentos mensais. A análise AI dos recibos pode não ser perfeita, por isso os utilizadores devem rever valores, datas e categorias importantes antes de confiar nos relatórios. A app é para controlo pessoal de despesas e não constitui aconselhamento financeiro, fiscal ou legal. Os utilizadores são responsáveis por manter backups dos dados importantes e cumprir as regras locais sobre recibos, faturas e contabilidade.",
   refundBadge: "Reembolso",
   markedImportant: "Importante",
@@ -2590,7 +2594,7 @@ Object.assign(featureTranslations.pt, {
 });
 
 Object.assign(translations.nl, {
-  notSignedIn: "Cloudaccount niet gekoppeld",
+  notSignedIn: "Gegevens op deze telefoon",
   saveError: "Fout bij opslaan",
   receiptsSaveError: "Bonnen konden niet op de telefoon worden opgeslagen.",
   incomeSaveError: "Inkomen kon niet worden opgeslagen.",
@@ -2690,7 +2694,7 @@ Object.assign(translations.nl, {
   incomeForMonth: "Inkomen deze maand",
   spending: "Uitgaven",
   reportButton: "Bekijk rapport",
-  backupInfo: "Bonnen, inkomen en valuta worden op deze telefoon geback-upt.",
+  backupInfo: "Bonnen, inkomen en instellingen blijven op deze telefoon. Je kunt de back-up opslaan in iCloud, Google Drive of Bestanden.",
   feedbackTitle: "Wat kunnen we verbeteren?",
   feedbackText: "Je bericht wordt vanuit de app verzonden, zodat we feedback kunnen lezen en de app verbeteren.",
   feedbackPlaceholder: "Bijv: bonlezen sneller maken, dit scherm is verwarrend...",
@@ -2703,7 +2707,7 @@ Object.assign(translations.nl, {
   startPremium: "Word Premium",
   premiumSetupTitle: "Premium komt binnenkort",
   premiumSetupText: "Echte abonnementen worden verbonden via App Store en Google Play aankopen.",
-  accountSyncInfo: "Je accountkeuze wordt hier bewaard zodat dataverlies later kan worden hersteld.",
+  accountSyncInfo: "Je gegevens blijven op deze telefoon. Premium en aankopen worden beheerd via je store-account.",
   feedbackInfo: "Stuur suggesties, bugs of functieverzoeken.",
   noPhoto: "Geen foto",
   noPhotoText: "Deze registratie heeft geen bonfoto.",
@@ -2781,11 +2785,71 @@ Object.assign(featureTranslations.nl, {
   restorePurchasesInfo: "Voor App Store- en Google Play-abonnementen zodra Premium actief is.",
   deleteAccountInfo: "Vraag ons om account en synchronisatiegegevens te verwijderen.",
   privacySummary: "Bonfoto's worden op deze telefoon opgeslagen tenzij je foto-opslag uitschakelt. AI-analyse stuurt de geselecteerde bonafbeelding naar de analysetool om winkel, datum, totaal en items te lezen.",
-  privacyPolicyText: "Reciro slaat bonnetjes, inkomsten, budgetten, maandelijkse betalingen en voorkeuren lokaal op deze telefoon op. Als bonfoto-opslag is ingeschakeld, worden bonafbeeldingen ook lokaal bewaard. Bij gebruik van AI-analyse wordt de geselecteerde bonafbeelding alleen naar de bonanalyse-service gestuurd om winkel, datum, totalen, categorieën en regels te extraheren. Reciro verkoopt geen persoonlijke gegevens en gebruikt boninhoud niet voor reclame. Je kunt lokale gegevens exporteren, back-uppen of verwijderen via Mijn gegevens. Verzoeken tot accountverwijdering kunnen gestart worden via Account en premium.",
+  privacyPolicyText: "Reciro slaat bonnetjes, inkomsten, budgetten, maandelijkse betalingen en voorkeuren lokaal op deze telefoon op. Als bonfoto-opslag is ingeschakeld, worden bonafbeeldingen ook lokaal bewaard. Bij gebruik van AI-analyse wordt de geselecteerde bonafbeelding alleen naar de bonanalyse-service gestuurd om winkel, datum, totalen, categorieën en regels te extraheren. Reciro verkoopt geen persoonlijke gegevens, gebruikt boninhoud niet voor reclame en bewaart geen bonback-ups op eigen servers. Je kunt lokale gegevens exporteren, back-uppen of verwijderen via Mijn gegevens.",
   termsOfUseText: "Reciro helpt bij het bijhouden van bonnetjes, uitgaven, producten en maandelijkse betalingen. AI-bonanalyse kan onvolledig zijn, dus gebruikers moeten belangrijke bedragen, data en categorieën controleren voordat ze op rapporten vertrouwen. De app is bedoeld voor persoonlijke uitgavenregistratie en is geen financieel, fiscaal of juridisch advies. Gebruikers zijn verantwoordelijk voor het maken van back-ups van belangrijke gegevens en het naleven van lokale regels over bonnetjes, facturen en boekhouding.",
   refundBadge: "Terugbetaling",
   markedImportant: "Belangrijk",
   warrantyUntil: "Garantie tot",
+});
+
+Object.assign(translations.fr, {
+  accountSync: "Premium et achats",
+  accountSyncInfo: "Vos donnees restent sur ce telephone. Premium et les achats sont geres par votre compte de store.",
+  notSignedIn: "Donnees sur ce telephone",
+  cloudSetupNeededTitle: "Donnees stockees sur l appareil",
+  cloudSetupNeededText: "Reciro ne stocke pas vos tickets sur ses propres serveurs. Vous pouvez exporter votre sauvegarde depuis Mes donnees.",
+  backupInfo: "Tickets, revenus et reglages restent sur ce telephone. Vous pouvez enregistrer la sauvegarde dans iCloud, Google Drive ou vos fichiers.",
+  accountAndPremium: "Premium et achats",
+});
+
+Object.assign(translations.de, {
+  accountSync: "Premium und Kaeufe",
+  accountSyncInfo: "Deine Daten bleiben auf diesem Telefon. Premium und Kaeufe werden ueber dein Store-Konto verwaltet.",
+  notSignedIn: "Daten bleiben auf diesem Telefon",
+  cloudSetupNeededTitle: "Daten werden auf dem Geraet gespeichert",
+  cloudSetupNeededText: "Reciro speichert deine Belege nicht auf eigenen Servern. Du kannst dein Backup unter Meine Daten exportieren.",
+  backupInfo: "Belege, Einkommen und Einstellungen bleiben auf diesem Telefon. Du kannst das Backup in iCloud, Google Drive oder Dateien speichern.",
+  accountAndPremium: "Premium und Kaeufe",
+});
+
+Object.assign(translations.es, {
+  accountSync: "Premium y compras",
+  accountSyncInfo: "Tus datos permanecen en este telefono. Premium y las compras se gestionan con tu cuenta de la tienda.",
+  notSignedIn: "Datos en este telefono",
+  cloudSetupNeededTitle: "Datos guardados en el dispositivo",
+  cloudSetupNeededText: "Reciro no guarda tus tickets en sus propios servidores. Puedes exportar tu copia desde Mis datos.",
+  backupInfo: "Tickets, ingresos y ajustes permanecen en este telefono. Puedes guardar la copia en iCloud, Google Drive o archivos.",
+  accountAndPremium: "Premium y compras",
+});
+
+Object.assign(translations.it, {
+  accountSync: "Premium e acquisti",
+  accountSyncInfo: "I tuoi dati restano su questo telefono. Premium e acquisti sono gestiti dal tuo account dello store.",
+  notSignedIn: "Dati su questo telefono",
+  cloudSetupNeededTitle: "Dati salvati sul dispositivo",
+  cloudSetupNeededText: "Reciro non salva gli scontrini sui propri server. Puoi esportare il backup da I miei dati.",
+  backupInfo: "Scontrini, entrate e impostazioni restano su questo telefono. Puoi salvare il backup in iCloud, Google Drive o nei file.",
+  accountAndPremium: "Premium e acquisti",
+});
+
+Object.assign(translations.pt, {
+  accountSync: "Premium e compras",
+  accountSyncInfo: "Os seus dados ficam neste telefone. Premium e compras sao geridos pela sua conta da loja.",
+  notSignedIn: "Dados neste telefone",
+  cloudSetupNeededTitle: "Dados guardados no dispositivo",
+  cloudSetupNeededText: "O Reciro nao guarda os seus recibos em servidores proprios. Pode exportar o backup em Os meus dados.",
+  backupInfo: "Recibos, rendimentos e definicoes ficam neste telefone. Pode guardar o backup no iCloud, Google Drive ou ficheiros.",
+  accountAndPremium: "Premium e compras",
+});
+
+Object.assign(translations.nl, {
+  accountSync: "Premium en aankopen",
+  accountSyncInfo: "Je gegevens blijven op deze telefoon. Premium en aankopen worden beheerd via je store-account.",
+  notSignedIn: "Gegevens op deze telefoon",
+  cloudSetupNeededTitle: "Gegevens worden op het apparaat bewaard",
+  cloudSetupNeededText: "Reciro bewaart je bonnetjes niet op eigen servers. Je kunt je back-up exporteren via Mijn gegevens.",
+  backupInfo: "Bonnen, inkomen en instellingen blijven op deze telefoon. Je kunt de back-up opslaan in iCloud, Google Drive of Bestanden.",
+  accountAndPremium: "Premium en aankopen",
 });
 
 function getAppTranslations(languageCode) {
@@ -2822,6 +2886,18 @@ function getDeviceCurrency() {
   const locales = Localization.getLocales?.() || [];
   const regionCode = String(locales[0]?.regionCode || locales[0]?.countryCode || '').toUpperCase();
   return countryCurrencyMap[regionCode] || 'EUR';
+}
+
+function getAuthProviderLabel(provider) {
+  if (provider === 'apple') {
+    return 'Apple';
+  }
+
+  if (provider === 'google') {
+    return 'Google';
+  }
+
+  return 'Reciro';
 }
 
 function normalizeLookupText(value) {
@@ -3132,18 +3208,6 @@ function getReceiptSignedAmount(receipt) {
 
 function formatReceiptAmount(receipt) {
   return formatTL(getReceiptSignedAmount(receipt));
-}
-
-function getAuthProviderLabel(authChoice, t) {
-  if (authChoice === 'google') {
-    return 'Google';
-  }
-
-  if (authChoice === 'icloud') {
-    return 'iCloud';
-  }
-
-  return t.notSignedIn;
 }
 
 function safeParseStoredJson(value, fallbackValue) {
@@ -4572,7 +4636,6 @@ export default function App() {
   const [editItems, setEditItems] = useState([]);
   const [selectedLanguage, setSelectedLanguage] = useState(getDeviceLanguage);
   const [selectedCurrency, setSelectedCurrency] = useState(getDeviceCurrency);
-  const [authChoice, setAuthChoice] = useState(null);
   const [analysisUsageByMonth, setAnalysisUsageByMonth] = useState({});
   const [rewardedAnalysisCreditsByMonth, setRewardedAnalysisCreditsByMonth] = useState({});
   const [categoryMemory, setCategoryMemory] = useState({});
@@ -4582,6 +4645,7 @@ export default function App() {
   const [receiptSettings, setReceiptSettings] = useState(DEFAULT_RECEIPT_SETTINGS);
   const [activeSpace, setActiveSpace] = useState(DEFAULT_SPACE_KEY);
   const [settingsSection, setSettingsSection] = useState('main');
+  const [authProvider, setAuthProvider] = useState(null);
   const [reportPeriod, setReportPeriod] = useState('month');
   const [reportView, setReportView] = useState('overview');
   const [reportSearchText, setReportSearchText] = useState('');
@@ -4602,7 +4666,7 @@ export default function App() {
           savedSalary,
           savedIncomeByMonth,
           savedCurrency,
-          savedAuthChoice,
+          savedAuthProvider,
           savedAnalysisUsage,
           savedRewardedAnalysisCredits,
           savedCategoryMemory,
@@ -4616,7 +4680,7 @@ export default function App() {
           AsyncStorage.getItem(SALARY_STORAGE_KEY),
           AsyncStorage.getItem(INCOME_BY_MONTH_STORAGE_KEY),
           AsyncStorage.getItem(CURRENCY_STORAGE_KEY),
-          AsyncStorage.getItem(AUTH_CHOICE_STORAGE_KEY),
+          AsyncStorage.getItem(AUTH_PROVIDER_STORAGE_KEY),
           AsyncStorage.getItem(ANALYSIS_USAGE_STORAGE_KEY),
           AsyncStorage.getItem(REWARDED_ANALYSIS_CREDITS_STORAGE_KEY),
           AsyncStorage.getItem(CATEGORY_MEMORY_STORAGE_KEY),
@@ -4654,8 +4718,8 @@ export default function App() {
 
         setSelectedCurrency(startupCurrency);
 
-        if (savedAuthChoice) {
-          setAuthChoice(savedAuthChoice);
+        if (savedAuthProvider === 'apple' || savedAuthProvider === 'google') {
+          setAuthProvider(savedAuthProvider);
         }
 
         const parsedAnalysisUsage = safeParseStoredJson(savedAnalysisUsage, null);
@@ -4753,6 +4817,22 @@ export default function App() {
       return;
     }
 
+    if (authProvider === 'apple' || authProvider === 'google') {
+      AsyncStorage.setItem(AUTH_PROVIDER_STORAGE_KEY, authProvider).catch(() => {
+        console.warn('Auth provider could not be saved.');
+      });
+    } else {
+      AsyncStorage.removeItem(AUTH_PROVIDER_STORAGE_KEY).catch(() => {
+        console.warn('Auth provider could not be removed.');
+      });
+    }
+  }, [authProvider, storageReady]);
+
+  useEffect(() => {
+    if (!storageReady) {
+      return;
+    }
+
     AsyncStorage.setItem(RECEIPTS_STORAGE_KEY, JSON.stringify(receipts)).catch(() => {
       Alert.alert(t.saveError, t.receiptsSaveError);
     });
@@ -4787,22 +4867,6 @@ export default function App() {
       console.warn('Receipt settings could not be saved.');
     });
   }, [receiptSettings, storageReady]);
-
-  useEffect(() => {
-    if (!storageReady) {
-      return;
-    }
-
-    if (authChoice) {
-      AsyncStorage.setItem(AUTH_CHOICE_STORAGE_KEY, authChoice).catch(() => {
-        console.warn('Auth choice could not be saved.');
-      });
-    } else {
-      AsyncStorage.removeItem(AUTH_CHOICE_STORAGE_KEY).catch(() => {
-        console.warn('Auth choice could not be removed.');
-      });
-    }
-  }, [authChoice, storageReady]);
 
   useEffect(() => {
     if (!storageReady) {
@@ -5111,27 +5175,6 @@ export default function App() {
     setScreen(nextScreen);
   }
 
-  function chooseAuthMethod(method) {
-    setAuthChoice(method);
-    setScreen('home');
-    setSettingsSection('main');
-  }
-
-  function signOutAccount() {
-    Alert.alert(t.signOutTitle, t.signOutMessage, [
-      { text: t.cancel, style: 'cancel' },
-      {
-        text: t.signOutConfirm,
-        style: 'destructive',
-        onPress: () => {
-          setAuthChoice(null);
-          setScreen('home');
-          setSettingsSection('main');
-        },
-      },
-    ]);
-  }
-
   function goBack() {
     if (previewImage) {
       setPreviewImage(null);
@@ -5429,7 +5472,15 @@ export default function App() {
       };
 
       await FileSystem.writeAsStringAsync(targetUri, JSON.stringify(backupData, null, 2));
-      Alert.alert(t.backupReady, t.backupReadyText(fileName));
+      if (await Sharing.isAvailableAsync()) {
+        await Sharing.shareAsync(targetUri, {
+          mimeType: 'application/json',
+          dialogTitle: t.backupReady,
+          UTI: 'public.json',
+        });
+      } else {
+        Alert.alert(t.backupReady, t.backupReadyText(fileName));
+      }
     } catch (error) {
       Alert.alert(t.backupError, t.backupErrorText);
     }
@@ -5437,25 +5488,23 @@ export default function App() {
 
   async function restoreLatestBackup() {
     try {
-      const backupDirectory = await FileSystem.getInfoAsync(BACKUP_DIR);
+      const result = await DocumentPicker.getDocumentAsync({
+        copyToCacheDirectory: true,
+        multiple: false,
+        type: '*/*',
+      });
 
-      if (!backupDirectory.exists) {
+      if (result.canceled) {
+        return;
+      }
+
+      const latestBackupUri = result.assets?.[0]?.uri;
+
+      if (!latestBackupUri) {
         Alert.alert(t.noBackupTitle, t.noBackupText);
         return;
       }
 
-      const files = await FileSystem.readDirectoryAsync(BACKUP_DIR);
-      const backupFiles = files
-        .filter((fileName) => fileName.endsWith('.json'))
-        .sort()
-        .reverse();
-
-      if (backupFiles.length === 0) {
-        Alert.alert(t.noBackupTitle, t.noBackupText);
-        return;
-      }
-
-      const latestBackupUri = `${BACKUP_DIR}${backupFiles[0]}`;
       const backupText = await FileSystem.readAsStringAsync(latestBackupUri);
       const backupData = JSON.parse(backupText);
 
@@ -5532,6 +5581,27 @@ export default function App() {
     }));
   }
 
+  function chooseAuthProvider(provider) {
+    setAuthProvider(provider);
+    setSettingsSection('main');
+    setScreen('home');
+  }
+
+  function signOutAuthProvider() {
+    Alert.alert(t.signOutTitle, t.signOutMessage, [
+      { text: t.cancel, style: 'cancel' },
+      {
+        text: t.signOutConfirm,
+        style: 'destructive',
+        onPress: () => {
+          setAuthProvider(null);
+          setSettingsSection('main');
+          setScreen('home');
+        },
+      },
+    ]);
+  }
+
   function clearAllData() {
     Alert.alert(t.clearAllDataTitle, t.clearAllDataText, [
       { text: t.cancel, style: 'cancel' },
@@ -5543,7 +5613,7 @@ export default function App() {
             RECEIPTS_STORAGE_KEY,
             SALARY_STORAGE_KEY,
             INCOME_BY_MONTH_STORAGE_KEY,
-            AUTH_CHOICE_STORAGE_KEY,
+            AUTH_PROVIDER_STORAGE_KEY,
             ANALYSIS_USAGE_STORAGE_KEY,
             CATEGORY_MEMORY_STORAGE_KEY,
             BUDGETS_STORAGE_KEY,
@@ -5559,8 +5629,8 @@ export default function App() {
           setBudgetsByCategory({});
           setRecurringExpenses([]);
           setOtherCategoryLabel('');
-          setAuthChoice(null);
           setReceiptSettings(DEFAULT_RECEIPT_SETTINGS);
+          setAuthProvider(null);
           setActiveSpace(DEFAULT_SPACE_KEY);
           setSelectedReceipt(null);
           setSettingsSection('main');
@@ -5568,26 +5638,6 @@ export default function App() {
           await deleteDirectoryIfExists(RECEIPT_IMAGE_DIR);
           await deleteDirectoryIfExists(RECEIPT_FILE_DIR);
           Alert.alert(t.dataDeletedTitle, t.dataDeletedText);
-        },
-      },
-    ]);
-  }
-
-  function requestAccountDeletion() {
-    Alert.alert(t.deleteAccountTitle, t.deleteAccountText, [
-      { text: t.cancel, style: 'cancel' },
-      {
-        text: t.sendDeleteRequest,
-        onPress: async () => {
-          const subject = encodeURIComponent('Reciro account deletion request');
-          const providerLabel = getAuthProviderLabel(authChoice, t);
-          const body = encodeURIComponent(`Please delete my Reciro account and sync data.\n\nProvider: ${providerLabel}\nCurrency: ${selectedCurrency}`);
-
-          try {
-            await Linking.openURL(`mailto:${FEEDBACK_EMAIL}?subject=${subject}&body=${body}`);
-          } catch (error) {
-            Alert.alert(t.feedbackMailTitle, t.feedbackMailText);
-          }
         },
       },
     ]);
@@ -6171,14 +6221,13 @@ export default function App() {
     );
   }
 
-  if (ENABLE_START_ACCOUNT_GATE && !authChoice) {
+  if (!authProvider) {
     return (
-      <SafeAreaView style={styles.safeArea}>
-        <StatusBar style="dark" />
-        <View style={styles.app}>
-          <AuthStartScreen onChoose={chooseAuthMethod} t={t} />
-        </View>
-      </SafeAreaView>
+      <AuthStartScreen
+        t={t}
+        onChooseApple={() => chooseAuthProvider('apple')}
+        onChooseGoogle={() => chooseAuthProvider('google')}
+      />
     );
   }
 
@@ -6445,9 +6494,9 @@ export default function App() {
               onRestoreBackup={restoreLatestBackup}
               onExportCsv={exportReceiptsCsv}
               onClearAllData={clearAllData}
-              onDeleteAccount={requestAccountDeletion}
-              authChoice={authChoice}
-              onSignOut={signOutAccount}
+              authProvider={authProvider}
+              onSignOut={signOutAuthProvider}
+              onChooseAuthProvider={chooseAuthProvider}
               t={t}
             />
           )}
@@ -6501,6 +6550,40 @@ export default function App() {
           onClose={() => setPreviewImage(null)}
           closeLabel={t.cancel}
         />
+      </View>
+    </SafeAreaView>
+  );
+}
+
+function AuthStartScreen({ t, onChooseApple, onChooseGoogle }) {
+  return (
+    <SafeAreaView style={styles.safeArea}>
+      <StatusBar style="dark" />
+      <View style={styles.authScreen}>
+        <View style={styles.authBrandBlock}>
+          <View style={styles.authLogoMark}>
+            <Text style={styles.authLogoText}>R</Text>
+          </View>
+          <Text style={styles.authBrandName}>Reciro</Text>
+          <Text style={styles.authSubtitle}>{t.appSubtitle}</Text>
+        </View>
+
+        <View style={styles.authCard}>
+          <Text style={styles.authTitle}>{t.welcomeTitle}</Text>
+          <Text style={styles.authText}>{t.welcomeText}</Text>
+
+          <Pressable style={[styles.authButton, styles.authButtonDark]} onPress={onChooseApple}>
+            <Text style={[styles.authButtonIcon, styles.authButtonTextDark]}></Text>
+            <Text style={[styles.authButtonText, styles.authButtonTextDark]}>{t.signInWithApple}</Text>
+          </Pressable>
+
+          <Pressable style={styles.authButton} onPress={onChooseGoogle}>
+            <Text style={styles.authButtonIcon}>G</Text>
+            <Text style={styles.authButtonText}>{t.signInWithGoogle}</Text>
+          </Pressable>
+
+          <Text style={styles.authFootnote}>{t.accountSyncInfo}</Text>
+        </View>
       </View>
     </SafeAreaView>
   );
@@ -7558,9 +7641,9 @@ function SettingsScreen({
   onRestoreBackup,
   onExportCsv,
   onClearAllData,
-  onDeleteAccount,
-  authChoice,
+  authProvider,
   onSignOut,
+  onChooseAuthProvider,
   t,
 }) {
   const [feedbackText, setFeedbackText] = useState('');
@@ -8174,26 +8257,30 @@ function SettingsScreen({
   }
 
   if (settingsSection === 'account') {
-    const providerLabel = getAuthProviderLabel(authChoice, t);
-
     return (
       <View>
         <View style={styles.card}>
           <Text style={styles.analysisTitle}>{t.accountSync}</Text>
           <Text style={styles.analysisText}>{t.accountSyncInfo}</Text>
           <View style={styles.syncStatusRow}>
-            <Text style={styles.rowText}>
-              {authChoice ? t.signedInWith(providerLabel) : t.notSignedIn}
-            </Text>
+            <Text style={styles.rowMeta}>{t.signedInWith(getAuthProviderLabel(authProvider))}</Text>
           </View>
         </View>
 
         <View style={styles.settingsList}>
           <SettingsRow
-            icon="☁️"
-            title={t.accountSync}
-            subtitle={authChoice ? t.signedInWith(providerLabel) : t.notSignedIn}
-            value=">"
+            icon=""
+            title={t.signInWithApple}
+            subtitle={t.backupInfo}
+            value={authProvider === 'apple' ? '✓' : '>'}
+            onPress={() => onChooseAuthProvider('apple')}
+          />
+          <SettingsRow
+            icon="G"
+            title={t.signInWithGoogle}
+            subtitle={t.backupInfo}
+            value={authProvider === 'google' ? '✓' : '>'}
+            onPress={() => onChooseAuthProvider('google')}
           />
           <SettingsRow
             icon="↻"
@@ -8202,21 +8289,12 @@ function SettingsScreen({
             value=">"
             onPress={() => Alert.alert(t.restorePurchasesTitle, t.restorePurchasesText)}
           />
-          {authChoice && (
-            <SettingsRow
-              icon="🚪"
-              title={t.signOut}
-              subtitle={t.signOutMessage}
-              value=">"
-              onPress={onSignOut}
-            />
-          )}
           <SettingsRow
-            icon="🗑️"
-            title={t.deleteAccount}
-            subtitle={t.deleteAccountInfo}
+            icon="↩"
+            title={t.signOut}
+            subtitle={t.signOutMessage}
             value=">"
-            onPress={onDeleteAccount}
+            onPress={onSignOut}
           />
         </View>
         <SecondaryButton label={t.back} onPress={() => setSettingsSection('main')} />
@@ -8334,7 +8412,7 @@ function SettingsScreen({
           onPress={() => setSettingsSection('data')}
         />
         <SettingsRow
-          icon="☁️"
+          icon="💎"
           title={t.accountAndPremium}
           subtitle={t.accountSyncInfo}
           value=">"
@@ -9000,35 +9078,24 @@ function ImagePreviewModal({ imageUri, onClose, closeLabel }) {
     <Modal visible={Boolean(imageUri)} transparent animationType="fade" onRequestClose={onClose}>
       <View style={styles.previewOverlay}>
         {imageUri && (
-          <View style={styles.previewImageFrame}>
+          <ScrollView
+            style={styles.previewZoomScroll}
+            contentContainerStyle={styles.previewImageFrame}
+            maximumZoomScale={4}
+            minimumZoomScale={1}
+            bouncesZoom
+            centerContent
+            showsHorizontalScrollIndicator={false}
+            showsVerticalScrollIndicator={false}
+          >
             <Image source={{ uri: imageUri }} style={styles.previewImage} />
-          </View>
+          </ScrollView>
         )}
         <Pressable style={styles.previewCloseButton} onPress={onClose}>
           <Text style={styles.previewCloseText}>{closeLabel}</Text>
         </Pressable>
       </View>
     </Modal>
-  );
-}
-
-function AuthStartScreen({ onChoose, t }) {
-  return (
-    <View style={styles.authScreen}>
-      <View style={styles.authHeader}>
-        <View style={styles.authLogoLarge}>
-          <Text style={styles.authLogoText}>R</Text>
-        </View>
-        <Text style={styles.authBrandName}>Reciro</Text>
-        <Text style={styles.authTitle}>{t.welcomeTitle}</Text>
-        <Text style={styles.authText}>{t.welcomeText}</Text>
-      </View>
-
-      <View style={styles.authActionsCard}>
-        <PrimaryButton label={t.signInWithGoogle} onPress={() => onChoose('google')} />
-        <SecondaryButton label={t.signInWithICloud} onPress={() => onChoose('icloud')} />
-      </View>
-    </View>
   );
 }
 
@@ -9233,6 +9300,105 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#f4f7f4',
   },
+  authScreen: {
+    flex: 1,
+    backgroundColor: '#f4f7f4',
+    justifyContent: 'center',
+    padding: 24,
+  },
+  authBrandBlock: {
+    alignItems: 'center',
+    marginBottom: 28,
+  },
+  authLogoMark: {
+    alignItems: 'center',
+    backgroundColor: '#157f3b',
+    borderRadius: 18,
+    height: 64,
+    justifyContent: 'center',
+    marginBottom: 14,
+    width: 64,
+  },
+  authLogoText: {
+    color: '#ffffff',
+    fontSize: 32,
+    fontWeight: '900',
+  },
+  authBrandName: {
+    color: '#172018',
+    fontSize: 34,
+    fontWeight: '900',
+    textAlign: 'center',
+  },
+  authSubtitle: {
+    color: '#68766b',
+    fontSize: 15,
+    fontWeight: '700',
+    marginTop: 4,
+    textAlign: 'center',
+  },
+  authCard: {
+    backgroundColor: '#ffffff',
+    borderColor: '#dfe8e0',
+    borderRadius: 8,
+    borderWidth: 1,
+    padding: 20,
+  },
+  authTitle: {
+    color: '#172018',
+    fontSize: 24,
+    fontWeight: '900',
+    textAlign: 'center',
+  },
+  authText: {
+    color: '#68766b',
+    fontSize: 14,
+    fontWeight: '700',
+    lineHeight: 20,
+    marginTop: 8,
+    textAlign: 'center',
+  },
+  authButton: {
+    alignItems: 'center',
+    backgroundColor: '#ffffff',
+    borderColor: '#dfe8e0',
+    borderRadius: 8,
+    borderWidth: 1,
+    flexDirection: 'row',
+    gap: 12,
+    justifyContent: 'center',
+    marginTop: 14,
+    paddingHorizontal: 16,
+    paddingVertical: 15,
+  },
+  authButtonDark: {
+    backgroundColor: '#172018',
+    borderColor: '#172018',
+    marginTop: 22,
+  },
+  authButtonIcon: {
+    color: '#172018',
+    fontSize: 19,
+    fontWeight: '900',
+    minWidth: 22,
+    textAlign: 'center',
+  },
+  authButtonText: {
+    color: '#172018',
+    fontSize: 16,
+    fontWeight: '900',
+  },
+  authButtonTextDark: {
+    color: '#ffffff',
+  },
+  authFootnote: {
+    color: '#68766b',
+    fontSize: 12,
+    fontWeight: '700',
+    lineHeight: 17,
+    marginTop: 16,
+    textAlign: 'center',
+  },
   keyboardAvoidingView: {
     flex: 1,
   },
@@ -9281,53 +9447,6 @@ const styles = StyleSheet.create({
     fontSize: 13,
     fontWeight: '600',
     textAlign: 'center',
-  },
-  authScreen: {
-    flex: 1,
-    justifyContent: 'center',
-    paddingHorizontal: 24,
-  },
-  authHeader: {
-    alignItems: 'center',
-    marginBottom: 28,
-  },
-  authLogoLarge: {
-    alignItems: 'center',
-    backgroundColor: '#15803d',
-    borderRadius: 16,
-    height: 72,
-    justifyContent: 'center',
-    width: 72,
-  },
-  authLogoText: {
-    color: '#ffffff',
-    fontSize: 34,
-    fontWeight: '900',
-  },
-  authBrandName: {
-    color: '#172018',
-    fontSize: 30,
-    fontWeight: '900',
-    marginTop: 18,
-  },
-  authTitle: {
-    color: '#172018',
-    fontSize: 24,
-    fontWeight: '900',
-    lineHeight: 30,
-    marginTop: 28,
-    textAlign: 'center',
-  },
-  authText: {
-    color: '#4f5d52',
-    fontSize: 15,
-    fontWeight: '600',
-    lineHeight: 22,
-    marginTop: 8,
-    textAlign: 'center',
-  },
-  authActionsCard: {
-    gap: 10,
   },
   content: {
     padding: 20,
@@ -10516,8 +10635,13 @@ const styles = StyleSheet.create({
   },
   previewImageFrame: {
     alignItems: 'center',
-    flex: 1,
+    flexGrow: 1,
     justifyContent: 'center',
+    minHeight: '100%',
+    width: '100%',
+  },
+  previewZoomScroll: {
+    flex: 1,
     width: '100%',
   },
   previewImage: {
