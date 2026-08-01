@@ -9,7 +9,7 @@ Run this test on a real iPhone and a real Android device before each release.
 - Delete the app from the phone.
 - Install the latest build.
 - Open the app.
-- Confirm the app opens with the Reciro Apple / Google account choice screen.
+- Confirm the app opens with the Reciro local profile choice screen.
 - Choose Apple and confirm the app opens.
 - Clear app data or reinstall, choose Google, and confirm the app opens.
 - Confirm the selected provider remains saved after closing and reopening the app.
@@ -72,9 +72,8 @@ Run this test on a real iPhone and a real Android device before each release.
 
 ## Free Limit, Ads, And Premium
 
-- Confirm the monthly free limit is 5 AI analyses.
-- Confirm the Premium screen explains that real purchases are coming through App Store / Google Play.
-- Confirm rewarded ad flow grants an extra analysis credit in the correct build type.
+- Confirm Premium paywall is not presented as a working purchase flow in the first release build.
+- Confirm rewarded ads are not required for core receipt entry in the first release build.
 - Confirm manual entry remains available.
 - Before paid release, connect real RevenueCat subscriptions and test purchase and restore on iOS and Android.
 

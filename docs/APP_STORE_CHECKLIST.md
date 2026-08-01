@@ -13,7 +13,7 @@ Use this checklist before sending Reciro to Apple review.
 - First release targets iPhone only. iPad support is disabled until tablet layouts are tested.
 - App language defaults to the phone language when supported.
 - If the phone language is not supported, the app opens in English.
-- First launch shows Apple / Google account choice. Current selection is stored locally until real OAuth is connected.
+- First launch shows a local profile choice. It does not claim real Apple / Google sign-in until OAuth is connected.
 
 ## Apple Developer
 
@@ -29,8 +29,8 @@ Use this checklist before sending Reciro to Apple review.
 
 ## Subscriptions And Premium
 
-- Current app setting: Premium screen and free limit are visible, but real subscription purchase is not connected yet.
-- The Premium button currently shows an informational message until RevenueCat/App Store/Google Play purchases are connected.
+- Current app setting: Premium paywall is disabled for the first App Store build.
+- Real subscription purchase is not connected yet.
 - When paid release is ready:
   - Create monthly subscription: `Reciro Premium Monthly`.
   - Create yearly subscription: `Reciro Premium Yearly`.
@@ -75,8 +75,8 @@ Current local drafts:
 - Users can re-analyze a receipt when AI reads it badly.
 - Users can add a custom category from `Other`.
 - Feedback is sent to `denizcanpolat2307@gmail.com`.
-- Rewarded ads are planned for extra scan credits after the free monthly limit.
-- Apple / Google entry screen is visible, but it is local-first until real OAuth credentials are connected in a later native build step.
+- Rewarded ads are planned for extra scan credits after AdMob review and native build testing.
+- Apple / Google wording is local-first only; it must not be described as real sign-in until OAuth is connected.
 - User data remains on the device. User-controlled export can be saved to iCloud Drive, Google Drive, or Files.
 - No real API keys are committed to GitHub.
 

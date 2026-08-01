@@ -109,7 +109,7 @@ receipt,scanner,expense,budget,spending,money,tracker,AI,shopping,finance,invoic
 
 ## Premium Plan
 
-Free plan:
+Planned free plan after monetization is enabled:
 
 - 5 AI receipt analyses per month
 - Manual receipt entry
@@ -142,9 +142,11 @@ Important release note:
 
 Do not claim Premium is fully active until RevenueCat, App Store subscriptions, Google Play subscriptions, restore purchases, and subscription state checks are connected and tested on real iOS and Android builds.
 
+For the first App Store build, Premium purchase flow is disabled in the app so review does not see a non-working purchase screen.
+
 ## Rewarded Ads
 
-AdMob rewarded ads are planned for users who use their 5 free monthly AI analyses.
+AdMob rewarded ads are planned for users who use their 5 free monthly AI analyses after AdMob review and native build testing.
 
 User flow:
 
@@ -270,7 +272,7 @@ Suggested permission copy:
 - [ ] Google Play Data Safety completed.
 - [ ] Ads declaration completed.
 - [ ] Content rating completed.
-- [ ] Premium remains informational until real purchases are connected.
+- [ ] Premium purchase flow remains disabled until real purchases are connected and tested.
 - [ ] No private API keys are committed to GitHub.
 
 ## Current Known External Blockers
@@ -284,9 +286,8 @@ Suggested permission copy:
 
 Release 1.0 should focus on trust and stability:
 
-- Free plan with 5 AI analyses per month
+- Free/manual-first release while monetization is finalized
 - Manual receipt entry always available
 - Local-first receipt storage
 - Export backup controlled by the user
-- Premium screen visible as "coming soon" until purchases are fully tested
-- Rewarded ads connected only after AdMob review and native build testing
+- Premium and rewarded ads connected only after RevenueCat, App Store/Google Play products, AdMob review, and native build testing

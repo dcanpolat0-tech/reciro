@@ -82,7 +82,7 @@ If submit is not configured yet, upload the AAB manually in Google Play Console.
 ## Before Publishing
 
 - Complete Google Play Data Safety using `GOOGLE_PLAY_SUBMISSION_TR.md`.
-- Complete Ads declaration: Reciro uses rewarded ads.
+- Complete Ads declaration only after rewarded ads are enabled for the release build.
 - Complete Content Rating.
 - Add support, privacy, and terms URLs.
 - Add screenshots.

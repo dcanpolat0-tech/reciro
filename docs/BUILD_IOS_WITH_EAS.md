@@ -64,9 +64,9 @@ Because development is on Windows, use Expo Application Services to build the iP
 - Confirm receipt analysis works through Render.
 - Confirm camera and gallery permissions are clear.
 - Confirm PDF selection works.
-- Confirm first launch shows the Reciro Apple / Google choice screen and saves the selected provider locally.
-- Confirm Premium explains that real subscriptions will be connected through App Store / Google Play.
-- Confirm purchase restore does not claim to work until RevenueCat is connected.
+- Confirm first launch shows the Reciro local profile choice screen and saves the selected profile locally.
+- Confirm Premium paywall is not presented as a working purchase flow in the first release build.
+- Confirm purchase restore is not shown as an active feature until RevenueCat is connected.
 - Confirm the support, privacy, and terms links open.
 
 ## Version Rules

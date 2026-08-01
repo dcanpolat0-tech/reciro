@@ -30,9 +30,9 @@ Reciro is technically prepared for iOS and Android release preparation. The rema
 
 ## First Release Choices
 
-- The app opens with a simple Apple / Google account choice screen.
-- The current Apple / Google choice is local-first and stores the selected provider on the device. Real OAuth is still planned for a later native build step.
-- Premium screen, free limit, and rewarded ad flow are prepared, but real subscriptions are not connected yet.
+- The app opens with a simple local profile choice screen.
+- The current Apple / Google wording is local-first only and stores the selected profile on the device. It does not claim real OAuth sign-in.
+- Premium paywall and rewarded ads are disabled for the first App Store build until RevenueCat, store products, AdMob review, and native build testing are complete.
 - RevenueCat/App Store/Google Play purchase state must be connected before Premium can actually unlock paid features.
 - Receipt data is stored locally on the phone in the current release.
 - Users can export their own backups and keep them in iCloud Drive, Google Drive, or the Files app. Reciro does not store receipt backups on its own servers.

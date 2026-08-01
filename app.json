@@ -12,8 +12,8 @@
       "buildNumber": "1",
       "supportsTablet": false,
       "infoPlist": {
-        "NSCameraUsageDescription": "Reciro needs camera access so you can scan receipt photos.",
-        "NSPhotoLibraryUsageDescription": "Reciro needs photo library access so you can choose receipt photos."
+        "NSCameraUsageDescription": "Reciro uses the camera only when you choose to scan a receipt photo.",
+        "NSPhotoLibraryUsageDescription": "Reciro uses your photo library only when you choose receipt photos to save or analyze."
       }
     },
     "android": {
@@ -40,15 +40,15 @@
       [
         "expo-image-picker",
         {
-          "cameraPermission": "Reciro needs camera access so you can scan receipt photos.",
-          "photosPermission": "Reciro needs photo library access so you can choose receipt photos.",
+          "cameraPermission": "Reciro uses the camera only when you choose to scan a receipt photo.",
+          "photosPermission": "Reciro uses your photo library only when you choose receipt photos to save or analyze.",
           "microphonePermission": false
         }
       ],
       [
         "expo-camera",
         {
-          "cameraPermission": "Reciro needs camera access so you can scan receipt photos.",
+          "cameraPermission": "Reciro uses the camera only when you choose to scan a receipt photo.",
           "microphonePermission": false,
           "recordAudioAndroid": false
         }
