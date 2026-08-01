@@ -218,6 +218,9 @@ const translations = {
     pickFileHelp: 'PDF veya fotoğraf dosyası yükle.',
     fileSaved: 'Dosya kaydedildi',
     fileSavedText: 'PDF dosyası saklandı. Bilgileri elle doldurup kaydedebilirsin.',
+    openFile: 'PDF dosyasını aç',
+    openFileErrorTitle: 'PDF açılamadı',
+    openFileErrorText: 'Bu PDF dosyası telefonda bulunamadı veya açılamıyor.',
     exportCsv: 'CSV Dışa Aktar',
     exportReady: 'Dışa aktarma hazır',
     exportError: 'Dışa aktarma hatası',
@@ -469,6 +472,9 @@ const translations = {
     pickFileHelp: 'Upload a PDF or photo file.',
     fileSaved: 'File saved',
     fileSavedText: 'The PDF file was saved. Fill in the details manually and save.',
+    openFile: 'Open PDF file',
+    openFileErrorTitle: 'PDF could not be opened',
+    openFileErrorText: 'This PDF file could not be found on the phone or cannot be opened.',
     exportCsv: 'Export CSV',
     exportReady: 'Export ready',
     exportError: 'Export error',
@@ -720,6 +726,9 @@ const translations = {
     pickFileHelp: 'Importer un PDF ou une photo.',
     fileSaved: 'Fichier enregistre',
     fileSavedText: 'Le PDF a ete enregistre. Remplissez les details manuellement.',
+    openFile: 'Ouvrir le PDF',
+    openFileErrorTitle: 'PDF impossible a ouvrir',
+    openFileErrorText: 'Ce fichier PDF est introuvable sur le telephone ou ne peut pas etre ouvert.',
     exportCsv: 'Exporter CSV',
     exportReady: 'Export pret',
     exportError: 'Erreur export',
@@ -971,6 +980,9 @@ const translations = {
     pickFileHelp: 'PDF oder Foto hochladen.',
     fileSaved: 'Datei gespeichert',
     fileSavedText: 'Die PDF-Datei wurde gespeichert. Details manuell ausfuellen und speichern.',
+    openFile: 'PDF-Datei oeffnen',
+    openFileErrorTitle: 'PDF konnte nicht geoeffnet werden',
+    openFileErrorText: 'Diese PDF-Datei wurde auf dem Telefon nicht gefunden oder kann nicht geoeffnet werden.',
     exportCsv: 'CSV exportieren',
     exportReady: 'Export bereit',
     exportError: 'Exportfehler',
@@ -1222,6 +1234,9 @@ const translations = {
     pickFileHelp: 'Sube un PDF o una foto.',
     fileSaved: 'Archivo guardado',
     fileSavedText: 'El PDF fue guardado. Rellena los detalles manualmente y guarda.',
+    openFile: 'Abrir PDF',
+    openFileErrorTitle: 'No se pudo abrir el PDF',
+    openFileErrorText: 'Este PDF no se encontro en el telefono o no se puede abrir.',
     exportCsv: 'Exportar CSV',
     exportReady: 'Export listo',
     exportError: 'Error de exportacion',
@@ -5450,6 +5465,46 @@ export default function App() {
     requestDeleteReceipt(selectedReceipt);
   }
 
+  async function openReceiptFile(fileRecord) {
+    const fileUri = typeof fileRecord === 'string' ? fileRecord : fileRecord?.uri;
+    const fileName = typeof fileRecord === 'string' ? 'receipt.pdf' : fileRecord?.name || 'receipt.pdf';
+    const mimeType = typeof fileRecord === 'string' ? 'application/pdf' : fileRecord?.mimeType || 'application/pdf';
+
+    if (!fileUri) {
+      Alert.alert(t.openFileErrorTitle, t.openFileErrorText);
+      return;
+    }
+
+    try {
+      const fileInfo = await FileSystem.getInfoAsync(fileUri);
+
+      if (!fileInfo.exists) {
+        Alert.alert(t.openFileErrorTitle, t.openFileErrorText);
+        return;
+      }
+
+      if (await Sharing.isAvailableAsync()) {
+        await Sharing.shareAsync(fileUri, {
+          mimeType,
+          dialogTitle: fileName,
+          UTI: 'com.adobe.pdf',
+        });
+        return;
+      }
+
+      const canOpen = await Linking.canOpenURL(fileUri);
+      if (canOpen) {
+        await Linking.openURL(fileUri);
+        return;
+      }
+
+      Alert.alert(t.openFileErrorTitle, t.openFileErrorText);
+    } catch (error) {
+      console.warn('Receipt file open failed:', error);
+      Alert.alert(t.openFileErrorTitle, t.openFileErrorText);
+    }
+  }
+
   async function createDataBackup() {
     try {
       await ensureDirectory(BACKUP_DIR);
@@ -6461,6 +6516,7 @@ export default function App() {
               onSaveEdit={saveEditedReceipt}
               onDelete={deleteSelectedReceipt}
               onPreviewImage={setPreviewImage}
+              onOpenFile={openReceiptFile}
               t={t}
             />
           )}
@@ -8486,6 +8542,7 @@ function ReceiptDetailScreen({
   onSaveEdit,
   onDelete,
   onPreviewImage,
+  onOpenFile,
   t,
 }) {
   const items = Array.isArray(receipt.items) ? receipt.items : [];
@@ -8500,10 +8557,14 @@ function ReceiptDetailScreen({
           </Pressable>
         </View>
       ) : receipt.file ? (
-        <View style={styles.analysisCard}>
-          <Text style={styles.analysisTitle}>{receipt.file.name || t.fileSaved}</Text>
-          <Text style={styles.analysisText}>{t.fileSavedText}</Text>
-        </View>
+        <Pressable style={[styles.analysisCard, styles.fileDetailCard]} onPress={() => onOpenFile(receipt.file)}>
+          <Text style={styles.fileDetailIcon}>PDF</Text>
+          <View style={styles.fileDetailTextBlock}>
+            <Text style={styles.analysisTitle}>{receipt.file.name || t.fileSaved}</Text>
+            <Text style={styles.analysisText}>{t.fileSavedText}</Text>
+            <Text style={styles.fileDetailAction}>{t.openFile}</Text>
+          </View>
+        </Pressable>
       ) : (
         <View style={styles.analysisCard}>
           <Text style={styles.analysisTitle}>{t.noPhoto}</Text>
@@ -10195,6 +10256,30 @@ const styles = StyleSheet.create({
     fontSize: 14,
     lineHeight: 20,
     marginTop: 6,
+  },
+  fileDetailCard: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    gap: 12,
+  },
+  fileDetailIcon: {
+    backgroundColor: '#e6f6eb',
+    borderRadius: 8,
+    color: '#157f3b',
+    fontSize: 15,
+    fontWeight: '900',
+    overflow: 'hidden',
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+  },
+  fileDetailTextBlock: {
+    flex: 1,
+  },
+  fileDetailAction: {
+    color: '#096b32',
+    fontSize: 14,
+    fontWeight: '900',
+    marginTop: 8,
   },
   insightCard: {
     backgroundColor: '#fff',
