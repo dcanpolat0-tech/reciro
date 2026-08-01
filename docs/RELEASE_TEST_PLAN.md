@@ -1,6 +1,6 @@
 # Reciro Release Test Plan
 
-Last updated: July 27, 2026
+Last updated: July 31, 2026
 
 Run this test on a real iPhone and a real Android device before each release.
 
@@ -9,8 +9,10 @@ Run this test on a real iPhone and a real Android device before each release.
 - Delete the app from the phone.
 - Install the latest build.
 - Open the app.
-- Confirm the app opens directly to Home.
-- Confirm there is no inactive Apple/Google sign-in gate in the first release.
+- Confirm the app opens with the Reciro Apple / Google account choice screen.
+- Choose Apple and confirm the app opens.
+- Clear app data or reinstall, choose Google, and confirm the app opens.
+- Confirm the selected provider remains saved after closing and reopening the app.
 
 ## Language And Currency
 
@@ -18,12 +20,13 @@ Run this test on a real iPhone and a real Android device before each release.
 - Set phone language to English, French, German, Spanish, Italian, Portuguese, and Dutch when possible.
 - Confirm bottom tabs, settings, reports, categories, buttons, and empty states use the phone language.
 - If the phone language is not supported, confirm the app falls back to English.
-- Change currency to TRY, EUR, and GBP.
-- Confirm Home, Reports, receipt detail, and Products use the selected currency.
+- Scan or enter receipts using EUR, TRY, GBP, and USD where possible.
+- Confirm receipt detail preserves the detected or entered receipt currency.
+- Confirm Home, Reports, receipt detail, Monthly receipts, and Products show totals consistently.
 
 ## Receipt Adding
 
-- Tap `Fiş Ekle` on Home.
+- Tap `Add receipt` / `Fiş ekle` on Home.
 - Confirm camera and gallery choices open above the button.
 - Add a receipt with camera.
 - Add a receipt with gallery.
@@ -54,7 +57,7 @@ Run this test on a real iPhone and a real Android device before each release.
 ## Reports
 
 - Confirm monthly total matches saved receipts.
-- Confirm remaining money uses the selected month income correctly.
+- Confirm income, spending, monthly payments, and balance are consistent for the selected period.
 - Confirm category totals are correct.
 - Confirm fuel receipts appear under Fuel/Yakıt.
 - Tap a store in Markets and stores.

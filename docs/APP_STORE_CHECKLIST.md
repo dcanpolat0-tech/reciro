@@ -1,6 +1,6 @@
 # Reciro App Store Checklist
 
-Last updated: July 27, 2026
+Last updated: July 31, 2026
 
 Use this checklist before sending Reciro to Apple review.
 
@@ -13,6 +13,7 @@ Use this checklist before sending Reciro to Apple review.
 - First release targets iPhone only. iPad support is disabled until tablet layouts are tested.
 - App language defaults to the phone language when supported.
 - If the phone language is not supported, the app opens in English.
+- First launch shows Apple / Google account choice. Current selection is stored locally until real OAuth is connected.
 
 ## Apple Developer
 
@@ -75,7 +76,8 @@ Current local drafts:
 - Users can add a custom category from `Other`.
 - Feedback is sent to `denizcanpolat2307@gmail.com`.
 - Rewarded ads are planned for extra scan credits after the free monthly limit.
-- First release does not show an inactive Apple/Google sign-in gate.
+- Apple / Google entry screen is visible, but it is local-first until real OAuth credentials are connected in a later native build step.
+- User data remains on the device. User-controlled export can be saved to iCloud Drive, Google Drive, or Files.
 - No real API keys are committed to GitHub.
 
 ## Final Device Test

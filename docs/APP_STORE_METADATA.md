@@ -33,7 +33,7 @@ Key features:
 - Scan receipts with the camera, choose from gallery, or add PDFs
 - AI receipt analysis for store, date, total, category, and items
 - Edit products, quantities, prices, categories, and totals before saving
-- Track monthly spending and remaining money
+- Track monthly spending, income, monthly payments, and balance
 - View spending by category, store, and product
 - Search receipts by store, category, item, date, or amount
 - Save receipt photos so you can view them later
@@ -87,7 +87,7 @@ Benefits:
 - Store and merchant reports
 - Product-based monthly analysis
 - Ad-free experience
-- Future export and cloud backup features
+- User-controlled export and backup improvements
 
 ### Reciro Premium Yearly
 

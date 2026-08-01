@@ -1,10 +1,10 @@
 # Reciro Final Release Readiness
 
-Last updated: July 27, 2026
+Last updated: July 31, 2026
 
 ## Current Status
 
-Reciro is technically prepared for iOS and Android release preparation. The remaining external blockers are Apple Developer Program enrollment approval, Google Play developer approval, and final store purchase setup.
+Reciro is technically prepared for iOS and Android release preparation. The remaining external blockers are Apple Developer Program enrollment approval, Google Play developer approval, AdMob account/payment review, and final store purchase setup.
 
 ## Confirmed
 
@@ -30,18 +30,19 @@ Reciro is technically prepared for iOS and Android release preparation. The rema
 
 ## First Release Choices
 
-- The app opens directly to Home.
-- Inactive Apple/Google sign-in gate is disabled.
+- The app opens with a simple Apple / Google account choice screen.
+- The current Apple / Google choice is local-first and stores the selected provider on the device. Real OAuth is still planned for a later native build step.
 - Premium screen, free limit, and rewarded ad flow are prepared, but real subscriptions are not connected yet.
 - RevenueCat/App Store/Google Play purchase state must be connected before Premium can actually unlock paid features.
 - Receipt data is stored locally on the phone in the current release.
+- Users can export their own backups and keep them in iCloud Drive, Google Drive, or the Files app. Reciro does not store receipt backups on its own servers.
 
 ## Known Notes
 
 - Apple Developer enrollment is required before App Store Connect, TestFlight, and App Store submission can continue.
 - Google Play approval is required before production Android publishing can continue.
 - Real subscriptions should not be enabled until RevenueCat purchase and restore flows are implemented and tested on both platforms.
-- Cloud sync/login is planned for a later release.
+- Real Apple/Google OAuth and automatic cross-device sync are planned for a later release. Current data ownership is local/device-first.
 
 ## Next Steps After Apple Approval
 
