@@ -12,6 +12,7 @@
       "buildNumber": "1",
       "supportsTablet": false,
       "infoPlist": {
+        "ITSAppUsesNonExemptEncryption": false,
         "NSCameraUsageDescription": "Reciro uses the camera only when you choose to scan a receipt photo.",
         "NSPhotoLibraryUsageDescription": "Reciro uses your photo library only when you choose receipt photos to save or analyze."
       }
