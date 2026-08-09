@@ -392,6 +392,17 @@ const server = http.createServer(async (request, response) => {
     return;
   }
 
+  // AdMob verifies this file at the root of the public developer website.
+  // Keep the publisher account ID aligned with the production iOS ad units.
+  if (request.method === 'GET' && requestPath === '/app-ads.txt') {
+    response.writeHead(200, {
+      'Content-Type': 'text/plain; charset=utf-8',
+      'Cache-Control': 'public, max-age=300',
+    });
+    response.end('google.com, pub-8547815405822008, DIRECT, f08c47fec0942fa0\n');
+    return;
+  }
+
   if (request.method === 'GET' && requestPath === '/styles.css') {
     const filePath = path.join(__dirname, '..', 'docs', 'styles.css');
     fs.readFile(filePath, 'utf8', (error, css) => {
