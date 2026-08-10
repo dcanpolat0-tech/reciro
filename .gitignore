@@ -47,8 +47,7 @@ yarn-error.*
 /ios
 /android
 
-# local assistant/project scratch files
+# local assistant scratch files
 .claude/
 CLAUDE.md
-AGENTS.md
 store-assets/app-store/.generated-html/

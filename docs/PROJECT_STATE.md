@@ -1,92 +1,55 @@
-# Reciro Project State
+# reciro Project State
 
-Last updated: 2026-08-08
+## Current Architecture
 
-## Product
+Expo/React Native (SDK 54 in `package.json`) app. The UI and local state are primarily in `App.js`; receipt data is stored device-local with AsyncStorage and files in the app document directory. A small Node HTTP backend performs temporary receipt analysis and serves public/legal endpoints.
 
-- App name: Reciro - Smart Receipt Scanner
-- Brand: Reciro
-- Slogan: Scan. Save. Simplify.
-- Purpose: simple receipt scanning and expense tracking. Users add a receipt photo, gallery image, or PDF; AI extracts store, date, total, products, quantities, categories, and currency.
-- Main promise: fast, simple, low-confusion receipt tracking for weekly, monthly, yearly, and all-time spending.
+## Important Files
 
-## User and workflow
+- `App.js` — screens, navigation state, local data, receipt workflow, localization, auth, ads and purchase calls.
+- `app.json` / `app.config.js` — Expo identifiers, native settings and non-secret runtime environment mapping.
+- `revenueCat.js` — optional native RevenueCat module loader.
+- `mobileAds.native.js` / `mobileAds.web.js` — platform-safe AdMob module loader.
+- `server/receipt-analysis-server.js` — analysis API, rate limiting, feedback, legal pages and `/app-ads.txt`.
+- `docs/` — current project memory, release, privacy and store documentation.
 
-- User is beginner in coding and uses Windows, not Mac.
-- Preferred workflow: explain step by step in Turkish, but implement directly when possible.
-- Do not rely on the old long chat. Start each new session by reading:
-  - docs/PROJECT_STATE.md
-  - docs/NEXT_STEPS.md
-  - docs/RELEASE_CHECKLIST.md
+## Working Features
 
-## Local project
+- Add receipt by camera, gallery image or PDF; analyze it, review/edit it, save locally and prevent duplicate saves with a recovery path.
+- Home, reports, monthly receipts, products and settings flows; search, filters, swipe delete, receipt detail and image preview.
+- Local income, budget, recurring expense, currency, category-memory, backup/export and custom-category support.
+- Multilingual UI. “Other” can be renamed and custom categories can be created.
+- Five free analyses per month; rewarded-ad credits and Premium flows exist in native builds.
 
-- Main folder: C:\Users\ask_d\Documents\Codex\2026-07-08\si\Reciro
-- GitHub repo: https://github.com/dcanpolat0-tech/reciro
-- Expo project: @denizcanpolat2307/reciro
-- iOS bundle ID: com.dcanpolat.reciro
-- App Store app ID: 6797104975
+## Integrations
 
-## Backend and AI
+- **Backend:** Render-hosted receipt analysis endpoint. It requires server environment variables for OpenAI and optional feedback mail; receipts are for temporary analysis, not server-side archives.
+- **RevenueCat:** native iOS purchase configuration, offerings, purchase and restore calls are wired through `revenueCat.js`. SDK identifiers are client configuration, not server secrets.
+- **AdMob:** native rewarded-ad configuration exists; `/app-ads.txt` is served by the backend. Ads cannot run in Expo Go.
+- **Authentication:** Apple and Google sign-in flows are implemented for supported iOS devices; verify on-device after any auth/config change.
+- **Store:** iOS bundle ID is `com.dcanpolat.reciro`; App Store Connect ID is `6797104975`. EAS production submit is configured in `eas.json`.
 
-- Receipt analysis backend: https://reciro-receipt-analysis.onrender.com
-- Render dashboard service: https://dashboard.render.com/web/srv-d9h8c3t8nd3s73cdes6g
-- OpenAI API keys page: https://platform.openai.com/api-keys
-- Important rule: backend analyzes receipt images/PDFs only to extract details. It must not become permanent user storage.
+## Current UI / Screens
 
-## Data model and privacy direction
+Entry sign-in choice; tab navigation for Home, Report, Monthly, Products and Settings. Receipt add/review/detail, report/category/month drill-downs, data/backup, privacy/legal and developer-connections settings are rendered from the main `App.js` screen flow.
 
-- Local-first product direction.
-- User data should stay on the user's device.
-- Future sync/backup should use user-owned storage:
-  - iCloud for Apple users
-  - Google Drive for Google/Android users
-- We do not want to keep personal receipt archives on our own server.
-- Receipt photos/PDFs may be temporarily sent to the analysis backend for OCR/AI extraction.
+## Important Decisions
 
-## Monetization
+- Local-first: receipts and user financial data remain on-device; backups use user-controlled storage.
+- Do not put server credentials in Expo config or client code.
+- `App.js` is intentionally a large central file; avoid unrelated refactors.
+- Daily work is done only in `RECIRO-DEVELOPMENT` on `codex/development`; `main` remains the stable reference.
 
-- App Store app price: free.
-- Free plan: 5 receipt analyses per month.
-- After 5 free scans: user can either watch a rewarded ad for 1 extra scan or upgrade to Premium.
-- Premium monthly: 1.99 EUR.
-- Premium yearly: 10 percent discount, about 21.49 EUR/year.
-- RevenueCat setup was started, but payment logic must be checked before relying on it in production.
-- AdMob rewarded ads should unlock extra scans after the free limit.
+## Known Issues
 
-## AdMob
+- Some Premium and restore-purchase translations still say that purchases will be connected in a later version, although RevenueCat flows are present; update this copy in a focused task.
+- AdMob verification depends on the public App Store Marketing URL being crawled after the related App Store update is live.
 
-- Android app ID: ca-app-pub-8547815405822008~3094032770
-- Android rewarded ad unit: ca-app-pub-8547815405822008/8421426783
-- iOS app ID: ca-app-pub-8547815405822008~5448733377
-- iOS rewarded ad unit: ca-app-pub-8547815405822008/1911858751
-- AdMob account was still pending/verification in earlier setup. Real ads may not serve until Google approval completes.
+## Current Development State
 
-## App Store status
+Development worktree: `C:\Users\ask_d\Documents\Codex\2026-07-08\si\RECIRO-DEVELOPMENT` on `codex/development`. It currently has an uncommitted `App.js` change that adds a Settings → Connections overview; preserve and review it before unrelated work. Generated `dist-*` folders are temporary and must not be committed.
 
-- iOS build 2 was uploaded through EAS.
-- App Store Connect reached review/submission flow.
-- User later reported the app is active/open from Turkey App Store, not Expo Go.
-- Current user testing is from the real App Store version unless explicitly stated otherwise.
+## Next Relevant Work
 
-## Current important issues reported by user
-
-- Apple and Google login buttons are visible but not connected.
-- After 5 free receipt analyses, rewarded ad flow does not activate.
-- If a similar/duplicate receipt is detected, the flow can get stuck and needs a back button/recovery path.
-- Premium/payment method needs App Store/RevenueCat wiring checked.
-- PDF receipts can be saved but cannot always be opened from all sections.
-- Receipt image viewer should support zoom and should not drift/slide strangely.
-- Swipe-to-delete should work in report/month/archive lists and close when tapping elsewhere.
-- "Toplami urunlerden hesapla" is unclear and/or not functioning correctly.
-- Report section should show income/balance when monthly income is entered.
-- Home "recent uploads" should sort by app upload/save time; reports/months should sort by receipt date.
-
-## Quality principle
-
-- Keep each section focused:
-  - Home: summary, recent uploads, quick receipt add.
-  - Report: category/store/month reporting.
-  - Monthly: month-by-month receipt lists.
-  - Products: product summary by selected month/year/all-time.
-  - Settings: account, money/budget, monthly payments, receipt analysis, data, privacy/legal, help/feedback.
+- Verify Apple review/release status and AdMob crawling externally; do not change release settings without an explicit request.
+- Before the next store update, test native iOS receipt analysis, Apple/Google auth, rewarded ad, purchase and restore flows on a device.
