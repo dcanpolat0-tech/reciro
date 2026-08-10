@@ -27,7 +27,13 @@ import * as ImageManipulator from 'expo-image-manipulator';
 import * as Sharing from 'expo-sharing';
 import Constants from 'expo-constants';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import * as AppleAuthentication from 'expo-apple-authentication';
+import * as WebBrowser from 'expo-web-browser';
+import * as Google from 'expo-auth-session/providers/google';
 import { getMobileAdsModule } from './mobileAds';
+import { getPurchasesModule } from './revenueCat';
+
+WebBrowser.maybeCompleteAuthSession();
 
 const RECEIPTS_STORAGE_KEY = 'reciro.receipts.v2';
 const SALARY_STORAGE_KEY = 'reciro.salary.v1';
@@ -40,6 +46,7 @@ const BUDGETS_STORAGE_KEY = 'reciro.budgets.v1';
 const RECURRING_EXPENSES_STORAGE_KEY = 'reciro.recurringExpenses.v1';
 const ACTIVE_SPACE_STORAGE_KEY = 'reciro.activeSpace.v1';
 const OTHER_CATEGORY_LABEL_STORAGE_KEY = 'reciro.otherCategoryLabel.v1';
+const CUSTOM_CATEGORIES_STORAGE_KEY = 'reciro.customCategories.v1';
 const RECEIPT_SETTINGS_STORAGE_KEY = 'reciro.receiptSettings.v1';
 const REWARDED_ANALYSIS_CREDITS_STORAGE_KEY = 'reciro.rewardedAnalysisCredits.v1';
 const RECEIPT_IMAGE_DIR = `${FileSystem.documentDirectory}receipts/`;
@@ -47,6 +54,9 @@ const RECEIPT_FILE_DIR = `${FileSystem.documentDirectory}receipt-files/`;
 const BACKUP_DIR = `${FileSystem.documentDirectory}backups/`;
 const EXPORT_DIR = `${FileSystem.documentDirectory}exports/`;
 const APP_CONFIG_EXTRA = Constants.expoConfig?.extra || Constants.manifest?.extra || {};
+const IS_EXPO_GO =
+  Constants.appOwnership === 'expo' ||
+  Constants.executionEnvironment === 'storeClient';
 const DEFAULT_RECEIPT_ANALYSIS_ENDPOINT = 'https://reciro-receipt-analysis.onrender.com/analyze-receipt';
 const RECEIPT_ANALYSIS_ENDPOINT =
   APP_CONFIG_EXTRA.receiptAnalysisUrl ||
@@ -62,8 +72,13 @@ const ANALYSIS_IMAGE_QUALITY = 0.55;
 const ANALYSIS_REQUEST_TIMEOUT_MS = 35000;
 const EXCHANGE_RATE_ENDPOINT = 'https://api.frankfurter.dev/v2/rates';
 const FREE_MONTHLY_ANALYSIS_LIMIT = 5;
-const ENABLE_PREMIUM_PAYWALL = false;
-const ENABLE_REWARDED_ADS = false;
+// Keep the free plan limited to five analyses per calendar month. Premium
+// access can replace this check once its purchase integration is connected.
+const ENABLE_PREMIUM_PAYWALL = true;
+const ENABLE_REWARDED_ADS = true;
+const REVENUECAT_IOS_API_KEY = 'appl_wVqvYmGGSHrkWFeuvCmOBISdSNK';
+const REVENUECAT_PREMIUM_ENTITLEMENT = 'Reciro Premium';
+const GOOGLE_IOS_CLIENT_ID = '561368359079-hkk7ifrscsoqtsk9t1gl3l2gpf5qfp7r.apps.googleusercontent.com';
 const ADMOB_ANDROID_REWARDED_AD_UNIT_ID = 'ca-app-pub-8547815405822008/8421426783';
 const ADMOB_IOS_REWARDED_AD_UNIT_ID = 'ca-app-pub-8547815405822008/1911858751';
 const REWARDED_AD_LOAD_TIMEOUT_MS = 20000;
@@ -228,6 +243,7 @@ const translations = {
     category: 'Kategori',
     customCategory: 'Özel kategori',
     customCategoryPlaceholder: 'Örn. Oto bakım, okul, vergi...',
+    addCategory: 'Kategori ekle',
     readItems: 'Okunan ürünler',
     addToSpending: 'Harcamalara Ekle',
     manualSaveHelp: 'Analiz olmadan kaydetmek için mağaza adı ve toplam tutarı yazman yeterli.',
@@ -482,6 +498,7 @@ const translations = {
     category: 'Category',
     customCategory: 'Custom category',
     customCategoryPlaceholder: 'Example: car care, school, tax...',
+    addCategory: 'Add category',
     readItems: 'Read items',
     addToSpending: 'Add to spending',
     manualSaveHelp: 'To save without analysis, enter the store name and total amount.',
@@ -3038,8 +3055,32 @@ function normalizeCategoryKey(category) {
 }
 
 function makeCustomCategoryKey(label) {
-  const cleanLabel = String(label || '').trim();
+  const cleanLabel = normalizeCustomCategoryLabel(label);
   return cleanLabel ? `custom:${cleanLabel}` : 'other';
+}
+
+function normalizeCustomCategoryLabel(label) {
+  return String(label || '').trim().replace(/\s+/g, ' ');
+}
+
+function normalizeCustomCategories(categories) {
+  if (!Array.isArray(categories)) {
+    return [];
+  }
+
+  const knownLabels = new Set();
+  return categories.reduce((result, category) => {
+    const cleanLabel = normalizeCustomCategoryLabel(category);
+    const normalizedLabel = normalizeLookupText(cleanLabel);
+
+    if (!cleanLabel || !normalizedLabel || knownLabels.has(normalizedLabel)) {
+      return result;
+    }
+
+    knownLabels.add(normalizedLabel);
+    result.push(cleanLabel);
+    return result;
+  }, []);
 }
 
 function isCustomCategory(category) {
@@ -4657,6 +4698,7 @@ export default function App() {
   const [budgetsByCategory, setBudgetsByCategory] = useState({});
   const [recurringExpenses, setRecurringExpenses] = useState([]);
   const [otherCategoryLabel, setOtherCategoryLabel] = useState('');
+  const [customCategories, setCustomCategories] = useState([]);
   const [receiptSettings, setReceiptSettings] = useState(DEFAULT_RECEIPT_SETTINGS);
   const [activeSpace, setActiveSpace] = useState(DEFAULT_SPACE_KEY);
   const [settingsSection, setSettingsSection] = useState('main');
@@ -4672,6 +4714,31 @@ export default function App() {
   const [selectedMonthlyReceiptKey, setSelectedMonthlyReceiptKey] = useState(null);
   const [openSwipeReceiptId, setOpenSwipeReceiptId] = useState(null);
   const [storageReady, setStorageReady] = useState(false);
+  const [hasPremiumAccess, setHasPremiumAccess] = useState(false);
+  const [, googleResponse, promptGoogleSignIn] = Google.useAuthRequest({
+    iosClientId: GOOGLE_IOS_CLIENT_ID,
+    scopes: ['openid', 'profile', 'email'],
+    selectAccount: true,
+  });
+
+  useEffect(() => {
+    if (googleResponse?.type !== 'success') return;
+
+    setAuthProvider('google');
+    setSettingsSection('main');
+    setScreen('home');
+  }, [googleResponse]);
+
+  useEffect(() => {
+    const purchases = getPurchasesModule();
+    if (Platform.OS !== 'ios' || !purchases || IS_EXPO_GO) return;
+    try {
+      purchases.configure({ apiKey: REVENUECAT_IOS_API_KEY });
+      purchases.getCustomerInfo().then((info) => setHasPremiumAccess(Boolean(info.entitlements.active[REVENUECAT_PREMIUM_ENTITLEMENT]))).catch(() => {});
+    } catch (error) {
+      console.warn('Purchases could not be configured.', error);
+    }
+  }, []);
 
   useEffect(() => {
     async function loadSavedData() {
@@ -4689,6 +4756,7 @@ export default function App() {
           savedRecurringExpenses,
           savedActiveSpace,
           savedOtherCategoryLabel,
+          savedCustomCategories,
           savedReceiptSettings,
         ] = await Promise.all([
           AsyncStorage.getItem(RECEIPTS_STORAGE_KEY),
@@ -4703,6 +4771,7 @@ export default function App() {
           AsyncStorage.getItem(RECURRING_EXPENSES_STORAGE_KEY),
           AsyncStorage.getItem(ACTIVE_SPACE_STORAGE_KEY),
           AsyncStorage.getItem(OTHER_CATEGORY_LABEL_STORAGE_KEY),
+          AsyncStorage.getItem(CUSTOM_CATEGORIES_STORAGE_KEY),
           AsyncStorage.getItem(RECEIPT_SETTINGS_STORAGE_KEY),
         ]);
 
@@ -4773,6 +4842,8 @@ export default function App() {
         if (savedOtherCategoryLabel) {
           setOtherCategoryLabel(savedOtherCategoryLabel);
         }
+
+        setCustomCategories(normalizeCustomCategories(safeParseStoredJson(savedCustomCategories, [])));
 
         const parsedReceiptSettings = safeParseStoredJson(savedReceiptSettings, null);
         if (parsedReceiptSettings && typeof parsedReceiptSettings === 'object' && !Array.isArray(parsedReceiptSettings)) {
@@ -4961,6 +5032,16 @@ export default function App() {
     }
   }, [otherCategoryLabel, storageReady]);
 
+  useEffect(() => {
+    if (!storageReady) {
+      return;
+    }
+
+    AsyncStorage.setItem(CUSTOM_CATEGORIES_STORAGE_KEY, JSON.stringify(customCategories)).catch(() => {
+      console.warn('Custom categories could not be saved.');
+    });
+  }, [customCategories, storageReady]);
+
   const salaryText = incomeByMonth[incomeMonthKey] || '';
   const salary = parseAmount(salaryText);
   const visibleReceipts = useMemo(
@@ -5033,7 +5114,7 @@ export default function App() {
   const monthlyAnalysisUsage = Number(analysisUsageByMonth[currentAnalysisMonthKey]) || 0;
   const monthlyRewardedCredits = Number(rewardedAnalysisCreditsByMonth[currentAnalysisMonthKey]) || 0;
   const monthlyAnalysisAllowance = FREE_MONTHLY_ANALYSIS_LIMIT + Math.max(0, monthlyRewardedCredits);
-  const isPremium = !ENABLE_PREMIUM_PAYWALL;
+  const isPremium = hasPremiumAccess;
   const canUseReceiptAnalysis = isPremium || monthlyAnalysisUsage < monthlyAnalysisAllowance;
   const freeUsageText = t.freeUsageText(
     Math.min(monthlyAnalysisUsage, monthlyAnalysisAllowance),
@@ -5523,6 +5604,7 @@ export default function App() {
         recurringExpenses,
         activeSpace,
         otherCategoryLabel,
+        customCategories,
         receiptSettings,
       };
 
@@ -5589,6 +5671,7 @@ export default function App() {
       setRecurringExpenses(Array.isArray(backupData.recurringExpenses) ? backupData.recurringExpenses : []);
       setActiveSpace(normalizeSpaceKey(backupData.activeSpace));
       setOtherCategoryLabel(String(backupData.otherCategoryLabel || '').trim());
+      setCustomCategories(normalizeCustomCategories(backupData.customCategories));
       setReceiptSettings({
         ...DEFAULT_RECEIPT_SETTINGS,
         ...(backupData.receiptSettings && typeof backupData.receiptSettings === 'object' ? backupData.receiptSettings : {}),
@@ -5636,10 +5719,65 @@ export default function App() {
     }));
   }
 
-  function chooseAuthProvider(provider) {
-    setAuthProvider(provider);
-    setSettingsSection('main');
-    setScreen('home');
+  function addCustomCategory(label) {
+    const cleanLabel = normalizeCustomCategoryLabel(label);
+    const normalizedLabel = normalizeLookupText(cleanLabel);
+
+    if (!cleanLabel || !normalizedLabel) {
+      return null;
+    }
+
+    setCustomCategories((currentCategories) => {
+      if (currentCategories.some((category) => normalizeLookupText(category) === normalizedLabel)) {
+        return currentCategories;
+      }
+
+      return [...currentCategories, cleanLabel];
+    });
+
+    return makeCustomCategoryKey(cleanLabel);
+  }
+
+  async function chooseAuthProvider(provider) {
+    if (provider === 'google') {
+      if (Platform.OS !== 'ios') {
+        Alert.alert(t.signInWithGoogle, 'Google sign-in is currently available on iPhone and iPad.');
+        return;
+      }
+
+      try {
+        await promptGoogleSignIn({ showInRecents: true });
+      } catch (error) {
+        Alert.alert(t.signInWithGoogle, error?.message || 'Google sign-in could not be completed.');
+      }
+      return;
+    }
+
+    if (Platform.OS !== 'ios' || !(await AppleAuthentication.isAvailableAsync())) {
+      Alert.alert(t.signInWithApple, 'Sign in with Apple is available on supported iPhones and iPads.');
+      return;
+    }
+
+    try {
+      const credential = await AppleAuthentication.signInAsync({
+        requestedScopes: [
+          AppleAuthentication.AppleAuthenticationScope.FULL_NAME,
+          AppleAuthentication.AppleAuthenticationScope.EMAIL,
+        ],
+      });
+
+      if (!credential.user) {
+        throw new Error('Apple did not return a user identifier.');
+      }
+
+      setAuthProvider('apple');
+      setSettingsSection('main');
+      setScreen('home');
+    } catch (error) {
+      if (error?.code !== 'ERR_REQUEST_CANCELED') {
+        Alert.alert(t.signInWithApple, error?.message || 'Apple sign-in could not be completed.');
+      }
+    }
   }
 
   function signOutAuthProvider() {
@@ -5675,6 +5813,7 @@ export default function App() {
             RECURRING_EXPENSES_STORAGE_KEY,
             ACTIVE_SPACE_STORAGE_KEY,
             OTHER_CATEGORY_LABEL_STORAGE_KEY,
+            CUSTOM_CATEGORIES_STORAGE_KEY,
             RECEIPT_SETTINGS_STORAGE_KEY,
           ]);
           setReceipts([]);
@@ -5684,6 +5823,7 @@ export default function App() {
           setBudgetsByCategory({});
           setRecurringExpenses([]);
           setOtherCategoryLabel('');
+          setCustomCategories([]);
           setReceiptSettings(DEFAULT_RECEIPT_SETTINGS);
           setAuthProvider(null);
           setActiveSpace(DEFAULT_SPACE_KEY);
@@ -5721,6 +5861,20 @@ export default function App() {
     setAnalysisStatus('idle');
     setPhotoOptionsOpen(false);
     setPendingPhotoAction(null);
+  }
+
+  function cancelReceiptEntry() {
+    resetReceiptForm();
+    setPhotoOptionsOpen(false);
+    setPendingPhotoAction(null);
+    setScreen('home');
+  }
+
+  function showDuplicateReceiptAlert() {
+    Alert.alert(t.duplicateReceiptTitle, t.duplicateReceiptText, [
+      { text: t.back, style: 'cancel' },
+      { text: t.cancel, style: 'destructive', onPress: cancelReceiptEntry },
+    ]);
   }
 
   function showAnalysisLimitAlert() {
@@ -5780,6 +5934,45 @@ export default function App() {
       }
 
       Alert.alert(t.rewardedAdSetupTitle, t.rewardedAdSetupText);
+    }
+  }
+
+  async function purchasePremium(packageType) {
+    try {
+      const purchases = getPurchasesModule();
+      if (!purchases || IS_EXPO_GO) {
+        throw new Error('Premium purchases require the TestFlight or App Store version of Reciro.');
+      }
+      const offerings = await purchases.getOfferings();
+      const selectedPackage = offerings.current?.[packageType];
+
+      if (!selectedPackage) {
+        throw new Error('This subscription is not available yet. Please try again shortly.');
+      }
+
+      const purchaseResult = await purchases.purchasePackage(selectedPackage);
+      setHasPremiumAccess(Boolean(purchaseResult.customerInfo.entitlements.active[REVENUECAT_PREMIUM_ENTITLEMENT]));
+    } catch (error) {
+      if (!error.userCancelled) Alert.alert(t.premiumTitle, error.message || t.premiumSetupText);
+    }
+  }
+
+  async function restorePremiumPurchases() {
+    try {
+      const purchases = getPurchasesModule();
+      if (!purchases || IS_EXPO_GO) {
+        throw new Error('Premium purchases require the TestFlight or App Store version of Reciro.');
+      }
+      const info = await purchases.restorePurchases();
+      setHasPremiumAccess(Boolean(info.entitlements.active[REVENUECAT_PREMIUM_ENTITLEMENT]));
+      Alert.alert(
+        t.restorePurchasesTitle,
+        info.entitlements.active[REVENUECAT_PREMIUM_ENTITLEMENT]
+          ? t.premiumSubtitle
+          : 'No active Premium subscription was found for this Apple ID.'
+      );
+    } catch (error) {
+      Alert.alert(t.restorePurchasesTitle, error.message || t.restorePurchasesText);
     }
   }
 
@@ -6067,7 +6260,11 @@ export default function App() {
       setTaxText(analysisResult.taxText || '');
       setReceiptDateText(analysisResult.dateText || formatReceiptDate(Date.now()));
       setReceiptNumberText(analysisResult.receiptNumber || '');
-      const analyzedCategory = normalizeCategoryKey(analysisResult.categoryKey);
+      const detectedCategory = normalizeCategoryKey(analysisResult.categoryKey);
+      const analyzedCategory =
+        detectedCategory === 'other'
+          ? normalizeCategoryKey(receiptSettings.defaultCategory)
+          : detectedCategory;
       const editableItems = createEditableItemsFromList(
         applyCategoryMemory(analysisResult.items || [], categoryMemory),
         analyzedCategory
@@ -6148,7 +6345,7 @@ export default function App() {
     newReceipt.fingerprint = getReceiptFingerprint(newReceipt);
 
     if (isReceiptDuplicate(newReceipt, receipts)) {
-      Alert.alert(t.duplicateReceiptTitle, t.duplicateReceiptText);
+      showDuplicateReceiptAlert();
       return;
     }
 
@@ -6249,7 +6446,7 @@ export default function App() {
     newReceipt.fingerprint = getReceiptFingerprint(newReceipt);
 
     if (isReceiptDuplicate(newReceipt, receipts)) {
-      Alert.alert(t.duplicateReceiptTitle, t.duplicateReceiptText);
+      showDuplicateReceiptAlert();
       return;
     }
 
@@ -6359,6 +6556,7 @@ export default function App() {
                   setReceiptDateText={setReceiptDateText}
                   selectedCategory={selectedCategory}
                   setSelectedCategory={setSelectedCategory}
+                  customCategories={customCategories}
                   customCategoryText={customCategoryText}
                   setCustomCategoryText={setCustomCategoryText}
                   receiptKind={receiptKind}
@@ -6419,6 +6617,7 @@ export default function App() {
                     analyzeReceiptImage(receiptImage);
                   }}
                   onSave={saveManualReceipt}
+                  onCancel={cancelReceiptEntry}
                   onPreviewImage={setPreviewImage}
                   t={t}
                 />
@@ -6537,6 +6736,8 @@ export default function App() {
               setBudgetsByCategory={setBudgetsByCategory}
               otherCategoryLabel={otherCategoryLabel}
               setOtherCategoryLabel={setOtherCategoryLabel}
+              customCategories={customCategories}
+              onAddCustomCategory={addCustomCategory}
               receiptSettings={receiptSettings}
               updateReceiptSettings={updateReceiptSettings}
               recurringExpenses={recurringExpenses}
@@ -6553,6 +6754,8 @@ export default function App() {
               authProvider={authProvider}
               onSignOut={signOutAuthProvider}
               onChooseAuthProvider={chooseAuthProvider}
+              onPurchasePremium={purchasePremium}
+              onRestorePremiumPurchases={restorePremiumPurchases}
               t={t}
             />
           )}
@@ -6798,6 +7001,7 @@ function ReceiptScreen({
   setReceiptDateText,
   selectedCategory,
   setSelectedCategory,
+  customCategories,
   customCategoryText,
   setCustomCategoryText,
   receiptKind,
@@ -6830,10 +7034,22 @@ function ReceiptScreen({
   onTakePhoto,
   onReanalyze,
   onSave,
+  onCancel,
   onPreviewImage,
   t,
 }) {
   const [expandedReceiptItemId, setExpandedReceiptItemId] = useState(null);
+  const availableCategoryOptions = useMemo(
+    () => [
+      ...categoryOptions,
+      ...customCategories.map((label) => ({
+        key: makeCustomCategoryKey(label),
+        color: '#6b7280',
+        icon: '🏷️',
+      })),
+    ],
+    [customCategories]
+  );
   const requiredFieldsComplete =
     Boolean(storeName.trim()) && Boolean(amountText.trim());
   const confidencePercent =
@@ -7052,7 +7268,7 @@ function ReceiptScreen({
 
               <Text style={styles.inputLabel}>{t.category}</Text>
               <View style={styles.receiptCategoryGrid}>
-                {categoryOptions.map((category) => (
+                {availableCategoryOptions.map((category) => (
                   <Pressable
                     key={category.key}
                     style={[
@@ -7212,7 +7428,7 @@ function ReceiptScreen({
                       </View>
 
                       <View style={styles.receiptItemCategoryGrid}>
-                        {categoryOptions.map((category) => (
+                        {availableCategoryOptions.map((category) => (
                           <Pressable
                             key={category.key}
                             style={[
@@ -7251,6 +7467,7 @@ function ReceiptScreen({
           onPress={onSave}
         />
       )}
+      <SecondaryButton label={t.cancel} onPress={onCancel} />
     </View>
   );
 }
@@ -7684,6 +7901,8 @@ function SettingsScreen({
   setBudgetsByCategory,
   otherCategoryLabel,
   setOtherCategoryLabel,
+  customCategories,
+  onAddCustomCategory,
   receiptSettings,
   updateReceiptSettings,
   recurringExpenses,
@@ -7700,6 +7919,8 @@ function SettingsScreen({
   authProvider,
   onSignOut,
   onChooseAuthProvider,
+  onPurchasePremium,
+  onRestorePremiumPurchases,
   t,
 }) {
   const [feedbackText, setFeedbackText] = useState('');
@@ -7709,8 +7930,32 @@ function SettingsScreen({
   const [recurringMonth, setRecurringMonth] = useState(String(new Date().getMonth() + 1));
   const [recurringFrequency, setRecurringFrequency] = useState('monthly');
   const [recurringCategory, setRecurringCategory] = useState('home');
+  const [newCustomCategory, setNewCustomCategory] = useState('');
   const selectedCurrencyItem =
     currencies.find((currency) => currency.code === selectedCurrency) || currencies[0];
+
+  const configuredCategoryOptions = useMemo(
+    () => [
+      ...categoryOptions,
+      ...customCategories.map((label) => ({
+        key: makeCustomCategoryKey(label),
+        color: '#6b7280',
+        icon: '🏷️',
+      })),
+    ],
+    [customCategories]
+  );
+
+  function saveNewCustomCategory() {
+    const categoryKey = onAddCustomCategory(newCustomCategory);
+
+    if (!categoryKey) {
+      return;
+    }
+
+    updateReceiptSettings({ defaultCategory: categoryKey });
+    setNewCustomCategory('');
+  }
 
   async function sendFeedback() {
     const message = feedbackText.trim();
@@ -7961,18 +8206,20 @@ function SettingsScreen({
 
         <Text style={styles.settingGroupTitle}>{t.defaultCategory}</Text>
         <View style={styles.card}>
-          <Text style={styles.settingsTitle}>{t.otherCategoryName}</Text>
+          <Text style={styles.settingsTitle}>{t.customCategory}</Text>
           <Text style={styles.settingsText}>{t.defaultCategoryInfo}</Text>
           <TextInput
             style={styles.inlineSettingsInput}
-            value={otherCategoryLabel}
-            onChangeText={setOtherCategoryLabel}
-            placeholder={t.otherCategoryPlaceholder}
+            value={newCustomCategory}
+            onChangeText={setNewCustomCategory}
+            placeholder={t.customCategoryPlaceholder}
             returnKeyType="done"
+            onSubmitEditing={saveNewCustomCategory}
           />
+          <PrimaryButton label={t.addCategory} onPress={saveNewCustomCategory} />
         </View>
         <View style={styles.settingsList}>
-          {categoryOptions.map((category) => (
+          {configuredCategoryOptions.map((category) => (
             <Pressable
               key={category.key}
               style={styles.settingsRow}
@@ -8299,13 +8546,11 @@ function SettingsScreen({
           ))}
         </View>
 
-        <PrimaryButton
-          label={t.startPremium}
-          onPress={() => Alert.alert(t.premiumSetupTitle, t.premiumSetupText)}
-        />
+        <PrimaryButton label={t.premiumYearly} onPress={() => onPurchasePremium('annual')} />
+        <SecondaryButton label={t.premiumMonthly} onPress={() => onPurchasePremium('monthly')} />
         <SecondaryButton
           label={t.restorePurchases}
-          onPress={() => Alert.alert(t.restorePurchasesTitle, t.restorePurchasesText)}
+          onPress={onRestorePremiumPurchases}
         />
         <SecondaryButton label={t.back} onPress={() => setSettingsSection('main')} />
       </View>
@@ -8377,16 +8622,11 @@ function SettingsScreen({
   if (settingsSection === 'privacy') {
     return (
       <View>
-        <View style={styles.card}>
-          <Text style={styles.analysisTitle}>{t.privacyAndLegal}</Text>
-          <Text style={styles.analysisText}>{t.privacySummary}</Text>
-        </View>
-
         <View style={styles.settingsList}>
           <SettingsRow
             icon="🔒"
             title={t.privacyPolicy}
-            subtitle={t.privacySummary}
+            subtitle={t.privacyPolicy}
             value=">"
             onPress={() => setSettingsSection('privacyPolicy')}
           />
@@ -9480,7 +9720,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     left: 20,
     position: 'absolute',
-    top: 14,
+    top: 4,
     width: 42,
     zIndex: 2,
   },

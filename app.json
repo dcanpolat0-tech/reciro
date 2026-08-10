@@ -2,14 +2,19 @@
   "expo": {
     "name": "Reciro",
     "slug": "reciro",
-    "version": "1.0.0",
+    "version": "1.0.1",
     "description": "Reciro - Smart Receipt Scanner. Scan. Save. Simplify.",
+    "scheme": [
+      "reciro",
+      "com.googleusercontent.apps.561368359079-hkk7ifrscsoqtsk9t1gl3l2gpf5qfp7r"
+    ],
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
     "ios": {
       "bundleIdentifier": "com.dcanpolat.reciro",
-      "buildNumber": "1",
+      "buildNumber": "7",
+      "usesAppleSignIn": true,
       "supportsTablet": false,
       "infoPlist": {
         "ITSAppUsesNonExemptEncryption": false,
@@ -38,6 +43,8 @@
     },
     "plugins": [
       "expo-localization",
+      "expo-apple-authentication",
+      "expo-web-browser",
       [
         "expo-image-picker",
         {
