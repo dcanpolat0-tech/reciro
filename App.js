@@ -1,4 +1,4 @@
-﻿import { StatusBar } from 'expo-status-bar';
+import { StatusBar } from 'expo-status-bar';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   Alert,
@@ -16,6 +16,7 @@ import {
   StyleSheet,
   Text,
   TextInput,
+  useColorScheme,
   View,
 } from 'react-native';
 import { CameraView, useCameraPermissions } from 'expo-camera';
@@ -29,9 +30,9 @@ import Constants from 'expo-constants';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as AppleAuthentication from 'expo-apple-authentication';
 import * as WebBrowser from 'expo-web-browser';
-import * as Google from 'expo-auth-session/providers/google';
 import { getMobileAdsModule } from './mobileAds';
 import { getPurchasesModule } from './revenueCat';
+import { getSupabaseAccessToken, isSupabaseConfigured, supabase } from './supabase';
 
 WebBrowser.maybeCompleteAuthSession();
 
@@ -72,15 +73,23 @@ const ANALYSIS_IMAGE_QUALITY = 0.55;
 const ANALYSIS_REQUEST_TIMEOUT_MS = 35000;
 const EXCHANGE_RATE_ENDPOINT = 'https://api.frankfurter.dev/v2/rates';
 const FREE_MONTHLY_ANALYSIS_LIMIT = 5;
-// Keep the free plan limited to five analyses per calendar month. Premium
-// access can replace this check once its purchase integration is connected.
-const ENABLE_PREMIUM_PAYWALL = true;
+// Premium is available on supported native store builds. Android purchase
+// availability is completed through the Google Play and RevenueCat setup.
+const ENABLE_PREMIUM_PAYWALL = Platform.OS === 'ios' || Platform.OS === 'android';
 const ENABLE_REWARDED_ADS = true;
-const REVENUECAT_IOS_API_KEY = 'appl_wVqvYmGGSHrkWFeuvCmOBISdSNK';
+const REVENUECAT_IOS_API_KEY =
+  APP_CONFIG_EXTRA.revenueCatIosApiKey ||
+  process.env.EXPO_PUBLIC_REVENUECAT_IOS_API_KEY ||
+  'appl_wVqvYmGGSHrkWFeuvCmOBISdSNK';
+const REVENUECAT_ANDROID_API_KEY =
+  APP_CONFIG_EXTRA.revenueCatAndroidApiKey ||
+  process.env.EXPO_PUBLIC_REVENUECAT_ANDROID_API_KEY ||
+  '';
 const REVENUECAT_PREMIUM_ENTITLEMENT = 'Reciro Premium';
-const GOOGLE_IOS_CLIENT_ID = '561368359079-hkk7ifrscsoqtsk9t1gl3l2gpf5qfp7r.apps.googleusercontent.com';
 const ADMOB_ANDROID_REWARDED_AD_UNIT_ID = 'ca-app-pub-8547815405822008/8421426783';
 const ADMOB_IOS_REWARDED_AD_UNIT_ID = 'ca-app-pub-8547815405822008/1911858751';
+const PRIVACY_POLICY_URL = 'https://reciro-receipt-analysis.onrender.com/privacy';
+const APPLE_STANDARD_EULA_URL = 'https://www.apple.com/legal/internet-services/itunes/dev/stdeula/';
 const REWARDED_AD_LOAD_TIMEOUT_MS = 20000;
 const IMAGE_PICKER_MEDIA_TYPES = ['images'];
 const FEEDBACK_EMAIL = 'denizcanpolat2307@gmail.com';
@@ -94,6 +103,47 @@ const DEFAULT_RECEIPT_SETTINGS = {
 
 let activeCurrency = 'TRY';
 let mobileAdsInitializePromise = null;
+
+function getAuthenticatedProvider(session) {
+  const provider = session?.user?.app_metadata?.provider;
+  return provider === 'apple' || provider === 'google' ? provider : null;
+}
+
+function getSupabaseSessionFromRedirectUrl(url) {
+  if (!url) return null;
+  const urlString = String(url);
+  const fragment = urlString.split('#')[1] || '';
+  let values = new URLSearchParams(fragment);
+  let accessToken = values.get('access_token');
+  let refreshToken = values.get('refresh_token');
+
+  if (!accessToken || !refreshToken) {
+    const query = urlString.split('?')[1]?.split('#')[0] || '';
+    values = new URLSearchParams(query);
+    accessToken = accessToken || values.get('access_token');
+    refreshToken = refreshToken || values.get('refresh_token');
+  }
+
+  return accessToken && refreshToken ? { access_token: accessToken, refresh_token: refreshToken } : null;
+}
+
+async function getAnalysisRequestHeaders() {
+  const accessToken = await getSupabaseAccessToken();
+
+  return {
+    'Content-Type': 'application/json',
+    ...(RECEIPT_ANALYSIS_CLIENT_TOKEN ? { 'X-Client-Token': RECEIPT_ANALYSIS_CLIENT_TOKEN } : {}),
+    ...(accessToken ? { Authorization: `Bearer ${accessToken}` } : {}),
+  };
+}
+
+function getRevenueCatApiKey() {
+  return Platform.select({
+    ios: REVENUECAT_IOS_API_KEY,
+    android: REVENUECAT_ANDROID_API_KEY,
+    default: '',
+  });
+}
 
 const languages = [
   { code: 'tr', name: 'Türkçe' },
@@ -297,8 +347,8 @@ const translations = {
       'Reklamsız kullanım',
     ],
     startPremium: 'Premium’a Geç',
-    premiumSetupTitle: 'Premium yakında',
-    premiumSetupText: 'Premium satın alma sistemi sonraki sürümde App Store ve Google Play ile bağlanacak. Bu sürümde temel özellikler ücretsizdir.',
+    premiumSetupTitle: 'Premium kullanılamıyor',
+    premiumSetupText: 'Premium satın alma işlemleri yalnızca yapılandırılmış TestFlight veya App Store sürümünde kullanılabilir.',
     viewPremium: 'Premium’u Gör',
     accountSync: 'Yerel profil',
     accountSyncInfo: 'Bu seçim gerçek oturum açma değildir. Verilerin bu telefonda kalır; yedeklerini Verilerim bölümünden kendin dışa aktarabilirsin.',
@@ -552,8 +602,8 @@ const translations = {
       'Ad-free use',
     ],
     startPremium: 'Go Premium',
-    premiumSetupTitle: 'Premium coming soon',
-    premiumSetupText: 'Premium purchases will be connected through App Store and Google Play in a later version. Core features are free in this release.',
+    premiumSetupTitle: 'Premium unavailable',
+    premiumSetupText: 'Premium purchases are available only in a configured TestFlight or App Store build.',
     viewPremium: 'View Premium',
     accountSync: 'Local profile',
     accountSyncInfo: 'This is not a real sign-in. Your data stays on this phone; you can export your own backup from My data.',
@@ -806,8 +856,8 @@ const translations = {
       'Utilisation sans publicite',
     ],
     startPremium: 'Passer Premium',
-    premiumSetupTitle: 'Premium bientot',
-    premiumSetupText: 'Les abonnements reels seront connectes via l App Store et Google Play.',
+    premiumSetupTitle: 'Premium indisponible',
+    premiumSetupText: 'Les achats Premium sont disponibles uniquement dans une version TestFlight ou App Store configuree.',
     viewPremium: 'Voir Premium',
     accountSync: 'Profil local',
     accountSyncInfo: "Ce choix n'est pas une vraie connexion. Vos donnees restent sur ce telephone; vous pouvez exporter une sauvegarde depuis Mes donnees.",
@@ -1060,8 +1110,8 @@ const translations = {
       'Werbefreie Nutzung',
     ],
     startPremium: 'Premium aktivieren',
-    premiumSetupTitle: 'Premium kommt bald',
-    premiumSetupText: 'Echte Abos werden ueber App Store und Google Play Kaeufe verbunden.',
+    premiumSetupTitle: 'Premium nicht verfügbar',
+    premiumSetupText: 'Premium-Käufe sind nur in einem konfigurierten TestFlight- oder App-Store-Build verfügbar.',
     viewPremium: 'Premium ansehen',
     accountSync: 'Lokales Profil',
     accountSyncInfo: 'Diese Auswahl ist keine echte Anmeldung. Deine Daten bleiben auf diesem Telefon; du kannst unter Meine Daten ein Backup exportieren.',
@@ -1314,8 +1364,8 @@ const translations = {
       'Uso sin anuncios',
     ],
     startPremium: 'Pasar a Premium',
-    premiumSetupTitle: 'Premium pronto',
-    premiumSetupText: 'Las suscripciones reales se conectaran con compras de App Store y Google Play.',
+    premiumSetupTitle: 'Premium no disponible',
+    premiumSetupText: 'Las compras Premium solo están disponibles en una versión configurada de TestFlight o App Store.',
     viewPremium: 'Ver Premium',
     accountSync: 'Perfil local',
     accountSyncInfo: 'Esta seleccion no es un inicio de sesion real. Tus datos permanecen en este telefono; puedes exportar una copia desde Mis datos.',
@@ -1506,9 +1556,9 @@ const featureTranslations = {
     termsOfUse: 'Terms of use',
     termsOfUseText: 'Reciro helps track receipts, spending, products and monthly payments. AI receipt analysis may be imperfect, so users should review important amounts, dates and categories before relying on reports. The app is provided for personal expense tracking and is not financial, tax or legal advice. Users are responsible for keeping backups of important data and for complying with local rules about receipts, invoices and accounting.',
     restorePurchases: 'Restore purchases',
-    restorePurchasesInfo: 'For App Store and Google Play subscriptions once Premium is active in a later version.',
+    restorePurchasesInfo: 'Restore an active Premium subscription from the App Store.',
     restorePurchasesTitle: 'Purchases',
-    restorePurchasesText: 'Purchase restore will be connected when Premium subscriptions are enabled in a later version.',
+    restorePurchasesText: 'Your Premium subscription could not be restored. Check your store account and try again.',
     appVersion: 'App version',
     enabled: 'On',
     disabled: 'Off',
@@ -1595,9 +1645,9 @@ const featureTranslations = {
     termsOfUse: 'Kullanım şartları',
     termsOfUseText: 'Reciro fiş, harcama, ürün ve aylık ödeme takibi için yardımcı olur. AI fiş analizi her zaman kusursuz olmayabilir; bu yüzden önemli tutar, tarih ve kategorileri raporlara güvenmeden önce kontrol etmek kullanıcının sorumluluğundadır. Uygulama kişisel harcama takibi içindir; finansal, vergi veya hukuki danışmanlık değildir. Önemli verilerin yedeğini almak ve fiş/fatura/muhasebe kurallarına uymak kullanıcının sorumluluğundadır.',
     restorePurchases: 'Satın almaları geri yükle',
-    restorePurchasesInfo: 'Premium sonraki sürümde aktif olunca App Store ve Google Play abonelikleri için kullanılır.',
+    restorePurchasesInfo: 'App Store’deki etkin Premium aboneliğini geri yükle.',
     restorePurchasesTitle: 'Satın almalar',
-    restorePurchasesText: 'Satın alma geri yükleme Premium abonelikleri sonraki sürümde aktif olduğunda bağlanacak.',
+    restorePurchasesText: 'Premium aboneliğin geri yüklenemedi. Mağaza hesabını kontrol edip tekrar dene.',
     appVersion: 'Uygulama sürümü',
     enabled: 'Açık',
     disabled: 'Kapalı',
@@ -2128,8 +2178,8 @@ Object.assign(featureTranslations.fr, {
   defaultCategoryInfo: "Utilisee quand l'IA ne peut pas choisir une categorie.",
   restorePurchases: "Restaurer les achats",
   restorePurchasesTitle: "Achats",
-  restorePurchasesText: "La restauration des achats sera liee aux abonnements App Store et Google Play.",
-  restorePurchasesInfo: "Pour les abonnements App Store et Google Play une fois Premium actif.",
+  restorePurchasesText: "Votre abonnement Premium n a pas pu etre restaure. Verifiez votre compte store et reessayez.",
+  restorePurchasesInfo: "Restaurez un abonnement Premium actif depuis l App Store.",
   deleteAccount: "Supprimer le compte",
   deleteAccountInfo: "Demandez-nous de supprimer le compte et les donnees synchronisees.",
   privacyAndLegal: "Confidentialite et legal",
@@ -2169,8 +2219,8 @@ Object.assign(featureTranslations.de, {
   defaultCategoryInfo: "Wird verwendet, wenn die KI keine Kategorie bestimmen kann.",
   restorePurchases: "Käufe wiederherstellen",
   restorePurchasesTitle: "Käufe",
-  restorePurchasesText: "Wiederherstellung der Käufe wird mit App Store und Google Play Abonnements verbunden.",
-  restorePurchasesInfo: "Für App Store und Google Play Abonnements, sobald Premium aktiv ist.",
+  restorePurchasesText: "Dein Premium-Abo konnte nicht wiederhergestellt werden. Prüfe dein Store-Konto und versuche es erneut.",
+  restorePurchasesInfo: "Stelle ein aktives Premium-Abo aus dem App Store wieder her.",
   deleteAccount: "Konto löschen",
   deleteAccountInfo: "Fordere uns auf, Konto und synchronisierte Daten zu löschen.",
   privacyAndLegal: "Datenschutz und Rechtliches",
@@ -2210,8 +2260,8 @@ Object.assign(featureTranslations.es, {
   defaultCategoryInfo: "Usada cuando AI no puede decidir una categoría.",
   restorePurchases: "Restaurar compras",
   restorePurchasesTitle: "Compras",
-  restorePurchasesText: "La restauración de compras se conectará con suscripciones de App Store y Google Play.",
-  restorePurchasesInfo: "Para suscripciones de App Store y Google Play una vez que Premium esté activo.",
+  restorePurchasesText: "No se pudo restaurar tu suscripción Premium. Revisa tu cuenta de la tienda e inténtalo de nuevo.",
+  restorePurchasesInfo: "Restaura una suscripción Premium activa desde App Store.",
   deleteAccount: "Eliminar cuenta",
   deleteAccountInfo: "Solicítanos eliminar cuenta y datos sincronizados.",
   privacyAndLegal: "Privacidad y legal",
@@ -2339,8 +2389,8 @@ Object.assign(translations.it, {
   premiumYearly: "Annuale: €21.49 (10% sconto)",
   premiumBenefits: ["Scansioni illimitate AI degli scontrini", "Analisi PDF e foto degli scontrini", "Report prodotti, categorie e negozi", "Analisi prodotti mensile", "Uso senza pubblicita"],
   startPremium: "Attiva Premium",
-  premiumSetupTitle: "Premium in arrivo",
-  premiumSetupText: "Gli abbonamenti reali saranno collegati tramite acquisti App Store e Google Play.",
+  premiumSetupTitle: "Premium non disponibile",
+  premiumSetupText: "Gli acquisti Premium sono disponibili solo in una build TestFlight o App Store configurata.",
   accountSyncInfo: "Questa scelta non e un vero accesso. I tuoi dati restano su questo telefono; puoi esportare un backup da I miei dati.",
   feedbackInfo: "Invia suggerimenti, bug o richieste di funzionalita.",
   noPhoto: "Nessuna foto",
@@ -2415,8 +2465,8 @@ Object.assign(featureTranslations.it, {
   activeSpace: "Spazio attivo",
   restorePurchases: "Ripristina acquisti",
   restorePurchasesTitle: "Acquisti",
-  restorePurchasesText: "Il ripristino acquisti sarà collegato agli abbonamenti App Store e Google Play.",
-  restorePurchasesInfo: "Per abbonamenti App Store e Google Play una volta attivato Premium.",
+  restorePurchasesText: "Impossibile ripristinare l abbonamento Premium. Controlla l account dello store e riprova.",
+  restorePurchasesInfo: "Ripristina un abbonamento Premium attivo da App Store.",
   deleteAccountInfo: "Chiedici di eliminare account e dati sincronizzati.",
   privacySummary: "Le foto degli scontrini sono memorizzate su questo telefono a meno che non disattivi l'archiviazione foto. L'analisi AI invia l'immagine selezionata al servizio di analisi per leggere negozio, data, totale e articoli.",
   privacyPolicyText: "Reciro memorizza scontrini, entrate, budget, pagamenti mensili e preferenze localmente su questo telefono. Se l'archiviazione foto scontrini è attiva, le immagini sono conservate localmente. Quando si usa l'analisi AI, l'immagine selezionata viene inviata solo per estrarre negozio, data, totali, categorie e voci. Reciro non vende dati personali, non usa contenuti degli scontrini per pubblicità e non conserva backup degli scontrini sui propri server. Puoi esportare, fare backup o eliminare dati locali da I miei dati.",
@@ -2538,8 +2588,8 @@ Object.assign(translations.pt, {
   premiumYearly: "Anual: €21.49 (10% desc.)",
   premiumBenefits: ["Digitalizações ilimitadas de recibos com IA", "Análise de recibos em PDF e foto", "Relatórios de produtos, categorias e lojas", "Análise mensal de produtos", "Uso sem anúncios"],
   startPremium: "Tornar-se Premium",
-  premiumSetupTitle: "Premium em breve",
-  premiumSetupText: "As subscrições reais serão ligadas através de compras na App Store e Google Play.",
+  premiumSetupTitle: "Premium indisponível",
+  premiumSetupText: "As compras Premium estão disponíveis apenas numa versão TestFlight ou App Store configurada.",
   accountSyncInfo: "Esta escolha nao e um inicio de sessao real. Os seus dados ficam neste telefone; pode exportar um backup em Os meus dados.",
   feedbackInfo: "Envie sugestões, erros ou pedidos de funcionalidades.",
   noPhoto: "Sem foto",
@@ -2614,8 +2664,8 @@ Object.assign(featureTranslations.pt, {
   activeSpace: "Espaço ativo",
   restorePurchases: "Restaurar compras",
   restorePurchasesTitle: "Compras",
-  restorePurchasesText: "A restauração de compras será ligada às subscrições da App Store e Google Play.",
-  restorePurchasesInfo: "Para subscrições da App Store e Google Play após ativar o Premium.",
+  restorePurchasesText: "Não foi possível restaurar a subscrição Premium. Verifique a conta da loja e tente novamente.",
+  restorePurchasesInfo: "Restaure uma subscrição Premium ativa da App Store.",
   deleteAccountInfo: "Peça-nos para eliminar conta e dados sincronizados.",
   privacySummary: "Fotos dos recibos são guardadas neste telemóvel a menos que desative o armazenamento. A análise AI envia a imagem do recibo selecionado para o serviço de análise para ler loja, data, total e itens.",
   privacyPolicyText: "O Reciro guarda recibos, rendimentos, orçamentos, pagamentos mensais e preferências localmente neste telemóvel. Se o armazenamento de fotos de recibos estiver ativado, as imagens também são guardadas localmente. Quando a análise AI é usada, a imagem do recibo selecionado é enviada ao serviço de análise apenas para extrair loja, data, totais, categorias e itens. O Reciro não vende dados pessoais, não usa conteúdo dos recibos para publicidade e não guarda backups de recibos nos seus próprios servidores. Pode exportar, fazer backup ou eliminar dados locais em Os meus dados.",
@@ -2737,8 +2787,8 @@ Object.assign(translations.nl, {
   premiumYearly: "Jaarlijks: €21.49 (10% korting)",
   premiumBenefits: ["Onbeperkt AI bonnen scannen", "PDF- en foto-bonanalyse", "Product-, categorie- en winkelrapporten", "Maandelijkse productanalyse", "Reclamevrij gebruik"],
   startPremium: "Word Premium",
-  premiumSetupTitle: "Premium komt binnenkort",
-  premiumSetupText: "Echte abonnementen worden verbonden via App Store en Google Play aankopen.",
+  premiumSetupTitle: "Premium niet beschikbaar",
+  premiumSetupText: "Premium-aankopen zijn alleen beschikbaar in een geconfigureerde TestFlight- of App Store-build.",
   accountSyncInfo: "Deze keuze is geen echte login. Je gegevens blijven op deze telefoon; je kunt een back-up exporteren via Mijn gegevens.",
   feedbackInfo: "Stuur suggesties, bugs of functieverzoeken.",
   noPhoto: "Geen foto",
@@ -2813,8 +2863,8 @@ Object.assign(featureTranslations.nl, {
   activeSpace: "Actieve ruimte",
   restorePurchases: "Aankopen herstellen",
   restorePurchasesTitle: "Aankopen",
-  restorePurchasesText: "Herstel van aankopen wordt gekoppeld aan App Store- en Google Play-abonnementen.",
-  restorePurchasesInfo: "Voor App Store- en Google Play-abonnementen zodra Premium actief is.",
+  restorePurchasesText: "Je Premium-abonnement kon niet worden hersteld. Controleer je store-account en probeer het opnieuw.",
+  restorePurchasesInfo: "Herstel een actief Premium-abonnement uit de App Store.",
   deleteAccountInfo: "Vraag ons om account en synchronisatiegegevens te verwijderen.",
   privacySummary: "Bonfoto's worden op deze telefoon opgeslagen tenzij je foto-opslag uitschakelt. AI-analyse stuurt de geselecteerde bonafbeelding naar de analysetool om winkel, datum, totaal en items te lezen.",
   privacyPolicyText: "Reciro slaat bonnetjes, inkomsten, budgetten, maandelijkse betalingen en voorkeuren lokaal op deze telefoon op. Als bonfoto-opslag is ingeschakeld, worden bonafbeeldingen ook lokaal bewaard. Bij gebruik van AI-analyse wordt de geselecteerde bonafbeelding alleen naar de bonanalyse-service gestuurd om winkel, datum, totalen, categorieën en regels te extraheren. Reciro verkoopt geen persoonlijke gegevens, gebruikt boninhoud niet voor reclame en bewaart geen bonback-ups op eigen servers. Je kunt lokale gegevens exporteren, back-uppen of verwijderen via Mijn gegevens.",
@@ -2882,6 +2932,36 @@ Object.assign(translations.nl, {
   cloudSetupNeededText: "Reciro bewaart je bonnetjes niet op eigen servers. Je kunt je back-up exporteren via Mijn gegevens.",
   backupInfo: "Bonnen, inkomen en instellingen blijven op deze telefoon. Je kunt de back-up opslaan in iCloud, Google Drive of Bestanden.",
   accountAndPremium: "Account en lokale data",
+});
+
+Object.assign(translations.en, {
+  subscriptionLegalNotice: 'By continuing, you agree to the Privacy Policy and Terms of Use.',
+  legalLinkErrorTitle: 'Link could not be opened',
+  legalLinkErrorText: 'Check your internet connection and try again.',
+});
+
+Object.assign(translations.tr, {
+  subscriptionLegalNotice: 'Devam ederek Gizlilik Politikasi ve Kullanim Kosullarini kabul edersin.',
+  legalLinkErrorTitle: 'Baglanti acilamadi',
+  legalLinkErrorText: 'Internet baglantini kontrol edip tekrar dene.',
+});
+
+Object.assign(translations.fr, {
+  subscriptionLegalNotice: "En continuant, vous acceptez la Politique de confidentialite et les Conditions d'utilisation.",
+  legalLinkErrorTitle: "Le lien n'a pas pu etre ouvert",
+  legalLinkErrorText: 'Verifiez votre connexion Internet et reessayez.',
+});
+
+Object.assign(translations.de, {
+  subscriptionLegalNotice: 'Mit dem Fortfahren stimmst du der Datenschutzerklarung und den Nutzungsbedingungen zu.',
+  legalLinkErrorTitle: 'Link konnte nicht geoffnet werden',
+  legalLinkErrorText: 'Prufe deine Internetverbindung und versuche es erneut.',
+});
+
+Object.assign(translations.es, {
+  subscriptionLegalNotice: 'Al continuar, aceptas la Politica de privacidad y los Terminos de uso.',
+  legalLinkErrorTitle: 'No se pudo abrir el enlace',
+  legalLinkErrorText: 'Comprueba tu conexion a Internet e intentalo de nuevo.',
 });
 
 function getAppTranslations(languageCode) {
@@ -3119,10 +3199,7 @@ async function sendFeedbackMessage({ message, language, currency }) {
   try {
     const response = await fetch(FEEDBACK_ENDPOINT, {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        ...(RECEIPT_ANALYSIS_CLIENT_TOKEN ? { 'X-Client-Token': RECEIPT_ANALYSIS_CLIENT_TOKEN } : {}),
-      },
+      headers: await getAnalysisRequestHeaders(),
       signal: controller.signal,
       body: JSON.stringify({
         message,
@@ -4154,10 +4231,7 @@ async function analyzeReceiptPhoto(imageUri) {
   try {
     response = await fetch(RECEIPT_ANALYSIS_ENDPOINT, {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        ...(RECEIPT_ANALYSIS_CLIENT_TOKEN ? { 'X-Client-Token': RECEIPT_ANALYSIS_CLIENT_TOKEN } : {}),
-      },
+      headers: await getAnalysisRequestHeaders(),
       signal: controller.signal,
       body: JSON.stringify({
         imageBase64,
@@ -4231,10 +4305,7 @@ async function analyzeReceiptPdf(fileUri, fileName = 'receipt.pdf', mimeType = '
   try {
     response = await fetch(RECEIPT_ANALYSIS_ENDPOINT, {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        ...(RECEIPT_ANALYSIS_CLIENT_TOKEN ? { 'X-Client-Token': RECEIPT_ANALYSIS_CLIENT_TOKEN } : {}),
-      },
+      headers: await getAnalysisRequestHeaders(),
       signal: controller.signal,
       body: JSON.stringify({
         fileBase64,
@@ -4647,6 +4718,8 @@ function buildReceiptsCsv(receiptList) {
 }
 
 export default function App() {
+  const colorScheme = useColorScheme();
+  styles = colorScheme === 'dark' ? darkStyles : lightStyles;
   const [cameraPermission, requestCameraPermission] = useCameraPermissions();
   const mainScrollRef = useRef(null);
   const [screen, setScreen] = useState('home');
@@ -4715,25 +4788,61 @@ export default function App() {
   const [openSwipeReceiptId, setOpenSwipeReceiptId] = useState(null);
   const [storageReady, setStorageReady] = useState(false);
   const [hasPremiumAccess, setHasPremiumAccess] = useState(false);
-  const [, googleResponse, promptGoogleSignIn] = Google.useAuthRequest({
-    iosClientId: GOOGLE_IOS_CLIENT_ID,
-    scopes: ['openid', 'profile', 'email'],
-    selectAccount: true,
-  });
 
   useEffect(() => {
-    if (googleResponse?.type !== 'success') return;
+    if (!supabase) {
+      return undefined;
+    }
 
-    setAuthProvider('google');
-    setSettingsSection('main');
-    setScreen('home');
-  }, [googleResponse]);
+    let active = true;
+
+    const applySession = (session) => {
+      if (!active) {
+        return;
+      }
+
+      const provider = getAuthenticatedProvider(session);
+      if (provider) {
+        setAuthProvider(provider);
+        setSettingsSection('main');
+        setScreen('home');
+      } else if (session === null) {
+        setAuthProvider((currentProvider) => {
+          if (currentProvider === 'apple' || currentProvider === 'google') {
+            return null;
+          }
+          return currentProvider;
+        });
+      }
+    };
+
+    supabase.auth.getSession().then(({ data, error }) => {
+      if (error) {
+        console.warn('Supabase session could not be restored.', error);
+        return;
+      }
+
+      applySession(data.session);
+    });
+
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((_event, session) => {
+      applySession(session);
+    });
+
+    return () => {
+      active = false;
+      subscription.unsubscribe();
+    };
+  }, []);
 
   useEffect(() => {
     const purchases = getPurchasesModule();
-    if (Platform.OS !== 'ios' || !purchases || IS_EXPO_GO) return;
+    const apiKey = getRevenueCatApiKey();
+    if (!apiKey || !purchases || IS_EXPO_GO) return;
     try {
-      purchases.configure({ apiKey: REVENUECAT_IOS_API_KEY });
+      purchases.configure({ apiKey });
       purchases.getCustomerInfo().then((info) => setHasPremiumAccess(Boolean(info.entitlements.active[REVENUECAT_PREMIUM_ENTITLEMENT]))).catch(() => {});
     } catch (error) {
       console.warn('Purchases could not be configured.', error);
@@ -4802,8 +4911,12 @@ export default function App() {
 
         setSelectedCurrency(startupCurrency);
 
-        if (savedAuthProvider === 'apple' || savedAuthProvider === 'google') {
-          setAuthProvider(savedAuthProvider);
+        if (
+          savedAuthProvider === 'apple' ||
+          savedAuthProvider === 'google' ||
+          savedAuthProvider === 'local'
+        ) {
+          setAuthProvider((current) => current || savedAuthProvider);
         }
 
         const parsedAnalysisUsage = safeParseStoredJson(savedAnalysisUsage, null);
@@ -4903,7 +5016,7 @@ export default function App() {
       return;
     }
 
-    if (authProvider === 'apple' || authProvider === 'google') {
+    if (authProvider === 'apple' || authProvider === 'google' || authProvider === 'local') {
       AsyncStorage.setItem(AUTH_PROVIDER_STORAGE_KEY, authProvider).catch(() => {
         console.warn('Auth provider could not be saved.');
       });
@@ -5739,6 +5852,11 @@ export default function App() {
   }
 
   async function chooseAuthProvider(provider) {
+    if (!supabase || !isSupabaseConfigured) {
+      Alert.alert('Sign in', 'Secure sign-in is not configured in this app build.');
+      return;
+    }
+
     if (provider === 'google') {
       if (Platform.OS !== 'ios') {
         Alert.alert(t.signInWithGoogle, 'Google sign-in is currently available on iPhone and iPad.');
@@ -5746,7 +5864,42 @@ export default function App() {
       }
 
       try {
-        await promptGoogleSignIn({ showInRecents: true });
+        const { data, error } = await supabase.auth.signInWithOAuth({
+          provider: 'google',
+          options: {
+            redirectTo: 'reciro://auth-callback',
+            skipBrowserRedirect: true,
+            queryParams: { prompt: 'select_account' },
+          },
+        });
+
+        if (error) {
+          throw error;
+        }
+
+        if (!data.url) {
+          throw new Error('Google sign-in URL could not be created.');
+        }
+
+        const result = await WebBrowser.openAuthSessionAsync(data.url, 'reciro://auth-callback', {
+          showInRecents: true,
+        });
+
+        if (result.type !== 'success') {
+          return;
+        }
+
+        const session = getSupabaseSessionFromRedirectUrl(result.url);
+
+        if (!session) {
+          throw new Error('Google did not return a valid Reciro session.');
+        }
+
+        const { error: sessionError } = await supabase.auth.setSession(session);
+
+        if (sessionError) {
+          throw sessionError;
+        }
       } catch (error) {
         Alert.alert(t.signInWithGoogle, error?.message || 'Google sign-in could not be completed.');
       }
@@ -5770,9 +5923,34 @@ export default function App() {
         throw new Error('Apple did not return a user identifier.');
       }
 
-      setAuthProvider('apple');
-      setSettingsSection('main');
-      setScreen('home');
+      if (!credential.identityToken) {
+        throw new Error('Apple did not return an identity token.');
+      }
+
+      const { error: signInError } = await supabase.auth.signInWithIdToken({
+        provider: 'apple',
+        token: credential.identityToken,
+        nonce: credential.nonce,
+        access_token: credential.authorizationCode || undefined,
+      });
+
+      if (signInError) {
+        throw signInError;
+      }
+
+      if (credential.fullName?.givenName || credential.fullName?.familyName) {
+        const fullName = [credential.fullName.givenName, credential.fullName.familyName]
+          .filter(Boolean)
+          .join(' ');
+
+        await supabase.auth.updateUser({
+          data: {
+            full_name: fullName,
+            given_name: credential.fullName.givenName || undefined,
+            family_name: credential.fullName.familyName || undefined,
+          },
+        });
+      }
     } catch (error) {
       if (error?.code !== 'ERR_REQUEST_CANCELED') {
         Alert.alert(t.signInWithApple, error?.message || 'Apple sign-in could not be completed.');
@@ -5786,10 +5964,16 @@ export default function App() {
       {
         text: t.signOutConfirm,
         style: 'destructive',
-        onPress: () => {
-          setAuthProvider(null);
-          setSettingsSection('main');
-          setScreen('home');
+        onPress: async () => {
+          try {
+            await supabase?.auth.signOut();
+          } catch (error) {
+            console.warn('Supabase sign-out failed.', error);
+          } finally {
+            setAuthProvider(null);
+            setSettingsSection('main');
+            setScreen('home');
+          }
         },
       },
     ]);
@@ -5808,6 +5992,7 @@ export default function App() {
             INCOME_BY_MONTH_STORAGE_KEY,
             AUTH_PROVIDER_STORAGE_KEY,
             ANALYSIS_USAGE_STORAGE_KEY,
+            REWARDED_ANALYSIS_CREDITS_STORAGE_KEY,
             CATEGORY_MEMORY_STORAGE_KEY,
             BUDGETS_STORAGE_KEY,
             RECURRING_EXPENSES_STORAGE_KEY,
@@ -5819,6 +6004,7 @@ export default function App() {
           setReceipts([]);
           setIncomeByMonth({});
           setAnalysisUsageByMonth({});
+          setRewardedAnalysisCreditsByMonth({});
           setCategoryMemory({});
           setBudgetsByCategory({});
           setRecurringExpenses([]);
@@ -5878,21 +6064,26 @@ export default function App() {
   }
 
   function showAnalysisLimitAlert() {
-    Alert.alert(t.freeLimitTitle, t.freeLimitText(FREE_MONTHLY_ANALYSIS_LIMIT), [
+    const actions = [
       { text: t.cancel, style: 'cancel' },
       {
         text: t.watchAdForScan,
         onPress: watchRewardedAdForScan,
       },
-      {
+    ];
+
+    if (ENABLE_PREMIUM_PAYWALL) {
+      actions.push({
         text: t.viewPremium,
         onPress: () => {
           setPhotoOptionsOpen(false);
           setSettingsSection('premium');
           setScreen('settings');
         },
-      },
-    ]);
+      });
+    }
+
+    Alert.alert(t.freeLimitTitle, t.freeLimitText(FREE_MONTHLY_ANALYSIS_LIMIT), actions);
   }
 
   function addRewardedAnalysisCredit() {
@@ -5940,8 +6131,8 @@ export default function App() {
   async function purchasePremium(packageType) {
     try {
       const purchases = getPurchasesModule();
-      if (!purchases || IS_EXPO_GO) {
-        throw new Error('Premium purchases require the TestFlight or App Store version of Reciro.');
+      if (!purchases || IS_EXPO_GO || !getRevenueCatApiKey()) {
+        throw new Error(t.premiumSetupText);
       }
       const offerings = await purchases.getOfferings();
       const selectedPackage = offerings.current?.[packageType];
@@ -5960,8 +6151,8 @@ export default function App() {
   async function restorePremiumPurchases() {
     try {
       const purchases = getPurchasesModule();
-      if (!purchases || IS_EXPO_GO) {
-        throw new Error('Premium purchases require the TestFlight or App Store version of Reciro.');
+      if (!purchases || IS_EXPO_GO || !getRevenueCatApiKey()) {
+        throw new Error(t.premiumSetupText);
       }
       const info = await purchases.restorePurchases();
       setHasPremiumAccess(Boolean(info.entitlements.active[REVENUECAT_PREMIUM_ENTITLEMENT]));
@@ -6464,10 +6655,12 @@ export default function App() {
     }
   }
 
+  const statusBarStyle = colorScheme === 'dark' ? 'light' : 'dark';
+
   if (!storageReady) {
     return (
       <SafeAreaView style={styles.safeArea}>
-        <StatusBar style="dark" />
+        <StatusBar style={statusBarStyle} />
         <View style={styles.app} />
       </SafeAreaView>
     );
@@ -6479,6 +6672,12 @@ export default function App() {
         t={t}
         onChooseApple={() => chooseAuthProvider('apple')}
         onChooseGoogle={() => chooseAuthProvider('google')}
+        onChooseLocal={() => {
+          setAuthProvider('local');
+          AsyncStorage.setItem(AUTH_PROVIDER_STORAGE_KEY, 'local').catch(() => {});
+          setSettingsSection('main');
+          setScreen('home');
+        }}
       />
     );
   }
@@ -6495,7 +6694,7 @@ export default function App() {
 
   return (
     <SafeAreaView style={styles.safeArea}>
-      <StatusBar style="dark" />
+      <StatusBar style={statusBarStyle} />
       <View style={styles.app}>
         {canShowBackControl && (
           <View style={styles.header}>
@@ -6814,10 +7013,11 @@ export default function App() {
   );
 }
 
-function AuthStartScreen({ t, onChooseApple, onChooseGoogle }) {
+function AuthStartScreen({ t, onChooseApple, onChooseGoogle, onChooseLocal }) {
+  const colorScheme = useColorScheme();
   return (
     <SafeAreaView style={styles.safeArea}>
-      <StatusBar style="dark" />
+      <StatusBar style={colorScheme === 'dark' ? 'light' : 'dark'} />
       <View style={styles.authScreen}>
         <View style={styles.authBrandBlock}>
           <View style={styles.authLogoMark}>
@@ -6840,6 +7040,13 @@ function AuthStartScreen({ t, onChooseApple, onChooseGoogle }) {
             <Text style={styles.authButtonIcon}>G</Text>
             <Text style={styles.authButtonText}>{t.signInWithGoogle}</Text>
           </Pressable>
+
+          {Platform.OS === 'web' && (
+            <Pressable style={styles.authButton} onPress={onChooseLocal}>
+              <Text style={styles.authButtonIcon}>→</Text>
+              <Text style={styles.authButtonText}>Yerel olarak devam et</Text>
+            </Pressable>
+          )}
 
           <Text style={styles.authFootnote}>{t.accountSyncInfo}</Text>
         </View>
@@ -7934,6 +8141,15 @@ function SettingsScreen({
   const selectedCurrencyItem =
     currencies.find((currency) => currency.code === selectedCurrency) || currencies[0];
 
+  async function openLegalLink(url) {
+    try {
+      await Linking.openURL(url);
+    } catch (error) {
+      console.warn('Legal link could not be opened:', error);
+      Alert.alert(t.legalLinkErrorTitle, t.legalLinkErrorText);
+    }
+  }
+
   const configuredCategoryOptions = useMemo(
     () => [
       ...categoryOptions,
@@ -8521,7 +8737,7 @@ function SettingsScreen({
     );
   }
 
-  if (settingsSection === 'premium') {
+  if (settingsSection === 'premium' && ENABLE_PREMIUM_PAYWALL) {
     return (
       <View>
         <View style={styles.card}>
@@ -8544,6 +8760,28 @@ function SettingsScreen({
               </View>
             </View>
           ))}
+        </View>
+
+        <View style={styles.subscriptionLegalCard}>
+          <Text style={styles.subscriptionLegalNotice}>{t.subscriptionLegalNotice}</Text>
+          <Pressable
+            accessibilityRole="link"
+            accessibilityLabel={t.privacyPolicy}
+            onPress={() => openLegalLink(PRIVACY_POLICY_URL)}
+            style={styles.subscriptionLegalLink}
+          >
+            <Text style={styles.subscriptionLegalLinkText}>{t.privacyPolicy}</Text>
+            <Text style={styles.subscriptionLegalLinkArrow}>↗</Text>
+          </Pressable>
+          <Pressable
+            accessibilityRole="link"
+            accessibilityLabel={`${t.termsOfUse} (EULA)`}
+            onPress={() => openLegalLink(APPLE_STANDARD_EULA_URL)}
+            style={styles.subscriptionLegalLink}
+          >
+            <Text style={styles.subscriptionLegalLinkText}>{t.termsOfUse} (EULA)</Text>
+            <Text style={styles.subscriptionLegalLinkArrow}>↗</Text>
+          </Pressable>
         </View>
 
         <PrimaryButton label={t.premiumYearly} onPress={() => onPurchasePremium('annual')} />
@@ -8707,6 +8945,15 @@ function SettingsScreen({
           value=">"
           onPress={() => setSettingsSection('account')}
         />
+        {ENABLE_PREMIUM_PAYWALL && (
+          <SettingsRow
+            icon="✨"
+            title={t.premiumTitle}
+            subtitle={t.premiumSubtitle}
+            value=">"
+            onPress={() => setSettingsSection('premium')}
+          />
+        )}
         <SettingsRow
           icon="✉️"
           title={t.supportAndFeedback}
@@ -9585,7 +9832,7 @@ function NavButton({ icon, label, active, onPress }) {
   );
 }
 
-const styles = StyleSheet.create({
+const lightStyles = StyleSheet.create({
   safeArea: {
     flex: 1,
     backgroundColor: '#f4f7f4',
@@ -11468,6 +11715,40 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     paddingVertical: 9,
   },
+  subscriptionLegalCard: {
+    backgroundColor: '#fbfdfb',
+    borderColor: '#dfe8e0',
+    borderRadius: 8,
+    borderWidth: 1,
+    marginTop: 12,
+    padding: 14,
+  },
+  subscriptionLegalNotice: {
+    color: '#4f5d52',
+    fontSize: 13,
+    fontWeight: '600',
+    lineHeight: 19,
+  },
+  subscriptionLegalLink: {
+    alignItems: 'center',
+    borderTopColor: '#dfe8e0',
+    borderTopWidth: 1,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginTop: 12,
+    paddingTop: 12,
+  },
+  subscriptionLegalLinkText: {
+    color: '#0d5f2b',
+    fontSize: 14,
+    fontWeight: '900',
+    textDecorationLine: 'underline',
+  },
+  subscriptionLegalLinkArrow: {
+    color: '#0d5f2b',
+    fontSize: 18,
+    fontWeight: '900',
+  },
   premiumCheck: {
     alignItems: 'center',
     backgroundColor: '#e6f5ea',
@@ -11552,3 +11833,29 @@ const styles = StyleSheet.create({
     color: '#ffffff',
   },
 });
+
+const darkColorMap = {
+  '#f4f7f4': '#101513', '#ffffff': '#18201b', '#fff': '#18201b', '#fbfdfb': '#18201b',
+  '#edf2ee': '#243029', '#eaf8ec': '#1c3023', '#e6f5ea': '#1d3626', '#e6f6eb': '#1d3626',
+  '#dff3e4': '#24452f', '#f0faf2': '#1c3023', '#fff9e8': '#382f16', '#fff0c2': '#4a3b11',
+  '#fff0f0': '#3a2020', '#fff1f1': '#3a2020', '#dfe8e0': '#344238', '#e1e9e2': '#344238',
+  '#b7d7bf': '#426b4e', '#efd28a': '#806b2d', '#f1b6b6': '#824242', '#172018': '#edf4ee',
+  '#344337': '#d7e1d9', '#4f5d52': '#c2ccc4', '#68766b': '#a8b5aa', '#97a59a': '#94a398',
+  '#0d5f2b': '#8fd6a7', '#096b32': '#8fd6a7', '#8a5a00': '#f5cb63', '#b42318': '#ff9b95',
+  '#0f2415': '#000000',
+};
+
+function createDarkStyles(sourceStyles) {
+  return StyleSheet.create(
+    Object.fromEntries(Object.entries(sourceStyles).map(([styleName, styleValue]) => [
+      styleName,
+      Object.fromEntries(Object.entries(styleValue).map(([property, value]) => [
+        property,
+        typeof value === 'string' ? darkColorMap[value.toLowerCase()] || value : value,
+      ])),
+    ]))
+  );
+}
+
+const darkStyles = createDarkStyles(lightStyles);
+let styles = lightStyles;

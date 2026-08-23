@@ -2,7 +2,7 @@
   "expo": {
     "name": "Reciro",
     "slug": "reciro",
-    "version": "1.0.1",
+    "version": "1.0.2",
     "description": "Reciro - Smart Receipt Scanner. Scan. Save. Simplify.",
     "scheme": [
       "reciro",
@@ -10,10 +10,10 @@
     ],
     "orientation": "portrait",
     "icon": "./assets/icon.png",
-    "userInterfaceStyle": "light",
+    "userInterfaceStyle": "automatic",
     "ios": {
       "bundleIdentifier": "com.dcanpolat.reciro",
-      "buildNumber": "7",
+      "buildNumber": "13",
       "usesAppleSignIn": true,
       "supportsTablet": false,
       "infoPlist": {
@@ -23,8 +23,9 @@
       }
     },
     "android": {
+      "scheme": "rc-28e36d87d9",
       "package": "com.dcanpolat.reciro",
-      "versionCode": 1,
+      "versionCode": 3,
       "permissions": [
         "android.permission.CAMERA"
       ],
@@ -45,6 +46,7 @@
       "expo-localization",
       "expo-apple-authentication",
       "expo-web-browser",
+      "expo-secure-store",
       [
         "expo-image-picker",
         {
@@ -70,6 +72,8 @@
       ]
     ],
     "extra": {
+      "supabaseUrl": "https://dvisvhmyvylmnzqlrgif.supabase.co",
+      "supabasePublishableKey": "sb_publishable_2qXDwaVGkyYVKVdO1p1tWA_oYjiCUKj",
       "eas": {
         "projectId": "3bd780d9-eec7-443e-990e-a60a3a3e20ee"
       }

@@ -7,16 +7,20 @@ The current receipt analysis server is in `server/receipt-analysis-server.js`. I
 ```text
 OPENAI_API_KEY=your-production-key
 OPENAI_MODEL=gpt-4.1-mini
-ANALYSIS_CLIENT_TOKEN=your-long-random-token
 RATE_LIMIT_WINDOW_MS=60000
 RATE_LIMIT_MAX_REQUESTS=20
+SUPABASE_URL=https://YOUR_PROJECT_REF.supabase.co
+SUPABASE_PUBLISHABLE_KEY=sb_publishable_your_public_key
+SUPABASE_AUTH_REQUIRED=false
 ```
 
-The mobile app must point to the public HTTPS endpoint:
+The mobile app must point to the public HTTPS endpoint. Supabase URL and
+publishable key are public mobile configuration, not server secrets:
 
 ```text
 EXPO_PUBLIC_RECEIPT_ANALYSIS_URL=https://reciro-receipt-analysis.onrender.com/analyze-receipt
-EXPO_PUBLIC_ANALYSIS_CLIENT_TOKEN=the-same-long-random-token
+EXPO_PUBLIC_SUPABASE_URL=https://YOUR_PROJECT_REF.supabase.co
+EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY=sb_publishable_your_public_key
 ```
 
 ## Production Requirements
@@ -24,6 +28,10 @@ EXPO_PUBLIC_ANALYSIS_CLIENT_TOKEN=the-same-long-random-token
 - Use HTTPS, not a local network IP.
 - Keep `OPENAI_API_KEY` only on the server.
 - Do not ship the OpenAI API key inside the app.
+- Do not use `EXPO_PUBLIC_ANALYSIS_CLIENT_TOKEN` as security. Every value in a
+  mobile build can be extracted.
+- When `SUPABASE_AUTH_REQUIRED=true`, the server validates the user's
+  Supabase access token with Supabase before receipt analysis.
 - Add request limits before launch to control AI cost.
 - Add logging for failed analysis requests.
 - Add monitoring for server uptime.
@@ -39,17 +47,23 @@ This project includes `render.yaml`.
 5. Render will detect `render.yaml`.
 6. Add secret environment variables:
    - `OPENAI_API_KEY`
-   - `ANALYSIS_CLIENT_TOKEN`
+   - `SUPABASE_URL`
+   - `SUPABASE_PUBLISHABLE_KEY`
+   - `SUPABASE_AUTH_REQUIRED=false`
 7. Deploy.
 8. Copy the public service URL.
 9. Set the app endpoint:
 
 ```text
 EXPO_PUBLIC_RECEIPT_ANALYSIS_URL=https://reciro-receipt-analysis.onrender.com/analyze-receipt
-EXPO_PUBLIC_ANALYSIS_CLIENT_TOKEN=the-same-long-random-token
+EXPO_PUBLIC_SUPABASE_URL=https://YOUR_PROJECT_REF.supabase.co
+EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY=sb_publishable_your_public_key
 ```
 
-10. Rebuild the app and test on a real phone.
+10. Rebuild the app and test Apple and Google sign-in on a real phone.
+11. Only after the new build is live and verified, change Render
+    `SUPABASE_AUTH_REQUIRED` to `true` and redeploy. This prevents older app
+    versions from losing receipt analysis during the rollout.
 
 ## Suggested Hosting
 
@@ -66,6 +80,8 @@ For the first public version, choose the simplest Node.js host with HTTPS and en
 
 1. Deploy the server publicly.
 2. Update `.env` with the public HTTPS analysis endpoint.
-3. Add the same client token to server and app env values.
+3. Configure Supabase Apple and Google providers, including
+   `reciro://auth-callback` as an allowed mobile redirect URL.
 4. Rebuild the app.
-5. Test receipt analysis on a real iPhone using mobile data and Wi-Fi.
+5. Test sign-in and receipt analysis on a real iPhone using mobile data and Wi-Fi.
+6. Turn on `SUPABASE_AUTH_REQUIRED` only after that test succeeds.

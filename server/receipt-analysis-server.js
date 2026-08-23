@@ -1,6 +1,7 @@
 const http = require('http');
 const fs = require('fs');
 const path = require('path');
+const crypto = require('crypto');
 
 loadEnvFile(path.join(__dirname, '..', '.env'));
 
@@ -8,6 +9,9 @@ const PORT = Number(process.env.PORT || process.env.RECEIPT_ANALYSIS_PORT || 878
 const OPENAI_API_KEY = process.env.OPENAI_API_KEY;
 const OPENAI_MODEL = process.env.OPENAI_MODEL || 'gpt-4.1-mini';
 const ANALYSIS_CLIENT_TOKEN = process.env.ANALYSIS_CLIENT_TOKEN || '';
+const SUPABASE_URL = (process.env.SUPABASE_URL || '').replace(/\/$/, '');
+const SUPABASE_PUBLISHABLE_KEY = process.env.SUPABASE_PUBLISHABLE_KEY || '';
+const SUPABASE_AUTH_REQUIRED = process.env.SUPABASE_AUTH_REQUIRED === 'true';
 const FEEDBACK_EMAIL_TO = process.env.FEEDBACK_EMAIL_TO || 'denizcanpolat2307@gmail.com';
 const FEEDBACK_EMAIL_FROM = process.env.FEEDBACK_EMAIL_FROM || 'Reciro <onboarding@resend.dev>';
 const RESEND_API_KEY = process.env.RESEND_API_KEY || '';
@@ -15,6 +19,8 @@ const MAX_BODY_BYTES = 18 * 1024 * 1024;
 const RATE_LIMIT_WINDOW_MS = Number(process.env.RATE_LIMIT_WINDOW_MS || 60 * 1000);
 const RATE_LIMIT_MAX_REQUESTS = Number(process.env.RATE_LIMIT_MAX_REQUESTS || 20);
 const rateLimitBuckets = new Map();
+const verifiedSessionCache = new Map();
+const VERIFIED_SESSION_CACHE_MS = 5 * 60 * 1000;
 
 function loadEnvFile(envPath) {
   if (!fs.existsSync(envPath)) {
@@ -92,7 +98,7 @@ const receiptSchema = {
 function sendJson(response, statusCode, payload) {
   response.writeHead(statusCode, {
     'Access-Control-Allow-Origin': '*',
-    'Access-Control-Allow-Headers': 'Content-Type, X-Client-Token',
+    'Access-Control-Allow-Headers': 'Authorization, Content-Type, X-Client-Token',
     'Access-Control-Allow-Methods': 'GET,POST,OPTIONS',
     'Content-Type': 'application/json',
   });
@@ -154,6 +160,64 @@ function isClientAuthorized(request) {
   }
 
   return request.headers['x-client-token'] === ANALYSIS_CLIENT_TOKEN;
+}
+
+async function isSupabaseSessionAuthorized(request) {
+  if (!SUPABASE_AUTH_REQUIRED) {
+    return true;
+  }
+
+  if (!SUPABASE_URL || !SUPABASE_PUBLISHABLE_KEY) {
+    console.error('SUPABASE_AUTH_REQUIRED is enabled but Supabase configuration is incomplete.');
+    return false;
+  }
+
+  const authorization = request.headers.authorization;
+
+  if (typeof authorization !== 'string' || !authorization.startsWith('Bearer ')) {
+    return false;
+  }
+
+  const accessToken = authorization.slice('Bearer '.length).trim();
+
+  if (!accessToken) {
+    return false;
+  }
+
+  const tokenCacheKey = crypto.createHash('sha256').update(accessToken).digest('hex');
+  const cachedSession = verifiedSessionCache.get(tokenCacheKey);
+
+  if (cachedSession && cachedSession.expiresAt > Date.now()) {
+    return true;
+  }
+
+  try {
+    const response = await fetch(`${SUPABASE_URL}/auth/v1/user`, {
+      headers: {
+        apikey: SUPABASE_PUBLISHABLE_KEY,
+        Authorization: `Bearer ${accessToken}`,
+      },
+    });
+
+    if (!response.ok) {
+      return false;
+    }
+
+    if (verifiedSessionCache.size > 500) {
+      const now = Date.now();
+      for (const [key, val] of verifiedSessionCache.entries()) {
+        if (val.expiresAt <= now) {
+          verifiedSessionCache.delete(key);
+        }
+      }
+    }
+
+    verifiedSessionCache.set(tokenCacheKey, { expiresAt: Date.now() + VERIFIED_SESSION_CACHE_MS });
+    return true;
+  } catch (error) {
+    console.error('Supabase session validation failed.', error);
+    return false;
+  }
 }
 
 function readJsonBody(request) {
@@ -462,6 +526,11 @@ const server = http.createServer(async (request, response) => {
 
   if (!isClientAuthorized(request)) {
     sendJson(response, 401, { error: 'UNAUTHORIZED' });
+    return;
+  }
+
+  if (!(await isSupabaseSessionAuthorized(request))) {
+    sendJson(response, 401, { error: 'UNAUTHORIZED', message: 'A valid Reciro session is required.' });
     return;
   }
 

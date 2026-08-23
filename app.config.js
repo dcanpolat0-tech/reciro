@@ -44,5 +44,10 @@ module.exports = ({ config }) => ({
     ...(appJson.expo.extra || {}),
     receiptAnalysisUrl: process.env.EXPO_PUBLIC_RECEIPT_ANALYSIS_URL || '',
     analysisClientToken: process.env.EXPO_PUBLIC_ANALYSIS_CLIENT_TOKEN || '',
+    revenueCatIosApiKey: process.env.EXPO_PUBLIC_REVENUECAT_IOS_API_KEY || '',
+    revenueCatAndroidApiKey: process.env.EXPO_PUBLIC_REVENUECAT_ANDROID_API_KEY || '',
+    supabaseUrl: process.env.EXPO_PUBLIC_SUPABASE_URL || appJson.expo.extra?.supabaseUrl || '',
+    supabasePublishableKey:
+      process.env.EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY || appJson.expo.extra?.supabasePublishableKey || '',
   },
 });
