@@ -29,6 +29,7 @@ import * as Sharing from 'expo-sharing';
 import Constants from 'expo-constants';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as AppleAuthentication from 'expo-apple-authentication';
+import * as Crypto from 'expo-crypto';
 import * as WebBrowser from 'expo-web-browser';
 import { getMobileAdsModule } from './mobileAds';
 import { getPurchasesModule } from './revenueCat';
@@ -84,7 +85,7 @@ const REVENUECAT_IOS_API_KEY =
 const REVENUECAT_ANDROID_API_KEY =
   APP_CONFIG_EXTRA.revenueCatAndroidApiKey ||
   process.env.EXPO_PUBLIC_REVENUECAT_ANDROID_API_KEY ||
-  '';
+  'goog_YXFpgXqlsMjRBmIkuimmdScMFxL';
 const REVENUECAT_PREMIUM_ENTITLEMENT = 'Reciro Premium';
 const ADMOB_ANDROID_REWARDED_AD_UNIT_ID = 'ca-app-pub-8547815405822008/8421426783';
 const ADMOB_IOS_REWARDED_AD_UNIT_ID = 'ca-app-pub-8547815405822008/1911858751';
@@ -348,7 +349,7 @@ const translations = {
     ],
     startPremium: 'Premium’a Geç',
     premiumSetupTitle: 'Premium kullanılamıyor',
-    premiumSetupText: 'Premium satın alma işlemleri yalnızca yapılandırılmış TestFlight veya App Store sürümünde kullanılabilir.',
+    premiumSetupText: 'Premium satın alma işlemleri yalnızca yapılandırılmış bir mağaza sürümünde kullanılabilir.',
     viewPremium: 'Premium’u Gör',
     accountSync: 'Yerel profil',
     accountSyncInfo: 'Bu seçim gerçek oturum açma değildir. Verilerin bu telefonda kalır; yedeklerini Verilerim bölümünden kendin dışa aktarabilirsin.',
@@ -603,7 +604,7 @@ const translations = {
     ],
     startPremium: 'Go Premium',
     premiumSetupTitle: 'Premium unavailable',
-    premiumSetupText: 'Premium purchases are available only in a configured TestFlight or App Store build.',
+    premiumSetupText: 'Premium purchases are available only in a configured store build.',
     viewPremium: 'View Premium',
     accountSync: 'Local profile',
     accountSyncInfo: 'This is not a real sign-in. Your data stays on this phone; you can export your own backup from My data.',
@@ -857,7 +858,7 @@ const translations = {
     ],
     startPremium: 'Passer Premium',
     premiumSetupTitle: 'Premium indisponible',
-    premiumSetupText: 'Les achats Premium sont disponibles uniquement dans une version TestFlight ou App Store configuree.',
+    premiumSetupText: 'Les achats Premium sont disponibles uniquement dans une version de magasin configuree.',
     viewPremium: 'Voir Premium',
     accountSync: 'Profil local',
     accountSyncInfo: "Ce choix n'est pas une vraie connexion. Vos donnees restent sur ce telephone; vous pouvez exporter une sauvegarde depuis Mes donnees.",
@@ -1111,7 +1112,7 @@ const translations = {
     ],
     startPremium: 'Premium aktivieren',
     premiumSetupTitle: 'Premium nicht verfügbar',
-    premiumSetupText: 'Premium-Käufe sind nur in einem konfigurierten TestFlight- oder App-Store-Build verfügbar.',
+    premiumSetupText: 'Premium-Käufe sind nur in einem konfigurierten Store-Build verfügbar.',
     viewPremium: 'Premium ansehen',
     accountSync: 'Lokales Profil',
     accountSyncInfo: 'Diese Auswahl ist keine echte Anmeldung. Deine Daten bleiben auf diesem Telefon; du kannst unter Meine Daten ein Backup exportieren.',
@@ -1365,7 +1366,7 @@ const translations = {
     ],
     startPremium: 'Pasar a Premium',
     premiumSetupTitle: 'Premium no disponible',
-    premiumSetupText: 'Las compras Premium solo están disponibles en una versión configurada de TestFlight o App Store.',
+    premiumSetupText: 'Las compras Premium solo están disponibles en una versión de tienda configurada.',
     viewPremium: 'Ver Premium',
     accountSync: 'Perfil local',
     accountSyncInfo: 'Esta seleccion no es un inicio de sesion real. Tus datos permanecen en este telefono; puedes exportar una copia desde Mis datos.',
@@ -1556,7 +1557,7 @@ const featureTranslations = {
     termsOfUse: 'Terms of use',
     termsOfUseText: 'Reciro helps track receipts, spending, products and monthly payments. AI receipt analysis may be imperfect, so users should review important amounts, dates and categories before relying on reports. The app is provided for personal expense tracking and is not financial, tax or legal advice. Users are responsible for keeping backups of important data and for complying with local rules about receipts, invoices and accounting.',
     restorePurchases: 'Restore purchases',
-    restorePurchasesInfo: 'Restore an active Premium subscription from the App Store.',
+    restorePurchasesInfo: 'Restore an active Premium subscription from your store account.',
     restorePurchasesTitle: 'Purchases',
     restorePurchasesText: 'Your Premium subscription could not be restored. Check your store account and try again.',
     appVersion: 'App version',
@@ -1645,7 +1646,7 @@ const featureTranslations = {
     termsOfUse: 'Kullanım şartları',
     termsOfUseText: 'Reciro fiş, harcama, ürün ve aylık ödeme takibi için yardımcı olur. AI fiş analizi her zaman kusursuz olmayabilir; bu yüzden önemli tutar, tarih ve kategorileri raporlara güvenmeden önce kontrol etmek kullanıcının sorumluluğundadır. Uygulama kişisel harcama takibi içindir; finansal, vergi veya hukuki danışmanlık değildir. Önemli verilerin yedeğini almak ve fiş/fatura/muhasebe kurallarına uymak kullanıcının sorumluluğundadır.',
     restorePurchases: 'Satın almaları geri yükle',
-    restorePurchasesInfo: 'App Store’deki etkin Premium aboneliğini geri yükle.',
+    restorePurchasesInfo: 'Mağaza hesabındaki etkin Premium aboneliğini geri yükle.',
     restorePurchasesTitle: 'Satın almalar',
     restorePurchasesText: 'Premium aboneliğin geri yüklenemedi. Mağaza hesabını kontrol edip tekrar dene.',
     appVersion: 'Uygulama sürümü',
@@ -2179,7 +2180,7 @@ Object.assign(featureTranslations.fr, {
   restorePurchases: "Restaurer les achats",
   restorePurchasesTitle: "Achats",
   restorePurchasesText: "Votre abonnement Premium n a pas pu etre restaure. Verifiez votre compte store et reessayez.",
-  restorePurchasesInfo: "Restaurez un abonnement Premium actif depuis l App Store.",
+  restorePurchasesInfo: "Restaurez un abonnement Premium actif depuis votre compte magasin.",
   deleteAccount: "Supprimer le compte",
   deleteAccountInfo: "Demandez-nous de supprimer le compte et les donnees synchronisees.",
   privacyAndLegal: "Confidentialite et legal",
@@ -2220,7 +2221,7 @@ Object.assign(featureTranslations.de, {
   restorePurchases: "Käufe wiederherstellen",
   restorePurchasesTitle: "Käufe",
   restorePurchasesText: "Dein Premium-Abo konnte nicht wiederhergestellt werden. Prüfe dein Store-Konto und versuche es erneut.",
-  restorePurchasesInfo: "Stelle ein aktives Premium-Abo aus dem App Store wieder her.",
+  restorePurchasesInfo: "Stelle ein aktives Premium-Abo über dein Store-Konto wieder her.",
   deleteAccount: "Konto löschen",
   deleteAccountInfo: "Fordere uns auf, Konto und synchronisierte Daten zu löschen.",
   privacyAndLegal: "Datenschutz und Rechtliches",
@@ -2261,7 +2262,7 @@ Object.assign(featureTranslations.es, {
   restorePurchases: "Restaurar compras",
   restorePurchasesTitle: "Compras",
   restorePurchasesText: "No se pudo restaurar tu suscripción Premium. Revisa tu cuenta de la tienda e inténtalo de nuevo.",
-  restorePurchasesInfo: "Restaura una suscripción Premium activa desde App Store.",
+  restorePurchasesInfo: "Restaura una suscripción Premium activa desde tu cuenta de tienda.",
   deleteAccount: "Eliminar cuenta",
   deleteAccountInfo: "Solicítanos eliminar cuenta y datos sincronizados.",
   privacyAndLegal: "Privacidad y legal",
@@ -2390,7 +2391,7 @@ Object.assign(translations.it, {
   premiumBenefits: ["Scansioni illimitate AI degli scontrini", "Analisi PDF e foto degli scontrini", "Report prodotti, categorie e negozi", "Analisi prodotti mensile", "Uso senza pubblicita"],
   startPremium: "Attiva Premium",
   premiumSetupTitle: "Premium non disponibile",
-  premiumSetupText: "Gli acquisti Premium sono disponibili solo in una build TestFlight o App Store configurata.",
+  premiumSetupText: "Gli acquisti Premium sono disponibili solo in una build dello store configurata.",
   accountSyncInfo: "Questa scelta non e un vero accesso. I tuoi dati restano su questo telefono; puoi esportare un backup da I miei dati.",
   feedbackInfo: "Invia suggerimenti, bug o richieste di funzionalita.",
   noPhoto: "Nessuna foto",
@@ -2466,7 +2467,7 @@ Object.assign(featureTranslations.it, {
   restorePurchases: "Ripristina acquisti",
   restorePurchasesTitle: "Acquisti",
   restorePurchasesText: "Impossibile ripristinare l abbonamento Premium. Controlla l account dello store e riprova.",
-  restorePurchasesInfo: "Ripristina un abbonamento Premium attivo da App Store.",
+  restorePurchasesInfo: "Ripristina un abbonamento Premium attivo dal tuo account dello store.",
   deleteAccountInfo: "Chiedici di eliminare account e dati sincronizzati.",
   privacySummary: "Le foto degli scontrini sono memorizzate su questo telefono a meno che non disattivi l'archiviazione foto. L'analisi AI invia l'immagine selezionata al servizio di analisi per leggere negozio, data, totale e articoli.",
   privacyPolicyText: "Reciro memorizza scontrini, entrate, budget, pagamenti mensili e preferenze localmente su questo telefono. Se l'archiviazione foto scontrini è attiva, le immagini sono conservate localmente. Quando si usa l'analisi AI, l'immagine selezionata viene inviata solo per estrarre negozio, data, totali, categorie e voci. Reciro non vende dati personali, non usa contenuti degli scontrini per pubblicità e non conserva backup degli scontrini sui propri server. Puoi esportare, fare backup o eliminare dati locali da I miei dati.",
@@ -2589,7 +2590,7 @@ Object.assign(translations.pt, {
   premiumBenefits: ["Digitalizações ilimitadas de recibos com IA", "Análise de recibos em PDF e foto", "Relatórios de produtos, categorias e lojas", "Análise mensal de produtos", "Uso sem anúncios"],
   startPremium: "Tornar-se Premium",
   premiumSetupTitle: "Premium indisponível",
-  premiumSetupText: "As compras Premium estão disponíveis apenas numa versão TestFlight ou App Store configurada.",
+  premiumSetupText: "As compras Premium estão disponíveis apenas numa versão de loja configurada.",
   accountSyncInfo: "Esta escolha nao e um inicio de sessao real. Os seus dados ficam neste telefone; pode exportar um backup em Os meus dados.",
   feedbackInfo: "Envie sugestões, erros ou pedidos de funcionalidades.",
   noPhoto: "Sem foto",
@@ -2665,7 +2666,7 @@ Object.assign(featureTranslations.pt, {
   restorePurchases: "Restaurar compras",
   restorePurchasesTitle: "Compras",
   restorePurchasesText: "Não foi possível restaurar a subscrição Premium. Verifique a conta da loja e tente novamente.",
-  restorePurchasesInfo: "Restaure uma subscrição Premium ativa da App Store.",
+  restorePurchasesInfo: "Restaure uma subscrição Premium ativa da sua conta da loja.",
   deleteAccountInfo: "Peça-nos para eliminar conta e dados sincronizados.",
   privacySummary: "Fotos dos recibos são guardadas neste telemóvel a menos que desative o armazenamento. A análise AI envia a imagem do recibo selecionado para o serviço de análise para ler loja, data, total e itens.",
   privacyPolicyText: "O Reciro guarda recibos, rendimentos, orçamentos, pagamentos mensais e preferências localmente neste telemóvel. Se o armazenamento de fotos de recibos estiver ativado, as imagens também são guardadas localmente. Quando a análise AI é usada, a imagem do recibo selecionado é enviada ao serviço de análise apenas para extrair loja, data, totais, categorias e itens. O Reciro não vende dados pessoais, não usa conteúdo dos recibos para publicidade e não guarda backups de recibos nos seus próprios servidores. Pode exportar, fazer backup ou eliminar dados locais em Os meus dados.",
@@ -2788,7 +2789,7 @@ Object.assign(translations.nl, {
   premiumBenefits: ["Onbeperkt AI bonnen scannen", "PDF- en foto-bonanalyse", "Product-, categorie- en winkelrapporten", "Maandelijkse productanalyse", "Reclamevrij gebruik"],
   startPremium: "Word Premium",
   premiumSetupTitle: "Premium niet beschikbaar",
-  premiumSetupText: "Premium-aankopen zijn alleen beschikbaar in een geconfigureerde TestFlight- of App Store-build.",
+  premiumSetupText: "Premium-aankopen zijn alleen beschikbaar in een geconfigureerde store-build.",
   accountSyncInfo: "Deze keuze is geen echte login. Je gegevens blijven op deze telefoon; je kunt een back-up exporteren via Mijn gegevens.",
   feedbackInfo: "Stuur suggesties, bugs of functieverzoeken.",
   noPhoto: "Geen foto",
@@ -2864,7 +2865,7 @@ Object.assign(featureTranslations.nl, {
   restorePurchases: "Aankopen herstellen",
   restorePurchasesTitle: "Aankopen",
   restorePurchasesText: "Je Premium-abonnement kon niet worden hersteld. Controleer je store-account en probeer het opnieuw.",
-  restorePurchasesInfo: "Herstel een actief Premium-abonnement uit de App Store.",
+  restorePurchasesInfo: "Herstel een actief Premium-abonnement via je store-account.",
   deleteAccountInfo: "Vraag ons om account en synchronisatiegegevens te verwijderen.",
   privacySummary: "Bonfoto's worden op deze telefoon opgeslagen tenzij je foto-opslag uitschakelt. AI-analyse stuurt de geselecteerde bonafbeelding naar de analysetool om winkel, datum, totaal en items te lezen.",
   privacyPolicyText: "Reciro slaat bonnetjes, inkomsten, budgetten, maandelijkse betalingen en voorkeuren lokaal op deze telefoon op. Als bonfoto-opslag is ingeschakeld, worden bonafbeeldingen ook lokaal bewaard. Bij gebruik van AI-analyse wordt de geselecteerde bonafbeelding alleen naar de bonanalyse-service gestuurd om winkel, datum, totalen, categorieën en regels te extraheren. Reciro verkoopt geen persoonlijke gegevens, gebruikt boninhoud niet voor reclame en bewaart geen bonback-ups op eigen servers. Je kunt lokale gegevens exporteren, back-uppen of verwijderen via Mijn gegevens.",
@@ -5912,7 +5913,13 @@ export default function App() {
     }
 
     try {
+      const rawNonce = Crypto.randomUUID();
+      const hashedNonce = await Crypto.digestStringAsync(
+        Crypto.CryptoDigestAlgorithm.SHA256,
+        rawNonce
+      );
       const credential = await AppleAuthentication.signInAsync({
+        nonce: hashedNonce,
         requestedScopes: [
           AppleAuthentication.AppleAuthenticationScope.FULL_NAME,
           AppleAuthentication.AppleAuthenticationScope.EMAIL,
@@ -5930,7 +5937,7 @@ export default function App() {
       const { error: signInError } = await supabase.auth.signInWithIdToken({
         provider: 'apple',
         token: credential.identityToken,
-        nonce: credential.nonce,
+        nonce: rawNonce,
         access_token: credential.authorizationCode || undefined,
       });
 
@@ -6160,7 +6167,7 @@ export default function App() {
         t.restorePurchasesTitle,
         info.entitlements.active[REVENUECAT_PREMIUM_ENTITLEMENT]
           ? t.premiumSubtitle
-          : 'No active Premium subscription was found for this Apple ID.'
+          : t.restorePurchasesText
       );
     } catch (error) {
       Alert.alert(t.restorePurchasesTitle, error.message || t.restorePurchasesText);
@@ -7041,12 +7048,10 @@ function AuthStartScreen({ t, onChooseApple, onChooseGoogle, onChooseLocal }) {
             <Text style={styles.authButtonText}>{t.signInWithGoogle}</Text>
           </Pressable>
 
-          {Platform.OS === 'web' && (
-            <Pressable style={styles.authButton} onPress={onChooseLocal}>
-              <Text style={styles.authButtonIcon}>→</Text>
-              <Text style={styles.authButtonText}>Yerel olarak devam et</Text>
-            </Pressable>
-          )}
+          <Pressable style={styles.authButton} onPress={onChooseLocal}>
+            <Text style={styles.authButtonIcon}>→</Text>
+            <Text style={styles.authButtonText}>{t.accountSync}</Text>
+          </Pressable>
 
           <Text style={styles.authFootnote}>{t.accountSyncInfo}</Text>
         </View>

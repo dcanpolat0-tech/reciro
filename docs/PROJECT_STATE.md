@@ -25,9 +25,9 @@ Expo/React Native (SDK 54 in `package.json`) app. The UI and local state are pri
 ## Integrations
 
 - **Backend:** Render-hosted receipt analysis endpoint. It requires server environment variables for OpenAI and optional feedback mail; receipts are for temporary analysis, not server-side archives.
-- **RevenueCat:** native iOS purchase configuration, offerings, purchase and restore calls are wired through `revenueCat.js`. Android's public SDK-key mapping is ready through `EXPO_PUBLIC_REVENUECAT_ANDROID_API_KEY`; Google Play products, the RevenueCat entitlement/offering, and a physical-device purchase test must be completed before Android release. SDK identifiers are client configuration, not server secrets.
+- **RevenueCat:** native iOS and Android purchase configuration, offerings, purchase and restore calls are wired through `revenueCat.js`. Android has active Google Play monthly and annual subscriptions, both mapped to the `Reciro Premium` entitlement and the default RevenueCat offering. Google Play service credentials validate successfully, and real-time developer notifications are connected through the `revenuecat-google-play` Pub/Sub topic (test notification received). The Android public SDK key is configured in the client build; a physical-device purchase and restore test is still required before release. SDK identifiers are client configuration, not server secrets.
 - **AdMob:** native rewarded-ad configuration exists; `/app-ads.txt` is served by the backend. Ads cannot run in Expo Go.
-- **Authentication:** Supabase Auth project `Reciro Auth` is the identity authority. Sessions use SecureStore on native devices. Apple uses a native identity token; Google uses Supabase OAuth with `reciro://auth-callback`. Provider dashboard configuration and physical-device verification are still required before enforcement.
+- **Authentication:** Supabase Auth project `Reciro Auth` is the identity authority. Sessions use SecureStore on native devices. Apple uses a native identity token with a raw nonce passed to Supabase and its SHA-256 hash passed to Apple; Google uses Supabase OAuth with `reciro://auth-callback`. A local profile is always available so an auth-provider outage cannot block access to local-first features. Provider dashboard configuration and physical-device verification are still required before enforcement.
 - **Analysis authorization:** the Render server supports verified Supabase bearer sessions when `SUPABASE_AUTH_REQUIRED=true`; leave it false until the Supabase-enabled build is live and verified so existing users are not interrupted.
 - **Store:** iOS bundle ID is `com.dcanpolat.reciro`; App Store Connect ID is `6797104975`. EAS production submit is configured in `eas.json`.
 
@@ -46,15 +46,16 @@ Entry sign-in choice; tab navigation for Home, Report, Monthly, Products and Set
 
 ## Known Issues
 
-- RevenueCat offerings, App Store products and AdMob delivery still require physical-device verification before release. Android Premium is intentionally out of scope for the current App Store release.
+- RevenueCat and AdMob delivery still require physical-device verification before release. Android Premium is configured for Google Play. Version code 6 has been added to the Alpha closed-test publishing overview with release notes in all eight locales; Google Play must finish its server-side processing before the submission control becomes available. A purchase and restore check is still required before production release.
 - AdMob verification depends on the public App Store Marketing URL being crawled after the related App Store update is live.
 - Supabase Apple/Google provider configuration and a physical-device sign-in test are required before `SUPABASE_AUTH_REQUIRED` is enabled on Render.
 
 ## Current Development State
 
-Development worktree: `C:\Users\ask_d\Documents\Codex\2026-07-08\si\RECIRO-DEVELOPMENT` on `codex/development`. iOS 1.0.2 build 12 was rejected because Apple could not verify subscription legal links. The source now exposes visible, functional Privacy Policy and standard Apple EULA links on the Premium purchase screen. EAS created and uploaded iOS 1.0.2 build 13 on 2026-08-22; build 13, both Premium subscriptions, and the Reciro Premium subscription group were resubmitted together to App Review with reviewer notes and are Waiting for Review. Build 10 remains a 1.0.1 TestFlight validation build. It currently has uncommitted application/config changes; preserve and review them before unrelated work. Generated `dist-*` folders are temporary and must not be committed.
+Development worktree: `C:\Users\ask_d\Documents\Codex\2026-07-08\si\RECIRO-DEVELOPMENT` on `codex/development`. iOS 1.0.2 build 12 was rejected because Apple could not verify subscription legal links. EAS created and uploaded iOS 1.0.2 build 13 on 2026-08-22, with the legal-link metadata corrected in all App Store localizations. On 2026-08-26 Apple rejected build 13 under Guideline 2.1(a) because Apple and Google sign-in both produced errors on an iPad. The underlying Supabase Auth project had become inactive; it was restored on 2026-08-29. The source now applies the required Apple nonce protocol and always offers a local profile, but a fresh physical iPhone/iPad authentication test and a new build are required before resubmission. Build 10 remains a 1.0.1 TestFlight validation build. Generated `dist-*` folders are temporary and must not be committed.
 
 ## Next Relevant Work
 
-- Verify Apple review/release status and AdMob crawling externally; do not change release settings without an explicit request.
-- Before the next store update, test native iOS receipt analysis, Apple/Google auth, rewarded ad, purchase and restore flows on a device.
+- Wait for the restored Supabase project to become active, then validate Google OAuth redirect configuration and Apple/Google login on a physical iPhone and iPad.
+- Build a new iOS binary only after those authentication checks pass, then resubmit the app version and its two subscriptions plus subscription group together.
+- Complete Android closed testing with the Play tester requirement, then verify Google Play purchase and restore using the Android RevenueCat configuration.
