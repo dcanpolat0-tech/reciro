@@ -52,10 +52,10 @@ Entry sign-in choice; tab navigation for Home, Report, Monthly, Products and Set
 
 ## Current Development State
 
-Development worktree: `C:\Users\ask_d\Documents\Codex\2026-07-08\si\RECIRO-DEVELOPMENT` on `codex/development`. iOS 1.0.2 build 12 was rejected because Apple could not verify subscription legal links. EAS created builds 13 and 14 with the legal-link metadata corrected in all App Store localizations. On 2026-08-26 Apple rejected build 13 under Guideline 2.1(a) because Apple and Google sign-in both produced errors on an iPad. The Supabase Auth project was resumed again on 2026-09-05 after a pause. The source now uses the native iOS Google account picker and direct Supabase identity-token sign-in, as well as the required Apple nonce protocol. EAS production build 15 was started on 2026-09-05 for device validation before any App Store resubmission. Build 10 remains a 1.0.1 TestFlight validation build. Generated `dist-*` folders are temporary and must not be committed.
+Development worktree: `C:\Users\ask_d\Documents\Codex\2026-07-08\si\RECIRO-DEVELOPMENT` on `codex/development`. iOS 1.0.2 is approved and ready for distribution. The source now uses the native iOS Google account picker and direct Supabase identity-token sign-in, as well as the required Apple nonce protocol. EAS production build 15 completed from the earlier 1.0.2 source and is not the new release candidate. Version 1.0.3 requires its own build from the current source before App Store submission. Build 10 remains a 1.0.1 TestFlight validation build. Generated `dist-*` folders are temporary and must not be committed.
 
 ## Next Relevant Work
 
-- When EAS build 15 finishes, validate Apple/Google login on a physical iPhone and iPad.
-- After physical authentication checks pass, resubmit the app version and its two subscriptions plus subscription group together.
+- Build version 1.0.3 from the current source, then validate Apple/Google login on a physical iPhone and iPad.
+- After physical authentication checks pass, submit the new app version for App Review.
 - Complete Android closed testing with the Play tester requirement, then verify Google Play purchase and restore using the Android RevenueCat configuration.
