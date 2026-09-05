@@ -52,10 +52,10 @@ Entry sign-in choice; tab navigation for Home, Report, Monthly, Products and Set
 
 ## Current Development State
 
-Development worktree: `C:\Users\ask_d\Documents\Codex\2026-07-08\si\RECIRO-DEVELOPMENT` on `codex/development`. iOS 1.0.2 is approved and ready for distribution. The source now uses the native iOS Google account picker and direct Supabase identity-token sign-in, as well as the required Apple nonce protocol. EAS production build 15 completed from the earlier 1.0.2 source and is not the new release candidate. Version 1.0.3 requires its own build from the current source before App Store submission. Build 10 remains a 1.0.1 TestFlight validation build. Generated `dist-*` folders are temporary and must not be committed.
+Development worktree: `C:\Users\ask_d\Documents\Codex\2026-07-08\si\RECIRO-DEVELOPMENT` on `codex/development`. iOS 1.0.2 is approved and ready for distribution. The source now uses the native iOS Google account picker and direct Supabase identity-token sign-in, as well as the required Apple nonce protocol. EAS production build 16 for version 1.0.3 completed from the current source and was uploaded to App Store Connect on 2026-09-05; Apple processing must finish before it can be added to a new App Review submission. Build 10 remains a 1.0.1 TestFlight validation build. Generated `dist-*` folders are temporary and must not be committed.
 
 ## Next Relevant Work
 
-- Build version 1.0.3 from the current source, then validate Apple/Google login on a physical iPhone and iPad.
-- After physical authentication checks pass, submit the new app version for App Review.
+- When Apple processing completes, validate Apple/Google login in version 1.0.3 build 16 on a physical iPhone and iPad.
+- After physical authentication checks pass, add version 1.0.3 to App Store Connect and submit it for App Review.
 - Complete Android closed testing with the Play tester requirement, then verify Google Play purchase and restore using the Android RevenueCat configuration.
