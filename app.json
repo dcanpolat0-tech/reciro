@@ -13,7 +13,7 @@
     "userInterfaceStyle": "automatic",
     "ios": {
       "bundleIdentifier": "com.dcanpolat.reciro",
-      "buildNumber": "14",
+      "buildNumber": "15",
       "usesAppleSignIn": true,
       "supportsTablet": false,
       "infoPlist": {
@@ -48,6 +48,12 @@
       "expo-web-browser",
       "expo-secure-store",
       [
+        "@react-native-google-signin/google-signin",
+        {
+          "iosUrlScheme": "com.googleusercontent.apps.561368359079-hkk7ifrscsoqtsk9t1gl3l2gpf5qfp7r"
+        }
+      ],
+      [
         "expo-image-picker",
         {
           "cameraPermission": "Reciro uses the camera only when you choose to scan a receipt photo.",
@@ -74,6 +80,8 @@
     "extra": {
       "supabaseUrl": "https://dvisvhmyvylmnzqlrgif.supabase.co",
       "supabasePublishableKey": "sb_publishable_2qXDwaVGkyYVKVdO1p1tWA_oYjiCUKj",
+      "googleIosClientId": "561368359079-hkk7ifrscsoqtsk9t1gl3l2gpf5qfp7r.apps.googleusercontent.com",
+      "googleWebClientId": "592400138010-777vssu26ga04te0gian9cud1lmngnsn.apps.googleusercontent.com",
       "eas": {
         "projectId": "3bd780d9-eec7-443e-990e-a60a3a3e20ee"
       }

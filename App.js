@@ -1,6 +1,7 @@
 import { StatusBar } from 'expo-status-bar';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
+  ActivityIndicator,
   Alert,
   Animated,
   AppState,
@@ -30,12 +31,10 @@ import Constants from 'expo-constants';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as AppleAuthentication from 'expo-apple-authentication';
 import * as Crypto from 'expo-crypto';
-import * as WebBrowser from 'expo-web-browser';
+import { getGoogleSignInModule } from './googleSignIn';
 import { getMobileAdsModule } from './mobileAds';
 import { getPurchasesModule } from './revenueCat';
 import { getSupabaseAccessToken, isSupabaseConfigured, supabase } from './supabase';
-
-WebBrowser.maybeCompleteAuthSession();
 
 const RECEIPTS_STORAGE_KEY = 'reciro.receipts.v2';
 const SALARY_STORAGE_KEY = 'reciro.salary.v1';
@@ -87,6 +86,12 @@ const REVENUECAT_ANDROID_API_KEY =
   process.env.EXPO_PUBLIC_REVENUECAT_ANDROID_API_KEY ||
   'goog_YXFpgXqlsMjRBmIkuimmdScMFxL';
 const REVENUECAT_PREMIUM_ENTITLEMENT = 'Reciro Premium';
+const GOOGLE_IOS_CLIENT_ID =
+  APP_CONFIG_EXTRA.googleIosClientId ||
+  '561368359079-hkk7ifrscsoqtsk9t1gl3l2gpf5qfp7r.apps.googleusercontent.com';
+const GOOGLE_WEB_CLIENT_ID =
+  APP_CONFIG_EXTRA.googleWebClientId ||
+  '592400138010-777vssu26ga04te0gian9cud1lmngnsn.apps.googleusercontent.com';
 const ADMOB_ANDROID_REWARDED_AD_UNIT_ID = 'ca-app-pub-8547815405822008/8421426783';
 const ADMOB_IOS_REWARDED_AD_UNIT_ID = 'ca-app-pub-8547815405822008/1911858751';
 const PRIVACY_POLICY_URL = 'https://reciro-receipt-analysis.onrender.com/privacy';
@@ -104,28 +109,24 @@ const DEFAULT_RECEIPT_SETTINGS = {
 
 let activeCurrency = 'TRY';
 let mobileAdsInitializePromise = null;
+let nativeGoogleSignInConfigured = false;
+
+function configureNativeGoogleSignIn(GoogleSignin) {
+  if (nativeGoogleSignInConfigured || !GoogleSignin) {
+    return;
+  }
+
+  GoogleSignin.configure({
+    iosClientId: GOOGLE_IOS_CLIENT_ID,
+    webClientId: GOOGLE_WEB_CLIENT_ID,
+    offlineAccess: false,
+  });
+  nativeGoogleSignInConfigured = true;
+}
 
 function getAuthenticatedProvider(session) {
   const provider = session?.user?.app_metadata?.provider;
   return provider === 'apple' || provider === 'google' ? provider : null;
-}
-
-function getSupabaseSessionFromRedirectUrl(url) {
-  if (!url) return null;
-  const urlString = String(url);
-  const fragment = urlString.split('#')[1] || '';
-  let values = new URLSearchParams(fragment);
-  let accessToken = values.get('access_token');
-  let refreshToken = values.get('refresh_token');
-
-  if (!accessToken || !refreshToken) {
-    const query = urlString.split('?')[1]?.split('#')[0] || '';
-    values = new URLSearchParams(query);
-    accessToken = accessToken || values.get('access_token');
-    refreshToken = refreshToken || values.get('refresh_token');
-  }
-
-  return accessToken && refreshToken ? { access_token: accessToken, refresh_token: refreshToken } : null;
 }
 
 async function getAnalysisRequestHeaders() {
@@ -243,7 +244,8 @@ const translations = {
     freeLimitText: (limit) => `Bu ay ${limit} ücretsiz fiş analizi hakkını kullandın. 1 ekstra analiz için reklam izleyebilir veya sınırsız analiz için Premium’a geçebilirsin.`,
     watchAdForScan: 'Reklam izle +1 hak',
     rewardedAdSetupTitle: 'Reklam şu an açılamadı',
-    rewardedAdSetupText: 'Gerçek ödüllü reklam Expo Go içinde çalışmaz. Dev build veya yayın sürümünde reklam izleyince 1 analiz hakkı eklenir.',
+    rewardedAdSetupText: 'Reklam şu anda yüklenemedi. İnternet bağlantını kontrol edip tekrar dene. Analiz hakkın eklenmedi.',
+    rewardedAdExpoGoText: 'Ödüllü reklam Expo Go içinde çalışmaz. Bu özelliği TestFlight, geliştirme derlemesi veya yayın sürümünde deneyebilirsin.',
     rewardedCreditTitle: '1 analiz hakkı eklendi',
     rewardedCreditText: 'Şimdi fişini tekrar analiz edebilirsin.',
     receiptHelp: 'Kamerayla çek, analiz et, kontrol edip harcamalara ekle.',
@@ -498,7 +500,8 @@ const translations = {
     freeLimitText: (limit) => `You used your ${limit} free receipt scans this month. Watch an ad for 1 extra scan or go Premium for unlimited scans.`,
     watchAdForScan: 'Watch ad +1 scan',
     rewardedAdSetupTitle: 'Ad could not open',
-    rewardedAdSetupText: 'Real rewarded ads do not run inside Expo Go. In a dev build or store build, watching an ad adds 1 scan.',
+    rewardedAdSetupText: 'The ad could not load right now. Check your internet connection and try again. No scan was added.',
+    rewardedAdExpoGoText: 'Rewarded ads do not run inside Expo Go. Try this feature in TestFlight, a development build, or the store app.',
     rewardedCreditTitle: '1 scan added',
     rewardedCreditText: 'You can analyze your receipt again now.',
     receiptHelp: 'Take a photo, analyze it, review it, and add it to spending.',
@@ -753,7 +756,8 @@ const translations = {
     freeLimitText: (limit) => `Vous avez utilise vos ${limit} analyses gratuites ce mois-ci. Regardez une publicite pour 1 analyse en plus ou passez Premium.`,
     watchAdForScan: 'Voir une pub +1 analyse',
     rewardedAdSetupTitle: 'Publicite indisponible',
-    rewardedAdSetupText: 'Les publicites recompensees ne fonctionnent pas dans Expo Go. Dans un dev build ou la version store, une publicite ajoute 1 analyse.',
+    rewardedAdSetupText: 'La publicite n a pas pu etre chargee. Verifiez votre connexion et reessayez. Aucune analyse n a ete ajoutee.',
+    rewardedAdExpoGoText: 'Les publicites recompensees ne fonctionnent pas dans Expo Go. Essayez cette fonction dans TestFlight, une version de developpement ou l app store.',
     rewardedCreditTitle: '1 analyse ajoutee',
     rewardedCreditText: 'Vous pouvez analyser votre ticket maintenant.',
     receiptHelp: 'Prenez une photo, analysez, verifiez et ajoutez aux depenses.',
@@ -1007,7 +1011,8 @@ const translations = {
     freeLimitText: (limit) => `Du hast deine ${limit} kostenlosen Beleganalysen diesen Monat genutzt. Sieh eine Anzeige fuer 1 weitere Analyse oder aktiviere Premium.`,
     watchAdForScan: 'Anzeige ansehen +1 Scan',
     rewardedAdSetupTitle: 'Anzeige konnte nicht geoeffnet werden',
-    rewardedAdSetupText: 'Rewarded Ads laufen nicht in Expo Go. In einem Dev Build oder Store Build fuegt eine angesehene Anzeige 1 Analyse hinzu.',
+    rewardedAdSetupText: 'Die Anzeige konnte nicht geladen werden. Pruefe deine Internetverbindung und versuche es erneut. Es wurde keine Analyse hinzugefuegt.',
+    rewardedAdExpoGoText: 'Rewarded Ads laufen nicht in Expo Go. Teste diese Funktion in TestFlight, einem Development Build oder der Store-App.',
     rewardedCreditTitle: '1 Analyse hinzugefuegt',
     rewardedCreditText: 'Du kannst deinen Beleg jetzt erneut analysieren.',
     receiptHelp: 'Foto aufnehmen, analysieren, pruefen und speichern.',
@@ -1261,7 +1266,8 @@ const translations = {
     freeLimitText: (limit) => `Has usado tus ${limit} analisis gratis este mes. Mira un anuncio para 1 analisis extra o pasa a Premium.`,
     watchAdForScan: 'Ver anuncio +1 analisis',
     rewardedAdSetupTitle: 'No se pudo abrir el anuncio',
-    rewardedAdSetupText: 'Los anuncios recompensados no funcionan en Expo Go. En un dev build o version de tienda, ver un anuncio anade 1 analisis.',
+    rewardedAdSetupText: 'El anuncio no se pudo cargar. Comprueba tu conexion y vuelve a intentarlo. No se anadio ningun analisis.',
+    rewardedAdExpoGoText: 'Los anuncios recompensados no funcionan en Expo Go. Prueba esta funcion en TestFlight, una version de desarrollo o la app de tienda.',
     rewardedCreditTitle: '1 analisis anadido',
     rewardedCreditText: 'Ya puedes analizar tu ticket otra vez.',
     receiptHelp: 'Haz una foto, analiza, revisa y anade al gasto.',
@@ -2423,7 +2429,8 @@ Object.assign(translations.it, {
   freeLimitText: limit => `Hai usato le ${limit} scansioni gratuite di questo mese. Guarda una pubblicita per 1 scansione extra o passa a Premium.`,
   watchAdForScan: "Guarda pubblicita +1",
   rewardedAdSetupTitle: "Pubblicita non disponibile",
-  rewardedAdSetupText: "Le pubblicita con ricompensa non funzionano in Expo Go. In un dev build o nella versione store, guardare una pubblicita aggiunge 1 scansione.",
+  rewardedAdSetupText: "La pubblicita non puo essere caricata ora. Controlla la connessione e riprova. Non e stata aggiunta alcuna scansione.",
+  rewardedAdExpoGoText: "Le pubblicita con ricompensa non funzionano in Expo Go. Prova questa funzione in TestFlight, in una build di sviluppo o nell app store.",
   rewardedCreditTitle: "1 scansione aggiunta",
   rewardedCreditText: "Ora puoi analizzare di nuovo lo scontrino.",
   topCategorySentence: (category, amount) => `La spesa maggiore e in ${category}: ${amount}.`,
@@ -2622,7 +2629,8 @@ Object.assign(translations.pt, {
   freeLimitText: limit => `Usou as ${limit} analises gratuitas deste mes. Veja um anuncio para 1 analise extra ou passe para Premium.`,
   watchAdForScan: "Ver anuncio +1",
   rewardedAdSetupTitle: "Anuncio indisponivel",
-  rewardedAdSetupText: "Os anuncios recompensados nao funcionam no Expo Go. Num dev build ou versao da loja, ver um anuncio adiciona 1 analise.",
+  rewardedAdSetupText: "Nao foi possivel carregar o anuncio. Verifique a ligacao e tente novamente. Nao foi adicionada nenhuma analise.",
+  rewardedAdExpoGoText: "Os anuncios recompensados nao funcionam no Expo Go. Experimente esta funcionalidade no TestFlight, numa build de desenvolvimento ou na app da loja.",
   rewardedCreditTitle: "1 analise adicionada",
   rewardedCreditText: "Agora pode analisar o recibo novamente.",
   topCategorySentence: (category, amount) => `A maior despesa esta em ${category}: ${amount}.`,
@@ -2821,7 +2829,8 @@ Object.assign(translations.nl, {
   freeLimitText: limit => `Je hebt je ${limit} gratis bonscans deze maand gebruikt. Bekijk een advertentie voor 1 extra scan of kies Premium.`,
   watchAdForScan: "Advertentie bekijken +1",
   rewardedAdSetupTitle: "Advertentie niet beschikbaar",
-  rewardedAdSetupText: "Beloningsadvertenties werken niet in Expo Go. In een dev build of store build voegt een advertentie 1 scan toe.",
+  rewardedAdSetupText: "De advertentie kon niet worden geladen. Controleer je internetverbinding en probeer het opnieuw. Er is geen scan toegevoegd.",
+  rewardedAdExpoGoText: "Beloningsadvertenties werken niet in Expo Go. Probeer deze functie in TestFlight, een development build of de store-app.",
   rewardedCreditTitle: "1 scan toegevoegd",
   rewardedCreditText: "Je kunt je bon nu opnieuw analyseren.",
   topCategorySentence: (category, amount) => `De meeste uitgaven zijn in ${category}: ${amount}.`,
@@ -2936,12 +2945,14 @@ Object.assign(translations.nl, {
 });
 
 Object.assign(translations.en, {
+  analysisInProgressText: 'We are reading your receipt. Your details will appear when the analysis is ready.',
   subscriptionLegalNotice: 'By continuing, you agree to the Privacy Policy and Terms of Use.',
   legalLinkErrorTitle: 'Link could not be opened',
   legalLinkErrorText: 'Check your internet connection and try again.',
 });
 
 Object.assign(translations.tr, {
+  analysisInProgressText: 'Fişin okunuyor. Analiz tamamlandığında bilgilerin burada görünecek.',
   subscriptionLegalNotice: 'Devam ederek Gizlilik Politikasi ve Kullanim Kosullarini kabul edersin.',
   legalLinkErrorTitle: 'Baglanti acilamadi',
   legalLinkErrorText: 'Internet baglantini kontrol edip tekrar dene.',
@@ -3275,7 +3286,13 @@ async function showRewardedScanAd() {
 
     const subscriptions = [
       rewardedAd.addAdEventListener(RewardedAdEventType.LOADED, () => {
-        rewardedAd.show();
+        try {
+          rewardedAd.show();
+        } catch (cause) {
+          const error = new Error(cause?.message || 'Rewarded ad could not be displayed.');
+          error.code = cause?.code || 'REWARDED_AD_SHOW_FAILED';
+          finish(reject, error);
+        }
       }),
       rewardedAd.addAdEventListener(RewardedAdEventType.EARNED_REWARD, () => {
         earnedReward = true;
@@ -3289,7 +3306,9 @@ async function showRewardedScanAd() {
           finish(reject, error);
         }
       }),
-      rewardedAd.addAdEventListener(AdEventType.ERROR, (error) => {
+      rewardedAd.addAdEventListener(AdEventType.ERROR, (cause) => {
+        const error = new Error(cause?.message || 'Rewarded ad request failed.');
+        error.code = cause?.code || 'REWARDED_AD_REQUEST_FAILED';
         finish(reject, error);
       }),
     ];
@@ -5865,41 +5884,33 @@ export default function App() {
       }
 
       try {
-        const { data, error } = await supabase.auth.signInWithOAuth({
-          provider: 'google',
-          options: {
-            redirectTo: 'reciro://auth-callback',
-            skipBrowserRedirect: true,
-            queryParams: { prompt: 'select_account' },
-          },
-        });
+        const googleSignIn = getGoogleSignInModule();
+        const GoogleSignin = googleSignIn?.GoogleSignin;
 
-        if (error) {
-          throw error;
+        if (!GoogleSignin) {
+          throw new Error('Google sign-in requires the latest Reciro app update.');
         }
 
-        if (!data.url) {
-          throw new Error('Google sign-in URL could not be created.');
-        }
+        configureNativeGoogleSignIn(GoogleSignin);
+        const result = await GoogleSignin.signIn();
 
-        const result = await WebBrowser.openAuthSessionAsync(data.url, 'reciro://auth-callback', {
-          showInRecents: true,
-        });
-
-        if (result.type !== 'success') {
+        if (result.type === 'cancelled') {
           return;
         }
 
-        const session = getSupabaseSessionFromRedirectUrl(result.url);
+        const idToken = result.data?.idToken;
 
-        if (!session) {
-          throw new Error('Google did not return a valid Reciro session.');
+        if (!idToken) {
+          throw new Error('Google did not return a valid identity token.');
         }
 
-        const { error: sessionError } = await supabase.auth.setSession(session);
+        const { error: signInError } = await supabase.auth.signInWithIdToken({
+          provider: 'google',
+          token: idToken,
+        });
 
-        if (sessionError) {
-          throw sessionError;
+        if (signInError) {
+          throw signInError;
         }
       } catch (error) {
         Alert.alert(t.signInWithGoogle, error?.message || 'Google sign-in could not be completed.');
@@ -6105,13 +6116,13 @@ export default function App() {
   async function watchRewardedAdForScan() {
     setPhotoOptionsOpen(false);
 
+    if (IS_EXPO_GO) {
+      Alert.alert(t.rewardedAdSetupTitle, t.rewardedAdExpoGoText);
+      return;
+    }
+
     if (!ENABLE_REWARDED_ADS) {
-      Alert.alert(t.rewardedAdSetupTitle, t.rewardedAdSetupText, [
-        {
-          text: 'OK',
-          onPress: addRewardedAnalysisCredit,
-        },
-      ]);
+      Alert.alert(t.rewardedAdSetupTitle, t.rewardedAdSetupText);
       return;
     }
 
@@ -6119,18 +6130,10 @@ export default function App() {
       await showRewardedScanAd();
       addRewardedAnalysisCredit();
     } catch (error) {
-      console.warn('Rewarded ad could not be shown.', error);
-
-      if (__DEV__) {
-        Alert.alert(t.rewardedAdSetupTitle, t.rewardedAdSetupText, [
-          {
-            text: 'OK',
-            onPress: addRewardedAnalysisCredit,
-          },
-        ]);
-        return;
-      }
-
+      console.warn('Rewarded ad could not be shown.', {
+        code: error?.code || 'REWARDED_AD_UNKNOWN_ERROR',
+        message: error?.message || String(error),
+      });
       Alert.alert(t.rewardedAdSetupTitle, t.rewardedAdSetupText);
     }
   }
@@ -7290,6 +7293,18 @@ function ReceiptScreen({
     );
   }
 
+  if (analysisStatus === 'analyzing') {
+    return (
+      <View style={styles.analysisLoadingScreen} accessibilityLiveRegion="polite">
+        <View style={styles.analysisLoadingIcon}>
+          <ActivityIndicator color="#157f3b" size="large" />
+        </View>
+        <Text style={styles.analysisLoadingTitle}>{t.demoAnalyzing}</Text>
+        <Text style={styles.analysisLoadingText}>{t.analysisInProgressText}</Text>
+      </View>
+    );
+  }
+
   return (
     <View>
       {receiptImage ? (
@@ -7347,13 +7362,6 @@ function ReceiptScreen({
         onPickFile={onPickFile}
         t={t}
       />
-
-      {receiptImage && analysisStatus === 'analyzing' && (
-        <View style={styles.analysisCard}>
-          <Text style={styles.analysisTitle}>{t.demoAnalyzing}</Text>
-          <Text style={styles.analysisText}>{t.receiptStartText}</Text>
-        </View>
-      )}
 
       {analysisStatus === 'done' && (
         <View style={[styles.reviewCard, needsReview && styles.reviewCardWarning]}>
@@ -8748,10 +8756,27 @@ function SettingsScreen({
         <View style={styles.card}>
           <Text style={styles.analysisTitle}>{t.premiumTitle}</Text>
           <Text style={styles.analysisText}>{t.premiumSubtitle}</Text>
-          <View style={styles.premiumPriceRow}>
-            <Text style={styles.premiumPriceText}>{t.premiumMonthly}</Text>
-            <Text style={styles.premiumPriceText}>{t.premiumYearly}</Text>
-          </View>
+        </View>
+
+        <View style={styles.premiumPlanList}>
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel={t.premiumMonthly}
+            onPress={() => onPurchasePremium('monthly')}
+            style={styles.premiumPlan}
+          >
+            <Text style={styles.premiumPlanTitle}>{t.premiumMonthly}</Text>
+            <Text style={styles.premiumPlanAction}>{t.startPremium}</Text>
+          </Pressable>
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel={t.premiumYearly}
+            onPress={() => onPurchasePremium('annual')}
+            style={[styles.premiumPlan, styles.premiumPlanFeatured]}
+          >
+            <Text style={styles.premiumPlanTitle}>{t.premiumYearly}</Text>
+            <Text style={styles.premiumPlanAction}>{t.startPremium}</Text>
+          </Pressable>
         </View>
 
         <View style={styles.settingsList}>
@@ -8776,7 +8801,6 @@ function SettingsScreen({
             style={styles.subscriptionLegalLink}
           >
             <Text style={styles.subscriptionLegalLinkText}>{t.privacyPolicy}</Text>
-            <Text style={styles.subscriptionLegalLinkArrow}>↗</Text>
           </Pressable>
           <Pressable
             accessibilityRole="link"
@@ -8785,12 +8809,9 @@ function SettingsScreen({
             style={styles.subscriptionLegalLink}
           >
             <Text style={styles.subscriptionLegalLinkText}>{t.termsOfUse} (EULA)</Text>
-            <Text style={styles.subscriptionLegalLinkArrow}>↗</Text>
           </Pressable>
         </View>
 
-        <PrimaryButton label={t.premiumYearly} onPress={() => onPurchasePremium('annual')} />
-        <SecondaryButton label={t.premiumMonthly} onPress={() => onPurchasePremium('monthly')} />
         <SecondaryButton
           label={t.restorePurchases}
           onPress={onRestorePremiumPurchases}
@@ -10731,6 +10752,38 @@ const lightStyles = StyleSheet.create({
     padding: 14,
     marginTop: 12,
   },
+  analysisLoadingScreen: {
+    alignItems: 'center',
+    backgroundColor: '#fbfdfb',
+    borderColor: '#b7d7bf',
+    borderRadius: 8,
+    borderWidth: 1,
+    marginTop: 24,
+    paddingHorizontal: 24,
+    paddingVertical: 42,
+  },
+  analysisLoadingIcon: {
+    alignItems: 'center',
+    backgroundColor: '#e6f5ea',
+    borderRadius: 999,
+    height: 68,
+    justifyContent: 'center',
+    width: 68,
+  },
+  analysisLoadingTitle: {
+    color: '#172018',
+    fontSize: 18,
+    fontWeight: '900',
+    marginTop: 18,
+    textAlign: 'center',
+  },
+  analysisLoadingText: {
+    color: '#4f5d52',
+    fontSize: 14,
+    lineHeight: 20,
+    marginTop: 8,
+    textAlign: 'center',
+  },
   analysisTitle: {
     color: '#172018',
     fontSize: 16,
@@ -11705,24 +11758,41 @@ const lightStyles = StyleSheet.create({
     fontSize: 15,
     fontWeight: '900',
   },
-  premiumPriceRow: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
+  premiumPlanList: {
     gap: 10,
     marginTop: 14,
   },
-  premiumPriceText: {
-    backgroundColor: '#e6f5ea',
+  premiumPlan: {
+    alignItems: 'center',
+    backgroundColor: '#ffffff',
+    borderColor: '#b7d7bf',
     borderRadius: 8,
-    color: '#0d5f2b',
-    fontSize: 14,
+    borderWidth: 1,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    minHeight: 62,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+  },
+  premiumPlanFeatured: {
+    backgroundColor: '#e6f5ea',
+    borderColor: '#0d5f2b',
+  },
+  premiumPlanTitle: {
+    color: '#172018',
+    flex: 1,
+    fontSize: 15,
     fontWeight: '900',
-    paddingHorizontal: 12,
-    paddingVertical: 9,
+    paddingRight: 12,
+  },
+  premiumPlanAction: {
+    color: '#0d5f2b',
+    fontSize: 13,
+    fontWeight: '900',
   },
   subscriptionLegalCard: {
-    backgroundColor: '#fbfdfb',
-    borderColor: '#dfe8e0',
+    backgroundColor: '#f7faf7',
+    borderColor: '#cfe0d2',
     borderRadius: 8,
     borderWidth: 1,
     marginTop: 12,
@@ -11736,22 +11806,20 @@ const lightStyles = StyleSheet.create({
   },
   subscriptionLegalLink: {
     alignItems: 'center',
-    borderTopColor: '#dfe8e0',
-    borderTopWidth: 1,
+    backgroundColor: '#ffffff',
+    borderColor: '#dfe8e0',
+    borderRadius: 8,
+    borderWidth: 1,
     flexDirection: 'row',
-    justifyContent: 'space-between',
+    justifyContent: 'center',
     marginTop: 12,
-    paddingTop: 12,
+    minHeight: 44,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
   },
   subscriptionLegalLinkText: {
     color: '#0d5f2b',
     fontSize: 14,
-    fontWeight: '900',
-    textDecorationLine: 'underline',
-  },
-  subscriptionLegalLinkArrow: {
-    color: '#0d5f2b',
-    fontSize: 18,
     fontWeight: '900',
   },
   premiumCheck: {

@@ -22,3 +22,14 @@ npm run backend:start
 ```
 
 `check:ios-export` bir `dist-check/` export çıktısı üretir; bunu kaynak değişiklik olarak commit etmeyin. EAS build/submit veya App Store yayın işlemleri yalnızca açıkça istendiğinde yapılır.
+
+## Task Completion Rules
+
+- Verilen görevi baştan sona tamamla.
+- Gerekli bir adım eksikse "sonra yaparız" deme; eksik adımı şimdi tamamla ve ana göreve devam et.
+- Gerekli işleri sonraya, başka bir göreve veya follow-up'a bırakma.
+- Kısmi çözümü tamamlanmış görev olarak kabul etme.
+- Gerekli TODO, placeholder veya yarım kod bırakma.
+- Bir hata veya başarısız test varsa mümkünse şimdi düzelt ve devam et.
+- Görevi bitirmeden önce kullanıcının istediği her şeyin tamamlandığını kontrol et.
+- Yalnızca kullanıcıdan bilgi, şifre, izin veya karar almadan gerçekten devam edemiyorsan dur ve tam olarak neye ihtiyaç olduğunu söyle.

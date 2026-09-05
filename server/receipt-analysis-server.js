@@ -457,8 +457,13 @@ const server = http.createServer(async (request, response) => {
   }
 
   // AdMob verifies this file at the root of the public developer website.
+  // The store's legal URLs also point to /privacy and /support, so serve the
+  // identical declaration from those paths if a crawler follows one of them.
   // Keep the publisher account ID aligned with the production iOS ad units.
-  if (request.method === 'GET' && requestPath === '/app-ads.txt') {
+  if (
+    request.method === 'GET' &&
+    ['/app-ads.txt', '/privacy/app-ads.txt', '/support/app-ads.txt'].includes(requestPath)
+  ) {
     response.writeHead(200, {
       'Content-Type': 'text/plain; charset=utf-8',
       'Cache-Control': 'public, max-age=300',

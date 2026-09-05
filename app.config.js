@@ -49,5 +49,9 @@ module.exports = ({ config }) => ({
     supabaseUrl: process.env.EXPO_PUBLIC_SUPABASE_URL || appJson.expo.extra?.supabaseUrl || '',
     supabasePublishableKey:
       process.env.EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY || appJson.expo.extra?.supabasePublishableKey || '',
+    googleIosClientId:
+      process.env.EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID || appJson.expo.extra?.googleIosClientId || '',
+    googleWebClientId:
+      process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID || appJson.expo.extra?.googleWebClientId || '',
   },
 });
